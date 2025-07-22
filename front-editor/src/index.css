@@ -1,0 +1,154 @@
+/* App.css */
+
+/* ==== Global & Body ==== */
+body, #root, .react-flow {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #1e1e2f;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #e0e0e0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+
+/* ==== Nodes ==== */
+.custom-node {
+  background: #2e2d44;
+  border: 2px solid #6c5ce7;
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 160px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+  transition: transform 0.1s ease;
+}
+
+.custom-node:hover {
+  transform: scale(1.02);
+}
+
+.custom-node-header {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-align: center;
+  color: #dfe6e9;
+}
+
+/* ==== Handles ==== */
+.handle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #2e2d44;
+  background: #00cec9;
+  box-shadow: 0 0 6px #00cec9;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.handle.input-handle {
+  background: #e17055;
+  box-shadow: 0 0 6px #e17055;
+}
+
+.handle.output-handle {
+  background: #00cec9;
+  box-shadow: 0 0 6px #00cec9;
+}
+
+.handle:hover {
+  background: #ff9f43 !important;
+  box-shadow: 0 0 8px #ff9f43 !important;
+}
+
+/* ==== Edges ==== */
+.react-flow__edge-path {
+  stroke: #00cec9 !important;
+  stroke-width: 4px !important;
+}
+
+.react-flow__edge-path.marker-end {
+  marker-end: url(#react-flow__arrowclosed) !important;
+}
+
+.react-flow__arrowclosed {
+  fill: #00cec9 !important;
+}
+
+/* Ligne en cours de création */
+.react-flow__connection line {
+  stroke: #d63031 !important;
+  stroke-width: 3px !important;
+}
+
+/* ==== Background ==== */
+.react-flow__background {
+  background-color: #1e1e2f !important;
+}
+
+/* ==== MiniMap ==== */
+.react-flow__minimap {
+  background: #2e2d44 !important;
+  border: 1px solid #6c5ce7;
+}
+
+.react-flow__minimap-mask {
+  stroke: #6c5ce7 !important;
+  fill: rgba(108, 92, 231, 0.2) !important;
+}
+
+/* ==== Controls ==== */
+.react-flow__controls {
+  background: rgba(46, 45, 68, 0.8) !important;
+  border-radius: 4px;
+  padding: 4px !important;
+}
+
+.react-flow__controls-button {
+  color: #dfe6e9 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.react-flow__controls-button svg {
+  fill: #dfe6e9 !important;
+}
+
+/* ==== Tooltips & Labels ==== */
+.custom-node small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #b2bec3;
+}
+
+/* ==== Scrollbars (optional) ==== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6c5ce7;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2e2d44;
+}
+
+.add-node-button {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #6c5ce7;
+  color: white;
+  cursor: pointer;
+}
