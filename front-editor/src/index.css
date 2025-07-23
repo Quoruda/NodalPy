@@ -140,15 +140,3 @@ body, #root, .react-flow {
   background: #2e2d44;
 }
 
-.add-node-button {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: none;
-  background: #6c5ce7;
-  color: white;
-  cursor: pointer;
-}
