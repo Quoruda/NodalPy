@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     ReactFlow,
     useNodesState,
@@ -36,6 +36,16 @@ function FunctionNode({ id, data, isConnectable }) {
 function CodeNode({ data, isConnectable }) {
     return (
         <div className="custom-node">
+            <div className="custom-node-header">
+                <span>Code Node</span>
+                <button
+                    onClick={() => data.onExecute?.(data.code)}
+                    className="execute-button"
+                    title="Exécuter"
+                >
+                    ▶
+                </button>
+            </div>
 
             <div style={{ width: 'auto' }}>
                 <CodeMirror
@@ -47,12 +57,13 @@ function CodeNode({ data, isConnectable }) {
                     basicSetup={{ lineNumbers: true }}
                 />
             </div>
+
             <Handle type="target" position={Position.Left} className="handle input-handle" isConnectable={isConnectable} />
             <Handle type="source" position={Position.Right} className="handle output-handle" isConnectable={isConnectable} />
         </div>
-
     );
 }
+
 
 
 const nodeTypes = {
@@ -88,6 +99,20 @@ export default function App() {
         [setEdges]
     );
 
+    const [selectedEdge, setSelectedEdge] = useState(null);
+
+    // Supprimer avec "Delete"
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Delete' && selectedEdge) {
+                setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
+                setSelectedEdge(null);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedEdge, setEdges]);
+
     // Callback pour modifier le code d'un noeud
     const updateNodeCode = (nodeId, newCode) => {
         setNodes((nds) =>
@@ -121,6 +146,15 @@ export default function App() {
         setNodeCount((count) => count + 1);
     };
 
+    const styledEdges = edges.map((edge) => ({
+        ...edge,
+        style: {
+            stroke: edge.id === selectedEdge?.id ? '#ff0072' : '#999',
+            strokeWidth: edge.id === selectedEdge?.id ? 3 : 1.5,
+        },
+    }));
+
+
     // Injecte updateNodeCode dans chaque noeud existant au démarrage
     const preparedNodes = nodes.map((node) => ({
         ...node,
@@ -138,7 +172,8 @@ export default function App() {
 
             <ReactFlow
                 nodes={preparedNodes}
-                edges={edges}
+                edges={styledEdges}
+                onEdgeClick={(_, edge) => setSelectedEdge(edge)}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
