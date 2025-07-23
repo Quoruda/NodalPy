@@ -12,6 +12,9 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import './App.css'; // Ajoute tes styles ici
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
+
 
 // Définition du node personnalisé avec un éditeur de texte
 function FunctionNode({ id, data, isConnectable }) {
@@ -30,8 +33,30 @@ function FunctionNode({ id, data, isConnectable }) {
     );
 }
 
+function CodeNode({ data, isConnectable }) {
+    return (
+        <div className="custom-node">
+
+            <div style={{ width: 'auto' }}>
+                <CodeMirror
+                    value={data.code}
+                    height="auto"
+                    extensions={[python()]}
+                    onChange={(value) => data.onChange(value)}
+                    theme="dark"
+                    basicSetup={{ lineNumbers: true }}
+                />
+            </div>
+            <Handle type="target" position={Position.Left} className="handle input-handle" isConnectable={isConnectable} />
+            <Handle type="source" position={Position.Right} className="handle output-handle" isConnectable={isConnectable} />
+        </div>
+
+    );
+}
+
+
 const nodeTypes = {
-    functionNode: FunctionNode,
+    functionNode: CodeNode,
 };
 
 const initialNodes = [
