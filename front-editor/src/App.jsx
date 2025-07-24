@@ -4,71 +4,17 @@ import {
     useNodesState,
     useEdgesState,
     addEdge,
-    Handle,
-    Position,
     Controls,
     MiniMap,
     Background
 } from '@xyflow/react';
+import { nodeTypes } from './components/nodes.jsx';
+
 import '@xyflow/react/dist/style.css';
 import './App.css'; // Ajoute tes styles ici
-import CodeMirror from '@uiw/react-codemirror';
-import { python } from '@codemirror/lang-python';
-
-
-// Définition du node personnalisé avec un éditeur de texte
-function FunctionNode({ id, data, isConnectable }) {
-    return (
-        <div className="custom-node">
-            <div className="custom-node-header">Node {id}</div>
-            <textarea
-                value={data.code || ''}
-                onChange={(e) => data.onChange(id, e.target.value)}
-                className="code-editor"
-                placeholder="Écris ton code ici..."
-            />
-            <Handle type="target" position={Position.Left} className="handle input-handle" isConnectable={isConnectable} />
-            <Handle type="source" position={Position.Right} className="handle output-handle" isConnectable={isConnectable} />
-        </div>
-    );
-}
-
-function CodeNode({ data, isConnectable }) {
-    return (
-        <div className="custom-node">
-            <div className="custom-node-header">
-                <span>Code Node</span>
-                <button
-                    onClick={() => data.onExecute?.(data.code)}
-                    className="execute-button"
-                    title="Exécuter"
-                >
-                    ▶
-                </button>
-            </div>
-
-            <div style={{ width: 'auto' }}>
-                <CodeMirror
-                    value={data.code}
-                    height="auto"
-                    extensions={[python()]}
-                    onChange={(value) => data.onChange(value)}
-                    theme="dark"
-                    basicSetup={{ lineNumbers: true }}
-                />
-            </div>
-
-            <Handle type="target" position={Position.Left} className="handle input-handle" isConnectable={isConnectable} />
-            <Handle type="source" position={Position.Right} className="handle output-handle" isConnectable={isConnectable} />
-        </div>
-    );
-}
 
 
 
-const nodeTypes = {
-    functionNode: CodeNode,
-};
 
 const initialNodes = [
     {
@@ -160,6 +106,7 @@ export default function App() {
         ...node,
         data: {
             ...node.data,
+            id: node.id,
             onChange: updateNodeCode,
         },
     }));
