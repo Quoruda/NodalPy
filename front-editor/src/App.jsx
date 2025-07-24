@@ -35,6 +35,9 @@ const initialEdges = [
     { id: 'e1-2', source: 'fn1', target: 'fn2' },
 ];
 
+
+
+
 export default function App() {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -59,6 +62,22 @@ export default function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedEdge, setEdges]);
 
+    const updateNodeTitle = (nodeId, newTitle) => {
+        setNodes((nds) =>
+            nds.map((node) =>
+                node.id === nodeId
+                    ? {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            title: newTitle,
+                        },
+                    }
+                    : node
+            )
+        );
+    };
+
     // Callback pour modifier le code d'un noeud
     const updateNodeCode = (nodeId, newCode) => {
         setNodes((nds) =>
@@ -76,6 +95,7 @@ export default function App() {
             )
         );
     };
+
 
     // Ajout d’un nouveau noeud avec une textarea vide
     const addNode = () => {
@@ -108,6 +128,9 @@ export default function App() {
             ...node.data,
             id: node.id,
             onChange: updateNodeCode,
+            onTitleChange: updateNodeTitle,
+
+
         },
     }));
 

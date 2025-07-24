@@ -20,8 +20,10 @@ function FunctionNode({ id, data, isConnectable }) {
     );
 }
 
-function CodeNode({ data, isConnectable }) {
+export default function CodeNode({ data, isConnectable }) {
     const [output, setOutput] = useState('');
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [tempTitle, setTempTitle] = useState(data.title || 'Code Node');
 
     const runCode = async () => {
         try {
@@ -34,21 +36,48 @@ function CodeNode({ data, isConnectable }) {
             const result = await res.json();
             setOutput(result.output || result.error || 'Aucune sortie');
         } catch (err) {
-            setOutput('Erreur lors de l\'appel API');
+            setOutput("Erreur lors de l'appel API");
         }
+    };
+
+    const handleTitleSave = () => {
+        data.onTitleChange?.(data.id, tempTitle); // appelle le callback du parent
+        setIsEditingTitle(false);
     };
 
     return (
         <div className="custom-node">
             <div className="custom-node-header">
-                <span>Code Node</span>
-                <button
-                    onClick={runCode}
-                    className="execute-button"
-                    title="Exécuter"
-                >
-                    ▶
-                </button>
+                {isEditingTitle ? (
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                        <input
+                            value={tempTitle}
+                            onChange={(e) => setTempTitle(e.target.value)}
+                            className="title-input"
+                            autoFocus
+                        />
+                        <button onClick={handleTitleSave}>✅</button>
+                    </div>
+                ) : (
+                    <>
+                        <span>{data.title || 'Code Node'}</span>
+                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+                            <button
+                                onClick={() => setIsEditingTitle(true)}
+                                title="Modifier le titre"
+                            >
+                                ✏️
+                            </button>
+                            <button
+                                onClick={runCode}
+                                className="execute-button"
+                                title="Exécuter"
+                            >
+                                ▶
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
 
             <div style={{ width: 'auto' }}>
@@ -68,11 +97,13 @@ function CodeNode({ data, isConnectable }) {
                 </pre>
             )}
 
-            <Handle type="target" position={Position.Left} className="handle input-handle" isConnectable={isConnectable} />
-            <Handle type="source" position={Position.Right} className="handle output-handle" isConnectable={isConnectable} />
+            <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+            <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
         </div>
     );
 }
+
+
 
 
 

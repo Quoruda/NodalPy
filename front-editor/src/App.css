@@ -91,3 +91,11 @@
   color: white;
   cursor: pointer;
 }
+
+.title-input {
+    font-size: 14px;
+    padding: 2px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex: 1;
+}
