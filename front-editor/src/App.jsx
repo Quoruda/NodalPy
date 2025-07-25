@@ -20,19 +20,13 @@ const initialNodes = [
     {
         id: 'fn1',
         type: 'functionNode',
-        data: { code: 'load_image("path")' },
+        data: { code: 'load_image("path")', inputs : ["test1", "test2"], outputs: ["output1", "output2"]},
         position: { x: 200, y: 100 },
-    },
-    {
-        id: 'fn2',
-        type: 'functionNode',
-        data: { code: 'resize(width, height)' },
-        position: { x: 500, y: 100 },
     },
 ];
 
 const initialEdges = [
-    { id: 'e1-2', source: 'fn1', target: 'fn2' },
+
 ];
 
 
@@ -62,7 +56,8 @@ export default function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedEdge, setEdges]);
 
-    const updateNodeTitle = (nodeId, newTitle) => {
+    const updateNode = (nodeId, updates) => {
+        console.log("update")
         setNodes((nds) =>
             nds.map((node) =>
                 node.id === nodeId
@@ -70,7 +65,7 @@ export default function App() {
                         ...node,
                         data: {
                             ...node.data,
-                            title: newTitle,
+                            ...updates
                         },
                     }
                     : node
@@ -128,9 +123,7 @@ export default function App() {
             ...node.data,
             id: node.id,
             onChange: updateNodeCode,
-            onTitleChange: updateNodeTitle,
-
-
+            onUpdate: updateNode,
         },
     }));
 
