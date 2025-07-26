@@ -4,6 +4,8 @@ import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import AutosizeInput from 'react-input-autosize';
 
+
+
 // Définition du node personnalisé avec un éditeur de texte
 function FunctionNode({ id, data, isConnectable }) {
     return (
@@ -29,6 +31,8 @@ export default function CodeNode({ data, isConnectable }) {
     const [outputs, setOutputs] = useState(data.outputs || []);
 
     const runCode = async () => {
+        data.runCode?.(data);
+        /*
         try {
             const res = await fetch('http://localhost:8000/run', {
                 method: 'POST',
@@ -41,9 +45,12 @@ export default function CodeNode({ data, isConnectable }) {
         } catch (err) {
             setOutput("Erreur lors de l'appel API");
         }
+
+         */
     };
 
     const handleSave = () => {
+        console.log(data)
         data.onUpdate?.(data.id, {
             title: tempTitle,
             code: data.code,
@@ -208,7 +215,7 @@ export default function CodeNode({ data, isConnectable }) {
                             key={`output-${index}`}
                             type="source"
                             position={Position.Right}
-                            id={`in${index + 1}`}
+                            id={`ou${index + 1}`}
                             style={{ background: 'red' }}
                             isConnectable={isConnectable}
                         />

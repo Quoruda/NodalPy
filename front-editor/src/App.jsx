@@ -14,7 +14,10 @@ import '@xyflow/react/dist/style.css';
 import './App.css'; // Ajoute tes styles ici
 
 
-
+function extractNumber(str) {
+  const match = str.match(/\d+/); // Cherche un ou plusieurs chiffres
+  return match ? parseInt(match[0], 10) : null;
+}
 
 const initialNodes = [
     {
@@ -57,6 +60,7 @@ export default function App() {
     }, [selectedEdge, setEdges]);
 
     const updateNode = (nodeId, updates) => {
+        console.log(edges)
         console.log("update")
         setNodes((nds) =>
             nds.map((node) =>
@@ -72,6 +76,54 @@ export default function App() {
             )
         );
     };
+
+    const runCode = (node) => {
+        let id_node = node.id
+        const variables = [];
+        for (let edge of edges){
+            if (edge.target === id_node){
+                let var_node = edge.source
+                let var_sourceHandle = extractNumber(edge.sourceHandle);
+                let var_targetHandle = extractNumber(edge.targetHandle);
+                let var_target_name = node.inputs[var_targetHandle-1]
+                for(let n of nodes){
+                    if (n.id === var_node){
+                        let var_source_name = n.data.outputs[var_sourceHandle-1]
+                        let variable = {
+                            source: var_node,
+                            name: var_source_name,
+                            target: var_target_name,
+                        }
+                        variables.push(variable)
+                        break
+                    }
+                }
+
+            }
+        }
+        const request_data = {
+            code: node.code,
+            variables: variables,
+            node: node.id
+        }
+
+        console.log(request_data)
+
+        fetch('http://localhost:8000/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request_data),
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+        })
+            .catch((error) => {
+                console.error('Error:', error);
+        });
+    }
 
     // Callback pour modifier le code d'un noeud
     const updateNodeCode = (nodeId, newCode) => {
@@ -124,6 +176,7 @@ export default function App() {
             id: node.id,
             onChange: updateNodeCode,
             onUpdate: updateNode,
+            runCode: runCode,
         },
     }));
 
