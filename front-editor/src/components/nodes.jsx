@@ -4,7 +4,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import AutosizeInput from 'react-input-autosize';
 
-
+import { EditorView } from '@codemirror/view';
 
 // Définition du node personnalisé avec un éditeur de texte
 function FunctionNode({ id, data, isConnectable }) {
@@ -24,29 +24,14 @@ function FunctionNode({ id, data, isConnectable }) {
 }
 
 export default function CodeNode({ data, isConnectable }) {
-    const [output, setOutput] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [tempTitle, setTempTitle] = useState(data.title || 'Code Node');
     const [inputs, setInputs] = useState(data.inputs || []);
     const [outputs, setOutputs] = useState(data.outputs || []);
 
+
     const runCode = async () => {
         data.runCode?.(data);
-        /*
-        try {
-            const res = await fetch('http://localhost:8000/run', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: data.code }),
-            });
-
-            const result = await res.json();
-            setOutput(result.output || result.error || 'Aucune sortie');
-        } catch (err) {
-            setOutput("Erreur lors de l'appel API");
-        }
-
-         */
     };
 
     const handleSave = () => {
@@ -56,6 +41,7 @@ export default function CodeNode({ data, isConnectable }) {
             code: data.code,
             inputs: inputs,
             outputs: outputs,
+            output: output,
         });
         setIsEditing(false);
     };
@@ -179,8 +165,23 @@ export default function CodeNode({ data, isConnectable }) {
                     />
                 </div>
 
-                {output && (
-                    <pre className="output">{output}</pre>
+                {data.output && (
+                    <div style={{
+                      marginTop: 8,
+                      width: '100%',
+                      maxWidth: '100%',
+                      overflowX: 'auto',            // scroll horizontal si besoin
+                    }}>
+                      <CodeMirror
+                        value={data.output}
+                        height="auto"
+                        extensions={[ python(), EditorView.lineWrapping ]}
+                        theme="dark"
+                        basicSetup={{ lineNumbers: true }}
+                        editable={false}
+                        style={{ width: '100%' }}
+                      />
+                    </div>
                 )}
             </div>
 

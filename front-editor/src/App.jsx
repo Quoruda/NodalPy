@@ -20,12 +20,7 @@ function extractNumber(str) {
 }
 
 const initialNodes = [
-    {
-        id: 'fn1',
-        type: 'functionNode',
-        data: { code: 'load_image("path")', inputs : ["test1", "test2"], outputs: ["output1", "output2"]},
-        position: { x: 200, y: 100 },
-    },
+
 ];
 
 const initialEdges = [
@@ -60,8 +55,7 @@ export default function App() {
     }, [selectedEdge, setEdges]);
 
     const updateNode = (nodeId, updates) => {
-        console.log(edges)
-        console.log("update")
+        console.log("updates: ", updates)
         setNodes((nds) =>
             nds.map((node) =>
                 node.id === nodeId
@@ -75,39 +69,42 @@ export default function App() {
                     : node
             )
         );
+        console.log(nodes)
     };
 
     const runCode = (node) => {
-        let id_node = node.id
+        const id_node = node.id;
         const variables = [];
-        for (let edge of edges){
-            if (edge.target === id_node){
-                let var_node = edge.source
-                let var_sourceHandle = extractNumber(edge.sourceHandle);
-                let var_targetHandle = extractNumber(edge.targetHandle);
-                let var_target_name = node.inputs[var_targetHandle-1]
-                for(let n of nodes){
-                    if (n.id === var_node){
-                        let var_source_name = n.data.outputs[var_sourceHandle-1]
-                        let variable = {
+
+        for (let edge of edges) {
+            if (edge.target === id_node) {
+                const var_node = edge.source;
+                const var_sourceHandle = extractNumber(edge.sourceHandle);
+                const var_targetHandle = extractNumber(edge.targetHandle);
+                const var_target_name = node.inputs[var_targetHandle - 1];
+
+                for (let n of nodes) {
+                    if (n.id === var_node) {
+                        const var_source_name = n.data.outputs[var_sourceHandle - 1];
+                        const variable = {
                             source: var_node,
                             name: var_source_name,
                             target: var_target_name,
-                        }
-                        variables.push(variable)
-                        break
+                        };
+                        variables.push(variable);
+                        break;
                     }
                 }
-
             }
         }
+
         const request_data = {
             code: node.code,
             variables: variables,
-            node: node.id
-        }
+            node: node.id,
+        };
 
-        console.log(request_data)
+        console.log(request_data);
 
         fetch('http://localhost:8000/run', {
             method: 'POST',
@@ -116,14 +113,47 @@ export default function App() {
             },
             body: JSON.stringify(request_data),
         })
-            .then(response => response.json())
-            .then(data => {
+            .then((response) => response.json())
+            .then((data) => {
                 console.log('Success:', data);
-        })
+                const output = data.output;
+
+                // ✅ Mettre à jour le noeud ici, quand on a le résultat
+                setNodes((nds) =>
+                    nds.map((n) =>
+                        n.id === id_node
+                            ? {
+                                  ...n,
+                                  data: {
+                                      ...n.data,
+                                      output: output,
+                                  },
+                              }
+                            : n
+                    )
+                );
+            })
             .catch((error) => {
                 console.error('Error:', error);
-        });
-    }
+                const output = "Erreur lors de l'exécution du code";
+
+                // ✅ Même en cas d'erreur, on met à jour le noeud
+                setNodes((nds) =>
+                    nds.map((n) =>
+                        n.id === id_node
+                            ? {
+                                  ...n,
+                                  data: {
+                                      ...n.data,
+                                      output: output,
+                                  },
+                              }
+                            : n
+                    )
+                );
+            });
+    };
+
 
     // Callback pour modifier le code d'un noeud
     const updateNodeCode = (nodeId, newCode) => {
