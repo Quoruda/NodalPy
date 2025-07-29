@@ -52,6 +52,12 @@
   stroke-width: 4px !important;
 }
 
+.react-flow__node.selected {
+  border: 2px solid #ff0072 !important;
+}
+
+
+
 .custom-node-header {
   display: flex;
   justify-content: space-between;

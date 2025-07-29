@@ -41,7 +41,7 @@ export default function CodeNode({ data, isConnectable }) {
             code: data.code,
             inputs: inputs,
             outputs: outputs,
-            output: output,
+            output: data.output,
         });
         setIsEditing(false);
     };

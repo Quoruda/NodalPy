@@ -41,18 +41,24 @@ export default function App() {
     );
 
     const [selectedEdge, setSelectedEdge] = useState(null);
+    const [selectedNode, setSelectedNode] = useState(null);
 
     // Supprimer avec "Delete"
     useEffect(() => {
         const handleKeyDown = (event) => {
-            if (event.key === 'Delete' && selectedEdge) {
+            if (selectedEdge) {
                 setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
                 setSelectedEdge(null);
+            } else if (selectedNode) {
+                setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+                // Supprime aussi les edges associés au node supprimé
+                setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
+                setSelectedNode(null);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedEdge, setEdges]);
+    }, [selectedEdge,selectedNode, setEdges, setNodes]);
 
     const updateNode = (nodeId, updates) => {
         console.log("updates: ", updates)
@@ -202,11 +208,13 @@ export default function App() {
     const preparedNodes = nodes.map((node) => ({
         ...node,
         data: {
+            output: "",
             ...node.data,
             id: node.id,
             onChange: updateNodeCode,
             onUpdate: updateNode,
             runCode: runCode,
+
         },
     }));
 
@@ -220,6 +228,7 @@ export default function App() {
                 nodes={preparedNodes}
                 edges={styledEdges}
                 onEdgeClick={(_, edge) => setSelectedEdge(edge)}
+                onNodeClick={(_, node) => setSelectedNode(node)}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
