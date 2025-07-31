@@ -52,7 +52,7 @@
   stroke-width: 4px !important;
 }
 
-.react-flow__node.selected {
+.react-flow__node.selected .custom-node {
   border: 2px solid #ff0072 !important;
 }
 
