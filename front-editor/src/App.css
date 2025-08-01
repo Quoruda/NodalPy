@@ -52,39 +52,6 @@
   stroke-width: 4px !important;
 }
 
-.react-flow__node.selected .custom-node {
-  border: 2px solid #ff0072 !important;
-}
-
-
-
-.custom-node-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #2c2c2c;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.9rem;
-  border-bottom: 1px solid #444;
-}
-
-.execute-button {
-  background: transparent;
-  border: none;
-  color: #00ff99;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-left: 0.5rem;
-  transition: color 0.2s, transform 0.1s;
-
-}
-
-.execute-button:hover {
-  color: #00ffaa;
-  transform: scale(1.1);
-}
-
 .add-node-button {
   position: absolute;
   top: 10px;
@@ -98,10 +65,98 @@
   cursor: pointer;
 }
 
-.title-input {
-    font-size: 14px;
-    padding: 2px 6px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    flex: 1;
+/* ==== Handles ==== */
+.handle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #2e2d44;
+  background: #00cec9;
+  box-shadow: 0 0 6px #00cec9;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.handle.input-handle {
+  background: #e17055;
+  box-shadow: 0 0 6px #e17055;
+}
+
+.handle.output-handle {
+  background: #00cec9;
+  box-shadow: 0 0 6px #00cec9;
+}
+
+.handle:hover {
+  background: #ff9f43 !important;
+  box-shadow: 0 0 8px #ff9f43 !important;
+}
+
+/* ==== Edges ==== */
+.react-flow__edge-path {
+  stroke: #00cec9 !important;
+  stroke-width: 4px !important;
+}
+
+.react-flow__edge-path.marker-end {
+  marker-end: url(#react-flow__arrowclosed) !important;
+}
+
+.react-flow__arrowclosed {
+  fill: #00cec9 !important;
+}
+
+/* Ligne en cours de création */
+.react-flow__connection line {
+  stroke: #d63031 !important;
+  stroke-width: 3px !important;
+}
+
+/* ==== Background ==== */
+.react-flow__background {
+  background-color: #1e1e2f !important;
+}
+
+/* ==== MiniMap ==== */
+.react-flow__minimap {
+  background: #2e2d44 !important;
+  border: 1px solid #6c5ce7;
+}
+
+.react-flow__minimap-mask {
+  stroke: #6c5ce7 !important;
+  fill: rgba(108, 92, 231, 0.2) !important;
+}
+
+/* ==== Controls ==== */
+.react-flow__controls {
+  background: rgba(46, 45, 68, 0.8) !important;
+  border-radius: 4px;
+  padding: 4px !important;
+}
+
+.react-flow__controls-button {
+  color: #dfe6e9 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.react-flow__controls-button svg {
+  fill: #dfe6e9 !important;
+}
+
+
+
+/* ==== Scrollbars (optional) ==== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6c5ce7;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2e2d44;
 }

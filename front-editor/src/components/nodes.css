@@ -1,0 +1,71 @@
+/* ==== Nodes ==== */
+.custom-node {
+  background: #2e2d44;
+  border: 2px solid #6c5ce7;
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 160px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+  transition: transform 0.1s ease;
+}
+
+.custom-node:hover {
+  transform: scale(1.02);
+}
+
+.custom-node-header {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-align: center;
+  color: #dfe6e9;
+}
+
+.react-flow__node.selected .custom-node {
+  border: 2px solid #ff0072 !important;
+}
+
+.custom-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #2c2c2c;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #444;
+}
+
+.execute-button {
+  background: transparent;
+  border: none;
+  color: #00ff99;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-left: 0.5rem;
+  transition: color 0.2s, transform 0.1s;
+
+}
+
+.execute-button:hover {
+  color: #00ffaa;
+  transform: scale(1.1);
+}
+
+/* ==== Tooltips & Labels ==== */
+.custom-node small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #b2bec3;
+}
+
+.custom-node .title-input {
+    font-size: 14px;
+    padding: 2px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex: 1;
+}
+

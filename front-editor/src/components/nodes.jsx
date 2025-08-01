@@ -6,6 +6,8 @@ import AutosizeInput from 'react-input-autosize';
 
 import { EditorView } from '@codemirror/view';
 
+import './nodes.css';
+
 // Définition du node personnalisé avec un éditeur de texte
 function FunctionNode({ id, data, isConnectable }) {
     return (
