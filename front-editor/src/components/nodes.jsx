@@ -3,6 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import AutosizeInput from 'react-input-autosize';
+import { memo } from 'react';
 
 import { EditorView } from '@codemirror/view';
 
@@ -240,5 +241,5 @@ export default function CodeNode({ data, isConnectable }) {
 
 
 export const nodeTypes = {
-    functionNode: CodeNode,
+    functionNode: memo(CodeNode),
 };

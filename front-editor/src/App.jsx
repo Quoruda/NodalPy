@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
     ReactFlow,
     useNodesState,
@@ -40,20 +40,24 @@ export default function App() {
         [setEdges]
     );
 
+
+
     const [selectedEdge, setSelectedEdge] = useState(null);
     const [selectedNode, setSelectedNode] = useState(null);
 
     // Supprimer avec "Delete"
     useEffect(() => {
         const handleKeyDown = (event) => {
-            if (selectedEdge) {
-                setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
-                setSelectedEdge(null);
-            } else if (selectedNode) {
-                setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
-                // Supprime aussi les edges associés au node supprimé
-                setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
-                setSelectedNode(null);
+            if (event.key === 'Delete' || event.key === 'Backspace') {
+                if (selectedEdge) {
+                    setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
+                    setSelectedEdge(null);
+                } else if (selectedNode) {
+                    setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+                    // Supprime aussi les edges associés au node supprimé
+                    setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
+                    setSelectedNode(null);
+                }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
@@ -205,10 +209,9 @@ export default function App() {
 
 
     // Injecte updateNodeCode dans chaque noeud existant au démarrage
-    const preparedNodes = nodes.map((node) => ({
+    const preparedNodes = useMemo(() => nodes.map((node) => ({
         ...node,
         data: {
-            output: "",
             ...node.data,
             id: node.id,
             onChange: updateNodeCode,
@@ -216,7 +219,7 @@ export default function App() {
             runCode: runCode,
 
         },
-    }));
+    })), [nodes, updateNodeCode, updateNode, runCode]);
 
     return (
         <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -234,6 +237,13 @@ export default function App() {
                 onConnect={onConnect}
                 nodeTypes={nodeTypes}
                 fitView
+                onNodeDragStop={(event, node) => {
+                      setNodes((nds) =>
+                          nds.map((n) =>
+                              n.id === node.id ? { ...n, position: node.position } : n
+                          )
+                      );
+                  }}
             >
                 <Background variant="dots" gap={16} size={1} />
                 <MiniMap nodeColor={(n) => (n.type === 'functionNode' ? '#ffcc00' : '#aaa')} />
