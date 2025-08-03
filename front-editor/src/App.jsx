@@ -42,27 +42,37 @@ export default function App() {
 
 
 
-    const [selectedEdge, setSelectedEdge] = useState(null);
-    const [selectedNode, setSelectedNode] = useState(null);
+    const [selectedEdges, setSelectedEdges] = useState([]);
+    const [selectedNodes, setSelectedNodes] = useState([]);
 
-    // Supprimer avec "Delete"
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === 'Delete' || event.key === 'Backspace') {
-                if (selectedEdge) {
-                    setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
-                    setSelectedEdge(null);
-                } else if (selectedNode) {
-                    setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
-                    // Supprime aussi les edges associés au node supprimé
-                    setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
-                    setSelectedNode(null);
+                if (selectedEdges.length > 0) {
+                    setEdges((eds) =>
+                        eds.filter((e) => !selectedEdges.some((sel) => sel.id === e.id))
+                    );
+                    setSelectedEdges([]);
+                }
+
+                if (selectedNodes.length > 0) {
+                    const selectedIds = selectedNodes.map((n) => n.id);
+
+                    setNodes((nds) => nds.filter((n) => !selectedIds.includes(n.id)));
+
+                    setEdges((eds) =>
+                        eds.filter((e) => !selectedIds.includes(e.source) && !selectedIds.includes(e.target))
+                    );
+
+                    setSelectedNodes([]);
                 }
             }
         };
+
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedEdge,selectedNode, setEdges, setNodes]);
+    }, [selectedEdges, selectedNodes, setEdges, setNodes]);
+
 
     const updateNode = (nodeId, updates) => {
         console.log("updates: ", updates)
@@ -202,8 +212,8 @@ export default function App() {
     const styledEdges = edges.map((edge) => ({
         ...edge,
         style: {
-            stroke: edge.id === selectedEdge?.id ? '#ff0072' : '#999',
-            strokeWidth: edge.id === selectedEdge?.id ? 3 : 1.5,
+            stroke: edge.id === selectedEdges?.id ? '#ff0072' : '#999',
+            strokeWidth: edge.id === selectedEdges?.id ? 3 : 1.5,
         },
     }));
 
@@ -230,8 +240,10 @@ export default function App() {
             <ReactFlow
                 nodes={preparedNodes}
                 edges={styledEdges}
-                onEdgeClick={(_, edge) => setSelectedEdge(edge)}
-                onNodeClick={(_, node) => setSelectedNode(node)}
+                onSelectionChange={({ nodes, edges }) => {
+                    setSelectedNodes(nodes || []);
+                    setSelectedEdges(edges || []);
+                }}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
