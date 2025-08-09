@@ -85,8 +85,8 @@ export default function App() {
     }, [selectedEdges, selectedNodes, setEdges, setNodes]);
 
 
-    const updateNode = (nodeId, updates) => {
-        console.log("updates: ", updates)
+    const updateNode = useCallback((nodeId, updates) => {
+        console.log("updates: ", updates);
         setNodes((nds) =>
             nds.map((node) =>
                 node.id === nodeId
@@ -100,10 +100,11 @@ export default function App() {
                     : node
             )
         );
-        console.log(nodes)
-    };
+        console.log(nodes);
+    }, [setNodes, nodes]);
 
-    const runCode = (node) => {
+
+    const runCode = useCallback((node) => {
         const id_node = node.id;
         const variables = [];
 
@@ -183,26 +184,18 @@ export default function App() {
                     )
                 );
             });
-    };
+    }, [edges, nodes, setNodes]);
 
 
     // Callback pour modifier le code d'un noeud
-    const updateNodeCode = (nodeId, newCode) => {
-        setNodes((nds) =>
-            nds.map((node) =>
-                node.id === nodeId
-                    ? {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            code: newCode,
-                            onChange: updateNodeCode,
-                        },
-                    }
-                    : node
-            )
-        );
-    };
+    const updateNodeCode = useCallback((nodeId, newCode) => {
+        setNodes((nds) => nds.map((node) =>
+            node.id === nodeId
+                ? { ...node, data: { ...node.data, code: newCode, onChange: updateNodeCode } }
+                : node
+        ));
+    }, [setNodes]);
+
 
 
     // Ajout d’un nouveau noeud avec une textarea vide
