@@ -48,6 +48,17 @@ export default function App() {
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === 'Delete' || event.key === 'Backspace') {
+
+                const activeTag = document.activeElement.tagName;
+                const isTyping = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement.isContentEditable;
+
+                // Pour CodeMirror : il met le focus sur un élément avec la classe cm-content
+                const isInCodeMirror = document.activeElement.closest('.cm-editor');
+
+                if (isTyping || isInCodeMirror) {
+                    return; // Ne rien faire si on tape dans un champ ou l'éditeur
+                }
+
                 if (selectedEdges.length > 0) {
                     setEdges((eds) =>
                         eds.filter((e) => !selectedEdges.some((sel) => sel.id === e.id))
