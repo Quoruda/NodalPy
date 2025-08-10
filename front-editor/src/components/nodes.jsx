@@ -10,22 +10,6 @@ import { EditorView } from '@codemirror/view';
 import './nodes.css';
 
 // Définition du node personnalisé avec un éditeur de texte
-function FunctionNode({ id, data, isConnectable }) {
-    return (
-        <div className="custom-node">
-            <div className="custom-node-header">Node {id}</div>
-            <textarea
-                value={data.code || ''}
-                onChange={(e) => data.onChange(id, e.target.value)}
-                className="code-editor"
-                placeholder="Écris ton code ici..."
-            />
-            <Handle type="target" position={Position.Left} className="handle input-handle" isConnectable={isConnectable} />
-            <Handle type="source" position={Position.Right} className="handle output-handle" isConnectable={isConnectable} />
-        </div>
-    );
-}
-
 export default function CodeNode({ data, isConnectable }) {
     const [isEditing, setIsEditing] = useState(false);
     const [tempTitle, setTempTitle] = useState(data.title || 'Code Node');
