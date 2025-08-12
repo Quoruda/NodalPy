@@ -8,7 +8,7 @@ import {
     MiniMap,
     Background
 } from '@xyflow/react';
-import { nodeTypes } from './components/nodes.jsx';
+import { nodeTypes } from './components/nodeTypes.jsx';
 
 import '@xyflow/react/dist/style.css';
 import './App.css'; // Ajoute tes styles ici
@@ -107,6 +107,17 @@ export default function App() {
     const runCode = useCallback((node) => {
         const id_node = node.id;
         const variables = [];
+        
+        // 🔹 Mettre l'état en "en cours" immédiatement
+        setNodes((nds) =>
+            nds.map((n) =>
+                n.id === id_node
+                    ? { ...n, data: { ...n.data, state: 1 } }
+                    : n
+            )
+        );
+
+
 
         for (let edge of edges) {
             if (edge.target === id_node) {
@@ -159,6 +170,7 @@ export default function App() {
                                   data: {
                                       ...n.data,
                                       output: output,
+                                      state: 2,
                                   },
                               }
                             : n
@@ -178,6 +190,7 @@ export default function App() {
                                   data: {
                                       ...n.data,
                                       output: output,
+                                      state: 2,
                                   },
                               }
                             : n

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import { Handle, Position } from '@xyflow/react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
@@ -15,7 +15,12 @@ export default function CodeNode({ data, isConnectable }) {
     const [tempTitle, setTempTitle] = useState(data.title || 'Code Node');
     const [inputs, setInputs] = useState(data.inputs || []);
     const [outputs, setOutputs] = useState(data.outputs || []);
+    const [state, setState] = useState(data.state || 0);
 
+
+    useEffect(() => {
+        setState(data.state || 0);
+    }, [data.state]);
 
     const runCode = async () => {
         data.runCode?.(data);
@@ -29,6 +34,7 @@ export default function CodeNode({ data, isConnectable }) {
             inputs: inputs,
             outputs: outputs,
             output: data.output,
+            state: state
         });
         setIsEditing(false);
     };
@@ -110,32 +116,59 @@ export default function CodeNode({ data, isConnectable }) {
             <div style={{ flexGrow: 1}}>
                 <div className="custom-node-header">
                     {isEditing ? (
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                            <AutosizeInput
-                                value={tempTitle}
-                                onChange={(e) => setTempTitle(e.target.value)}
-                                className="title-input"
-                                autoFocus
-                            />
-                            <button onClick={handleSave}>✅</button>
-                        </div>
-                    ) : (
-                        <>
-                            <span>{data.title || 'Code Node'}</span>
-                            <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    title="Modifier le titre"
-                                >
-                                    ✏️
-                                </button>
-                                <button
-                                    onClick={runCode}
-                                    className="execute-button"
-                                    title="Exécuter"
-                                >
-                                    ▶
-                                </button>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                                <AutosizeInput
+                                    value={tempTitle}
+                                    onChange={(e) => setTempTitle(e.target.value)}
+                                    className="title-input"
+                                    autoFocus
+                                />
+                                <button onClick={handleSave}>✅</button>
+                            </div>
+                        ) : (
+                            <>
+                                <span>{data.title || 'Code Node'}</span>
+                                <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        title="Modifier le titre"
+                                    >
+                                        ✏️
+                                    </button>
+
+                                    {state === 0 &&
+                                        (
+                                            <button
+                                                onClick={runCode}
+                                                className="execute-button"
+                                                title="Exécuter"
+                                            >
+                                                ▶
+                                            </button>
+                                        )
+                                    }
+                                    {state === 1 &&
+                                        (
+                                            <div
+                                                className="running-button"
+                                                title="Attendre"
+                                            >
+                                                ⏱
+                                            </div>
+                                        )
+                                    }
+                                    {state === 2 &&
+                                        (
+                                            <button
+                                                onClick={runCode}
+                                                className="execute-button"
+                                                title="Réexécuter"
+                                            >
+                                                🔄
+                                            </button>
+                                        )
+                                    }
+
                             </div>
                         </>
                     )}
@@ -221,9 +254,7 @@ export default function CodeNode({ data, isConnectable }) {
 }
 
 
-
-
-
-export const nodeTypes = {
+export let nodeTypes;
+nodeTypes = {
     functionNode: memo(CodeNode),
 };
