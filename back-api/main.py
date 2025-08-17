@@ -6,6 +6,8 @@ import traceback
 from fastapi.middleware.cors import CORSMiddleware
 import copy
 
+
+
 contexts = {}
 
 app = FastAPI()
@@ -27,19 +29,20 @@ class CodeRequest(BaseModel):
 @app.post("/run")
 async def run_code(request: CodeRequest):
     try:
-        stdout = io.StringIO()
-        sys.stdout = stdout
+
 
         context = {}
 
         for var in request.variables:
-            print(var)
             var_context = contexts.get(var["source"], {})
             value = var_context.get(var["name"], None)
             value = copy.deepcopy(value)
             context[var["target"]] = value
 
         # Execution en "sandbox"
+        stdout = io.StringIO()
+        sys.stdout = stdout
+
         try:
             exec(request.code, context)
         except:
