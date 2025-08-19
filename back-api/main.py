@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 import sys
 import io
 import traceback
 from fastapi.middleware.cors import CORSMiddleware
 import copy
+import asyncio
 
 
 
@@ -21,39 +22,65 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class CodeRequest(BaseModel):
-    code: str
-    variables: list
-    node: str
+# Petit wrapper pour capter stdout et envoyer directement via websocket
+class WebSocketStdout(io.StringIO):
+    def __init__(self, ws: WebSocket, node: str):
+        super().__init__()
+        self.ws = ws
+        self.node = node
 
-@app.post("/run")
-async def run_code(request: CodeRequest):
+    def write(self, s: str):
+        if s.strip():  # évite d’envoyer des trucs vides
+            asyncio.create_task(self.ws.send_json({
+                "node": self.node,
+                "output": s
+            }))
+        return super().write(s)
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
     try:
+        while True:
+            data = await websocket.receive_json()
 
+            if data.get("action") == "run":
+                code = data["code"]
+                variables = data["variables"]
+                node = data["node"]
 
-        context = {}
+                # ✅ Prévenir le front que l’exécution démarre
+                await websocket.send_json({"node": node, "status": "running"})
 
-        for var in request.variables:
-            var_context = contexts.get(var["source"], {})
-            value = var_context.get(var["name"], None)
-            value = copy.deepcopy(value)
-            context[var["target"]] = value
+                # Préparer le contexte
+                context = {}
+                for var in variables:
+                    var_context = contexts.get(var["source"], {})
+                    value = var_context.get(var["name"], None)
+                    value = copy.deepcopy(value)
+                    context[var["target"]] = value
 
-        # Execution en "sandbox"
-        stdout = io.StringIO()
-        sys.stdout = stdout
+                # Rediriger stdout
+                real_stdout = sys.stdout
+                sys.stdout = WebSocketStdout(websocket, node)
 
-        try:
-            exec(request.code, context)
-        except:
-            print(traceback.format_exc())
+                try:
+                    exec(code, context)  # exécution du code
+                except Exception:
+                    err = traceback.format_exc()
+                    await websocket.send_json({"node": node, "output": err})
 
-        # Remet stdout
-        sys.stdout = sys.__stdout__
+                # Remettre stdout
+                sys.stdout = real_stdout
 
-        contexts[request.node] = context
+                # Sauvegarder le contexte pour d’autres nœuds
+                contexts[node] = context
 
-        return {"output": stdout.getvalue()}
-    except Exception:
-        sys.stdout = sys.__stdout__
-        return {"error": traceback.format_exc()}
+                # ✅ Prévenir que l’exécution est terminée
+                await websocket.send_json({"node": node, "status": "finished"})
+
+    except WebSocketDisconnect:
+        print("❌ Client déconnecté")
+    except Exception as e:
+        print("⚠️ Erreur WebSocket:", e)

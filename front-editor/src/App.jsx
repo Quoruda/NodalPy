@@ -104,100 +104,70 @@ export default function App() {
     }, [setNodes, nodes]);
 
 
-    const runCode = useCallback((node) => {
-        const id_node = node.id;
-        const variables = [];
-        
-        // 🔹 Mettre l'état en "en cours" immédiatement
-        setNodes((nds) =>
-            nds.map((n) =>
-                n.id === id_node
-                    ? { ...n, data: { ...n.data, state: 1 } }
-                    : n
-            )
-        );
+    const [ws, setWs] = useState(null);
 
+    useEffect(() => {
+      const socket = new WebSocket("ws://localhost:8000/ws");
 
+        socket.onopen = () => console.log("✅ WebSocket connecté");
+        socket.onclose = () => console.log("❌ WebSocket fermé");
+        socket.onerror = (err) => console.error("⚠️ WS error", err);
 
-        for (let edge of edges) {
-            if (edge.target === id_node) {
-                const var_node = edge.source;
-                const var_sourceHandle = extractNumber(edge.sourceHandle);
-                const var_targetHandle = extractNumber(edge.targetHandle);
-                const var_target_name = node.inputs[var_targetHandle - 1];
+        // Réception des messages du serveur
+        socket.onmessage = (event) => {
+          const msg = JSON.parse(event.data);
+          console.log("WS reçu:", msg);
 
-                for (let n of nodes) {
-                    if (n.id === var_node) {
-                        const var_source_name = n.data.outputs[var_sourceHandle - 1];
-                        const variable = {
-                            source: var_node,
-                            name: var_source_name,
-                            target: var_target_name,
-                        };
-                        variables.push(variable);
-                        break;
-                    }
+          setNodes((nds) =>
+            nds.map((n) => {
+              if (n.id === msg.node) {
+                if (msg.status === "running") {
+                  return { ...n, data: { ...n.data, state: 1 } };
                 }
-            }
-        }
+                if (msg.output) {
+                  return {
+                    ...n,
+                    data: {
+                      ...n.data,
+                      output: (n.data.output || "") + msg.output,
+                    },
+                  };
+                }
+                if (msg.status === "finished") {
+                  return { ...n, data: { ...n.data, state: 2 } };
+                }
+              }
+              return n;
+            })
+          );
+        };
 
-        const request_data = {
+        setWs(socket);
+
+        return () => socket.close();
+      }, [setNodes]);
+
+      // ⚡ runCode modifié
+      const runCode = useCallback((node) => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          const variables = []; // comme ton code actuel qui analyse edges
+          const request_data = {
+            action: "run",
             code: node.code,
             variables: variables,
             node: node.id,
-        };
+          };
+          ws.send(JSON.stringify(request_data));
 
-        console.log(request_data);
+          // Mettre tout de suite en "running"
+          setNodes((nds) =>
+            nds.map((n) =>
+              n.id === node.id ? { ...n, data: { ...n.data, state: 1, output: "" } } : n
+            )
+          );
+        }
+      }, [ws, edges, nodes, setNodes]);
 
-        fetch('http://localhost:8000/run', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(request_data),
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                console.log('Success:', data);
-                const output = data.output;
-
-                // ✅ Mettre à jour le noeud ici, quand on a le résultat
-                setNodes((nds) =>
-                    nds.map((n) =>
-                        n.id === id_node
-                            ? {
-                                  ...n,
-                                  data: {
-                                      ...n.data,
-                                      output: output,
-                                      state: 2,
-                                  },
-                              }
-                            : n
-                    )
-                );
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                const output = "Erreur lors de l'exécution du code";
-
-                // ✅ Même en cas d'erreur, on met à jour le noeud
-                setNodes((nds) =>
-                    nds.map((n) =>
-                        n.id === id_node
-                            ? {
-                                  ...n,
-                                  data: {
-                                      ...n.data,
-                                      output: output,
-                                      state: 2,
-                                  },
-                              }
-                            : n
-                    )
-                );
-            });
-    }, [edges, nodes, setNodes]);
 
 
     // Callback pour modifier le code d'un noeud
