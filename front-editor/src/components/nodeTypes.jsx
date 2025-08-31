@@ -1,63 +1,222 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import AutosizeInput from 'react-input-autosize';
-import { memo } from 'react';
-
 import { EditorView } from '@codemirror/view';
 
 import './nodes.css';
 
-// Définition du node personnalisé avec un éditeur de texte
-export default function CodeNode({ data, isConnectable }) {
+// ✅ Composant InputHandle optimisé et memoized
+const InputHandle = memo(({ input, index, isEditing, updateInput, isConnectable }) => (
+    <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+        <Handle
+            type="target"
+            position={Position.Left}
+            id={`in${index + 1}`}
+            style={{ background: 'blue' }}
+            isConnectable={isConnectable}
+        />
+        {isEditing ? (
+            <AutosizeInput
+                value={input}
+                onChange={(e) => updateInput(index, e.target.value)}
+                className="var-input"
+                placeholder="input"
+            />
+        ) : (
+            <span style={{ marginLeft: 8, whiteSpace: 'nowrap' }}>{input}</span>
+        )}
+    </div>
+));
+
+// ✅ Composant OutputHandle optimisé et memoized
+const OutputHandle = memo(({ output, index, isEditing, updateOutput, isConnectable }) => (
+    <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+        {isEditing ? (
+            <AutosizeInput
+                value={output}
+                onChange={(e) => updateOutput(index, e.target.value)}
+                className="var-input"
+                placeholder="output"
+            />
+        ) : (
+            <span style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{output}</span>
+        )}
+        <Handle
+            type="source"
+            position={Position.Right}
+            id={`ou${index + 1}`}
+            style={{ background: 'red' }}
+            isConnectable={isConnectable}
+        />
+    </div>
+));
+
+// ✅ Composant Header optimisé et memoized
+const NodeHeader = memo(({
+    isEditing,
+    tempTitle,
+    setTempTitle,
+    handleSave,
+    setIsEditing,
+    title,
+    state,
+    runCode
+}) => (
+    <div className="custom-node-header">
+        {isEditing ? (
+            <div style={{ display: 'flex', gap: '4px' }}>
+                <AutosizeInput
+                    value={tempTitle}
+                    onChange={(e) => setTempTitle(e.target.value)}
+                    className="title-input"
+                    autoFocus
+                />
+                <button onClick={handleSave}>✅</button>
+            </div>
+        ) : (
+            <>
+                <span>{title || 'Code Node'}</span>
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        title="Modifier le titre"
+                    >
+                        ✏️
+                    </button>
+                    {state === 0 && (
+                        <button
+                            onClick={runCode}
+                            className="execute-button"
+                            title="Exécuter"
+                        >
+                            ▶
+                        </button>
+                    )}
+                    {state === 1 && (
+                        <div
+                            className="running-button"
+                            title="Attendre"
+                        >
+                            ⏱
+                        </div>
+                    )}
+                    {state === 2 && (
+                        <button
+                            onClick={runCode}
+                            className="execute-button"
+                            title="Ré-exécuter"
+                        >
+                            🔄
+                        </button>
+                    )}
+                </div>
+            </>
+        )}
+    </div>
+));
+
+function CodeNode({ data, isConnectable }) {
     const [isEditing, setIsEditing] = useState(false);
     const [tempTitle, setTempTitle] = useState(data.title || 'Code Node');
     const [inputs, setInputs] = useState(data.inputs || []);
     const [outputs, setOutputs] = useState(data.outputs || []);
-    const [state, setState] = useState(data.state || 0);
 
+    // ✅ Synchroniser avec les props seulement quand nécessaire
+    useEffect(() => {
+        if (data.title !== tempTitle && !isEditing) {
+            setTempTitle(data.title || 'Code Node');
+        }
+    }, [data.title, tempTitle, isEditing]);
 
     useEffect(() => {
-        setState(data.state || 0);
-    }, [data.state]);
+        if (JSON.stringify(data.inputs) !== JSON.stringify(inputs) && !isEditing) {
+            setInputs(data.inputs || []);
+        }
+    }, [data.inputs, inputs, isEditing]);
 
-    const runCode = async () => {
+    useEffect(() => {
+        if (JSON.stringify(data.outputs) !== JSON.stringify(outputs) && !isEditing) {
+            setOutputs(data.outputs || []);
+        }
+    }, [data.outputs, outputs, isEditing]);
+
+    // ✅ Callbacks stables avec useCallback
+    const runCode = useCallback(() => {
         data.runCode?.(data);
-    };
+    }, [data]);
 
-    const handleSave = () => {
-        console.log(data)
+    const handleSave = useCallback(() => {
         data.onUpdate?.(data.id, {
             title: tempTitle,
-            code: data.code,
             inputs: inputs,
             outputs: outputs,
-            output: data.output,
-            state: state
         });
         setIsEditing(false);
-    };
+    }, [data, tempTitle, inputs, outputs]);
 
-    const updateInput = (index, value) => {
-        const updated = [...inputs];
-        updated[index] = value;
-        setInputs(updated);
-    };
+    const updateInput = useCallback((index, value) => {
+        setInputs(prev => {
+            const updated = [...prev];
+            updated[index] = value;
+            return updated;
+        });
+    }, []);
 
-    const updateOutput = (index, value) => {
-        const updated = [...outputs];
-        updated[index] = value;
-        setOutputs(updated);
-    };
+    const updateOutput = useCallback((index, value) => {
+        setOutputs(prev => {
+            const updated = [...prev];
+            updated[index] = value;
+            return updated;
+        });
+    }, []);
 
-    const addInput = () => {
-        setInputs([...inputs, '']);
-    };
+    const addInput = useCallback(() => {
+        setInputs(prev => [...prev, '']);
+    }, []);
 
-    const addOutput = () => {
-        setOutputs([...outputs, '']);
-    };
+    const addOutput = useCallback(() => {
+        setOutputs(prev => [...prev, '']);
+    }, []);
+
+    // ✅ Extensions CodeMirror memoized pour éviter les re-créations
+    const codeMirrorExtensions = useMemo(() => [python()], []);
+    const outputExtensions = useMemo(() => [python(), EditorView.lineWrapping], []);
+
+    // ✅ Handler de changement de code optimisé
+    const handleCodeChange = useCallback((value) => {
+        data.onChange?.(data.id, value);
+    }, [data.onChange, data.id]);
+
+    // ✅ Memoization des listes pour éviter les re-renders
+    const inputHandles = useMemo(() =>
+        inputs.map((input, index) => (
+            <InputHandle
+                key={index}
+                input={input}
+                index={index}
+                isEditing={isEditing}
+                updateInput={updateInput}
+                isConnectable={isConnectable}
+            />
+        )),
+        [inputs, isEditing, updateInput, isConnectable]
+    );
+
+    const outputHandles = useMemo(() =>
+        outputs.map((output, index) => (
+            <OutputHandle
+                key={index}
+                output={output}
+                index={index}
+                isEditing={isEditing}
+                updateOutput={updateOutput}
+                isConnectable={isConnectable}
+            />
+        )),
+        [outputs, isEditing, updateOutput, isConnectable]
+    );
 
     return (
         <div
@@ -79,128 +238,67 @@ export default function CodeNode({ data, isConnectable }) {
                 gap: '4px',
                 width: 'auto',
             }}>
-                {inputs.map((input, index) => (
-                    <div key={index}   style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                        <Handle
-                            key={`input-${index}`}
-                            type="target"
-                            position={Position.Left}
-                            id={`in${index + 1}`}
-                            style={{ background: 'blue' }}
-                            isConnectable={isConnectable}
-                        />
-
-                        {isEditing ? (
-                            <AutosizeInput
-                                key={index}
-                                value={input}
-                                onChange={(e) => updateInput(index, e.target.value)}
-                                className="var-input"
-                                placeholder="input"
-                            />
-                        ) : (
-
-                                <span style={{ marginLeft: 8, whiteSpace: 'nowrap' }}>{input}</span>
-                        )}
-
-                    </div>
-
-
-                ))}
+                {inputHandles}
                 {isEditing && (
-                    <button onClick={addInput} style={{ fontSize: '0.8rem' }}>+ entrée</button>
+                    <button onClick={addInput} style={{ fontSize: '0.8rem' }}>
+                        + entrée
+                    </button>
                 )}
             </div>
 
             {/* Zone centrale */}
-            <div style={{ flexGrow: 1}}>
-                <div className="custom-node-header">
-                    {isEditing ? (
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                                <AutosizeInput
-                                    value={tempTitle}
-                                    onChange={(e) => setTempTitle(e.target.value)}
-                                    className="title-input"
-                                    autoFocus
-                                />
-                                <button onClick={handleSave}>✅</button>
-                            </div>
-                        ) : (
-                            <>
-                                <span>{data.title || 'Code Node'}</span>
-                                <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
-                                    <button
-                                        onClick={() => setIsEditing(true)}
-                                        title="Modifier le titre"
-                                    >
-                                        ✏️
-                                    </button>
+            <div style={{ flexGrow: 1 }}>
+                <NodeHeader
+                    isEditing={isEditing}
+                    tempTitle={tempTitle}
+                    setTempTitle={setTempTitle}
+                    handleSave={handleSave}
+                    setIsEditing={setIsEditing}
+                    title={data.title}
+                    state={data.state}
+                    runCode={runCode}
+                />
 
-                                    {state === 0 &&
-                                        (
-                                            <button
-                                                onClick={runCode}
-                                                className="execute-button"
-                                                title="Exécuter"
-                                            >
-                                                ▶
-                                            </button>
-                                        )
-                                    }
-                                    {state === 1 &&
-                                        (
-                                            <div
-                                                className="running-button"
-                                                title="Attendre"
-                                            >
-                                                ⏱
-                                            </div>
-                                        )
-                                    }
-                                    {state === 2 &&
-                                        (
-                                            <button
-                                                onClick={runCode}
-                                                className="execute-button"
-                                                title="Réexécuter"
-                                            >
-                                                🔄
-                                            </button>
-                                        )
-                                    }
-
-                            </div>
-                        </>
-                    )}
-                </div>
-
+                {/* ✅ CodeMirror avec key pour éviter les re-montages */}
                 <div style={{ width: '100%' }}>
                     <CodeMirror
-                        value={data.code}
+                        key={`code-${data.id}`}
+                        value={data.code || ''}
                         height="auto"
-                        extensions={[python()]}
-                        onChange={(value) => data.onChange(data.id, value)}
+                        extensions={codeMirrorExtensions}
+                        onChange={handleCodeChange}
                         theme="dark"
-                        basicSetup={{ lineNumbers: true }}
+                        basicSetup={{
+                            lineNumbers: true,
+                            foldGutter: false, // ✅ Désactiver pour les performances
+                            dropCursor: false,
+                            allowMultipleSelections: false
+                        }}
                     />
                 </div>
 
+                {/* ✅ Output avec affichage conditionnel optimisé */}
                 {data.output && (
                     <div style={{
-                      marginTop: 8,
-                      width: '100%',
-                      maxWidth: '100%',
-                      overflowX: 'auto',            // scroll horizontal si besoin
+                        marginTop: 8,
+                        width: '100%',
+                        maxWidth: '100%',
+                        overflowX: 'auto',
                     }}>
-                      <CodeMirror
-                        value={data.output}
-                        height="auto"
-                        extensions={[ python(), EditorView.lineWrapping ]}
-                        theme="dark"
-                        basicSetup={{ lineNumbers: true }}
-                        editable={false}
-                        style={{ width: '100%' }}
-                      />
+                        <CodeMirror
+                            key={`output-${data.id}`}
+                            value={data.output}
+                            height="auto"
+                            extensions={outputExtensions}
+                            theme="dark"
+                            basicSetup={{
+                                lineNumbers: true,
+                                foldGutter: false,
+                                dropCursor: false,
+                                allowMultipleSelections: false
+                            }}
+                            editable={false}
+                        />
                     </div>
                 )}
             </div>
@@ -213,48 +311,29 @@ export default function CodeNode({ data, isConnectable }) {
                 gap: '4px',
                 width: 'auto',
             }}>
-                {outputs.map((output, index) => (
-                    <div key={index} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                        {isEditing ? (
-                            <div >
-                                <AutosizeInput
-
-                                    value={output}
-                                    disabled={!isEditing}
-                                    onChange={(e) => updateOutput(index, e.target.value)}
-                                    className="var-input"
-                                    placeholder="output"
-                                />
-
-                            </div>
-
-                        ) : (
-                                <span style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{output}</span>
-
-                        )}
-                        <Handle
-                            key={`output-${index}`}
-                            type="source"
-                            position={Position.Right}
-                            id={`ou${index + 1}`}
-                            style={{ background: 'red' }}
-                            isConnectable={isConnectable}
-                        />
-
-                    </div>
-                ))}
-
+                {outputHandles}
                 {isEditing && (
-                    <button onClick={addOutput} style={{ fontSize: '0.8rem' }}>+ sortie</button>
+                    <button onClick={addOutput} style={{ fontSize: '0.8rem' }}>
+                        + sortie
+                    </button>
                 )}
             </div>
-
         </div>
     );
 }
 
-
-export let nodeTypes;
-nodeTypes = {
-    functionNode: memo(CodeNode),
+// ✅ Export avec memo pour éviter les re-renders inutiles
+export const nodeTypes = {
+    functionNode: memo(CodeNode, (prevProps, nextProps) => {
+        // ✅ Comparaison personnalisée pour optimiser les re-renders
+        return (
+            prevProps.data.code === nextProps.data.code &&
+            prevProps.data.title === nextProps.data.title &&
+            prevProps.data.state === nextProps.data.state &&
+            prevProps.data.output === nextProps.data.output &&
+            JSON.stringify(prevProps.data.inputs) === JSON.stringify(nextProps.data.inputs) &&
+            JSON.stringify(prevProps.data.outputs) === JSON.stringify(nextProps.data.outputs) &&
+            prevProps.isConnectable === nextProps.isConnectable
+        );
+    }),
 };

@@ -16,11 +16,11 @@
   "dependencies": {
     "20": "^3.1.9",
     "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/view": "^6.38.1",
     "@uiw/react-codemirror": "^4.24.1",
     "@xyflow/react": "^12.8.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-input-autosize": "^3.0.0",
     "react-scripts": "^5.0.1"
   },
   "devDependencies": {
