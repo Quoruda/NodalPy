@@ -12,7 +12,7 @@ import { nodeTypes } from './components/nodeTypes.jsx';
 
 import '@xyflow/react/dist/style.css';
 import './App.css';
-
+import { FlowProvider } from './components/FlowContext.jsx';
 
 const initialNodes = [];
 const initialEdges = [];
@@ -201,8 +201,9 @@ export default function App() {
                 onUpdate: updateNode,
                 runCode: runCode,
             },
+            edges: edges,
         }))
-    , [nodes, updateNodeCode, updateNode, runCode]);
+    , [nodes, updateNodeCode, updateNode, runCode, edges]);
 
     // Optimisation: handler de selection stable
     const onSelectionChange = useCallback(({ nodes, edges }) => {
@@ -211,25 +212,26 @@ export default function App() {
     }, []);
 
     return (
+        <FlowProvider edges={edges} nodes={nodes}>
         <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
             <button className="add-node-button" onClick={addNode}>
                 Ajouter un nœud
             </button>
-
-            <ReactFlow
-                nodes={preparedNodes}
-                edges={styledEdges}
-                onSelectionChange={onSelectionChange}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                nodeTypes={nodeTypes}
-                fitView
-            >
-                <Background variant="dots" gap={16} size={1} />
-                <MiniMap nodeColor={(n) => (n.type === 'functionNode' ? '#ffcc00' : '#aaa')} />
-                <Controls />
-            </ReactFlow>
+                <ReactFlow
+                    nodes={preparedNodes}
+                    edges={styledEdges}
+                    onSelectionChange={onSelectionChange}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    nodeTypes={nodeTypes}
+                    fitView
+                >
+                    <Background variant="dots" gap={16} size={1} />
+                    <MiniMap nodeColor={(n) => (n.type === 'functionNode' ? '#ffcc00' : '#aaa')} />
+                    <Controls />
+                </ReactFlow>
         </div>
+        </FlowProvider>
     );
 }
