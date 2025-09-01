@@ -4,7 +4,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import AutosizeInput from 'react-input-autosize';
 import { EditorView } from '@codemirror/view';
-
+import { useFlowContext } from './FlowContext.jsx';
 import './nodes.css';
 
 // ✅ Composant InputHandle optimisé et memoized
@@ -117,11 +117,12 @@ const NodeHeader = memo(({
     </div>
 ));
 
-function CodeNode({ data, isConnectable }) {
+function CodeNode({ data }) {
     const [isEditing, setIsEditing] = useState(false);
     const [tempTitle, setTempTitle] = useState(data.title || 'Code Node');
     const [inputs, setInputs] = useState(data.inputs || []);
     const [outputs, setOutputs] = useState(data.outputs || []);
+    const { edges, nodes } = useFlowContext();
 
     // ✅ Synchroniser avec les props seulement quand nécessaire
     useEffect(() => {
@@ -187,21 +188,28 @@ function CodeNode({ data, isConnectable }) {
     // ✅ Handler de changement de code optimisé
     const handleCodeChange = useCallback((value) => {
         data.onChange?.(data.id, value);
-    }, [data.onChange, data.id]);
+    }, [data]);
+
+
+    const nodeId = data.id;
+    const isConnectable = useCallback((index) => {
+        const incoming = edges.filter(e => e.target === nodeId && e.targetHandle===`in${index + 1}`).length;
+        return incoming < 1;
+    }, [edges, nodeId]);
 
     // ✅ Memoization des listes pour éviter les re-renders
     const inputHandles = useMemo(() =>
-        inputs.map((input, index) => (
-            <InputHandle
-                key={index}
-                input={input}
-                index={index}
-                isEditing={isEditing}
-                updateInput={updateInput}
-                isConnectable={isConnectable}
-            />
-        )),
-        [inputs, isEditing, updateInput, isConnectable]
+            inputs.map((input, index) => (
+                <InputHandle
+                    key={index}
+                    input={input}
+                    index={index}
+                    isEditing={isEditing}
+                    updateInput={updateInput}
+                    isConnectable={isConnectable(index)}
+                />
+            )),
+            [inputs, isEditing, updateInput,isConnectable]
     );
 
     const outputHandles = useMemo(() =>
@@ -212,11 +220,13 @@ function CodeNode({ data, isConnectable }) {
                 index={index}
                 isEditing={isEditing}
                 updateOutput={updateOutput}
-                isConnectable={isConnectable}
+                isConnectable={true}
             />
         )),
-        [outputs, isEditing, updateOutput, isConnectable]
+        [outputs, isEditing, updateOutput]
     );
+
+    console.log(edges)
 
     return (
         <div
