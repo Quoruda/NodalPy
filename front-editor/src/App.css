@@ -52,11 +52,21 @@
   stroke-width: 4px !important;
 }
 
-.add-node-button {
+.add-node-button{
   position: absolute;
   top: 10px;
   left: 10px;
   z-index: 10;
+}
+
+.save-button{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+.add-node-button, .save-button {
   padding: 8px 12px;
   border-radius: 6px;
   border: none;

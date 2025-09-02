@@ -179,6 +179,17 @@ export default function App() {
         setNodeCount((count) => count + 1);
     }, [nodeCount, setNodes]);
 
+    const saveProject = useCallback(() => {
+        const data = {nodes: nodes, edges:edges}
+        const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "data.json";
+        a.click();
+        URL.revokeObjectURL(url);
+    }, [nodes, edges]);
+
     // Optimisation: mémoisation des edges stylés
     const styledEdges = useMemo(() =>
         edges.map((edge) => ({
@@ -216,6 +227,9 @@ export default function App() {
         <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
             <button className="add-node-button" onClick={addNode}>
                 Ajouter un nœud
+            </button>
+            <button className="save-button" onClick={saveProject}>
+                Sauvegarder
             </button>
                 <ReactFlow
                     nodes={preparedNodes}
