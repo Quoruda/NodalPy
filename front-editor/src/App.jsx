@@ -8,7 +8,7 @@ import {
     MiniMap,
     Background
 } from '@xyflow/react';
-import { nodeTypes } from './components/nodeTypes.jsx';
+import { NodeTypes } from './components/Nodes/NodeTypes.jsx';
 
 import '@xyflow/react/dist/style.css';
 import './App.css';
@@ -23,7 +23,7 @@ export default function App() {
     const [nodeCount, setNodeCount] = useState(3);
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
-    const [ws, setWs] = useState(null);
+    const [, setWs] = useState(null);
 
     // Ref pour éviter les re-renders inutiles
     const wsRef = useRef(null);
@@ -165,7 +165,7 @@ export default function App() {
     const addNode = useCallback(() => {
         const newNode = {
             id: `fn${nodeCount}`,
-            type: 'functionNode',
+            type: 'CustomNode',
             data: {
                 code: '',
                 title: `Node ${nodeCount}`,
@@ -238,7 +238,7 @@ export default function App() {
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
-                    nodeTypes={nodeTypes}
+                    nodeTypes={NodeTypes}
                     fitView
                 >
                     <Background variant="dots" gap={16} size={1} />
