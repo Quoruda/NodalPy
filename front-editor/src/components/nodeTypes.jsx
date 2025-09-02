@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, memo, useMemo, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
@@ -7,7 +7,37 @@ import { EditorView } from '@codemirror/view';
 import { useFlowContext } from './FlowContext.jsx';
 import './nodes.css';
 
-// ✅ Composant InputHandle optimisé et memoized
+// ✅ Utilitaire pour comparer les arrays sans JSON.stringify
+const arraysEqual = (a, b) => {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+};
+
+// ✅ Extensions CodeMirror memoized globalement pour éviter les re-créations
+const CODE_EXTENSIONS = [python()];
+const OUTPUT_EXTENSIONS = [python(), EditorView.lineWrapping];
+
+// ✅ Configuration CodeMirror stable
+const CODE_BASIC_SETUP = {
+    lineNumbers: true,
+    foldGutter: false,
+    dropCursor: false,
+    allowMultipleSelections: false
+};
+
+const OUTPUT_BASIC_SETUP = {
+    ...CODE_BASIC_SETUP,
+    searchKeymap: false,
+    closeBrackets: false,
+    autocompletion: false
+};
+
+// ✅ Composant InputHandle optimisé avec comparaison shallow
 const InputHandle = memo(({ input, index, isEditing, updateInput, isConnectable }) => (
     <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
         <Handle
@@ -28,10 +58,16 @@ const InputHandle = memo(({ input, index, isEditing, updateInput, isConnectable 
             <span style={{ marginLeft: 8, whiteSpace: 'nowrap' }}>{input}</span>
         )}
     </div>
-));
+), (prevProps, nextProps) => {
+    return prevProps.input === nextProps.input &&
+           prevProps.index === nextProps.index &&
+           prevProps.isEditing === nextProps.isEditing &&
+           prevProps.isConnectable === nextProps.isConnectable &&
+           prevProps.updateInput === nextProps.updateInput;
+});
 
-// ✅ Composant OutputHandle optimisé et memoized
-const OutputHandle = memo(({ output, index, isEditing, updateOutput, isConnectable }) => (
+// ✅ Composant OutputHandle optimisé
+const OutputHandle = memo(({ output, index, isEditing, updateOutput }) => (
     <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
         {isEditing ? (
             <AutosizeInput
@@ -48,12 +84,17 @@ const OutputHandle = memo(({ output, index, isEditing, updateOutput, isConnectab
             position={Position.Right}
             id={`ou${index + 1}`}
             style={{ background: 'red' }}
-            isConnectable={isConnectable}
+            isConnectable={true}
         />
     </div>
-));
+), (prevProps, nextProps) => {
+    return prevProps.output === nextProps.output &&
+           prevProps.index === nextProps.index &&
+           prevProps.isEditing === nextProps.isEditing &&
+           prevProps.updateOutput === nextProps.updateOutput;
+});
 
-// ✅ Composant Header optimisé et memoized
+// ✅ Composant Header optimisé
 const NodeHeader = memo(({
     isEditing,
     tempTitle,
@@ -122,31 +163,52 @@ function CodeNode({ data }) {
     const [tempTitle, setTempTitle] = useState(data.title || 'Code Node');
     const [inputs, setInputs] = useState(data.inputs || []);
     const [outputs, setOutputs] = useState(data.outputs || []);
-    const { edges, nodes } = useFlowContext();
 
-    // ✅ Synchroniser avec les props seulement quand nécessaire
+    // ✅ Refs pour éviter les re-créations et optimiser les comparaisons
+    const prevDataRef = useRef();
+    const nodeId = data.id;
+
+    const { edges } = useFlowContext();
+
+    // ✅ Optimisation: synchronisation plus efficace avec les props
     useEffect(() => {
-        if (data.title !== tempTitle && !isEditing) {
-            setTempTitle(data.title || 'Code Node');
-        }
-    }, [data.title, tempTitle, isEditing]);
+        const prevData = prevDataRef.current;
+        let hasChanged = false;
 
-    useEffect(() => {
-        if (JSON.stringify(data.inputs) !== JSON.stringify(inputs) && !isEditing) {
-            setInputs(data.inputs || []);
+        if (!prevData || prevData.title !== data.title) {
+            if (!isEditing) {
+                setTempTitle(data.title || 'Code Node');
+            }
+            hasChanged = true;
         }
-    }, [data.inputs, inputs, isEditing]);
 
-    useEffect(() => {
-        if (JSON.stringify(data.outputs) !== JSON.stringify(outputs) && !isEditing) {
-            setOutputs(data.outputs || []);
+        if (!prevData || !arraysEqual(prevData.inputs, data.inputs)) {
+            if (!isEditing) {
+                setInputs(data.inputs || []);
+            }
+            hasChanged = true;
         }
-    }, [data.outputs, outputs, isEditing]);
 
-    // ✅ Callbacks stables avec useCallback
+        if (!prevData || !arraysEqual(prevData.outputs, data.outputs)) {
+            if (!isEditing) {
+                setOutputs(data.outputs || []);
+            }
+            hasChanged = true;
+        }
+
+        if (hasChanged) {
+            prevDataRef.current = {
+                title: data.title,
+                inputs: data.inputs,
+                outputs: data.outputs
+            };
+        }
+    }, [data.title, data.inputs, data.outputs, isEditing]);
+
+    // ✅ Callbacks stables avec useCallback et dépendances optimisées
     const runCode = useCallback(() => {
         data.runCode?.(data);
-    }, [data]);
+    }, [data.runCode, data.id, data.code]); // Seulement les props nécessaires
 
     const handleSave = useCallback(() => {
         data.onUpdate?.(data.id, {
@@ -155,7 +217,7 @@ function CodeNode({ data }) {
             outputs: outputs,
         });
         setIsEditing(false);
-    }, [data, tempTitle, inputs, outputs]);
+    }, [data.onUpdate, data.id, tempTitle, inputs, outputs]);
 
     const updateInput = useCallback((index, value) => {
         setInputs(prev => {
@@ -181,52 +243,64 @@ function CodeNode({ data }) {
         setOutputs(prev => [...prev, '']);
     }, []);
 
-    // ✅ Extensions CodeMirror memoized pour éviter les re-créations
-    const codeMirrorExtensions = useMemo(() => [python()], []);
-    const outputExtensions = useMemo(() => [python(), EditorView.lineWrapping], []);
-
-    // ✅ Handler de changement de code optimisé
+    // ✅ Handler de changement de code avec throttling pour éviter trop d'appels
+    const throttleRef = useRef(null);
     const handleCodeChange = useCallback((value) => {
-        data.onChange?.(data.id, value);
-    }, [data]);
+        // Throttle les changements pour éviter trop de re-renders
+        if (throttleRef.current) {
+            clearTimeout(throttleRef.current);
+        }
 
+        throttleRef.current = setTimeout(() => {
+            data.onChange?.(data.id, value);
+        }, 100); // 100ms de throttle
+    }, [data.onChange, data.id]);
 
-    const nodeId = data.id;
-    const isConnectable = useCallback((index) => {
-        const incoming = edges.filter(e => e.target === nodeId && e.targetHandle===`in${index + 1}`).length;
-        return incoming < 1;
-    }, [edges, nodeId]);
+    // ✅ Optimisation majeure: isConnectable memoized avec une dépendance précise
+    const connectionStatus = useMemo(() => {
+        const nodeEdges = edges.filter(e => e.target === nodeId);
+        return inputs.map((_, index) => {
+            const handleId = `in${index + 1}`;
+            return nodeEdges.filter(e => e.targetHandle === handleId).length < 1;
+        });
+    }, [edges, nodeId, inputs.length]);
 
-    // ✅ Memoization des listes pour éviter les re-renders
+    // ✅ Memoization des listes avec dépendances optimisées
     const inputHandles = useMemo(() =>
-            inputs.map((input, index) => (
-                <InputHandle
-                    key={index}
-                    input={input}
-                    index={index}
-                    isEditing={isEditing}
-                    updateInput={updateInput}
-                    isConnectable={isConnectable(index)}
-                />
-            )),
-            [inputs, isEditing, updateInput,isConnectable]
+        inputs.map((input, index) => (
+            <InputHandle
+                key={`input-${index}`} // Clé stable
+                input={input}
+                index={index}
+                isEditing={isEditing}
+                updateInput={updateInput}
+                isConnectable={connectionStatus[index]}
+            />
+        )),
+        [inputs, isEditing, updateInput, connectionStatus]
     );
 
     const outputHandles = useMemo(() =>
         outputs.map((output, index) => (
             <OutputHandle
-                key={index}
+                key={`output-${index}`} // Clé stable
                 output={output}
                 index={index}
                 isEditing={isEditing}
                 updateOutput={updateOutput}
-                isConnectable={true}
             />
         )),
         [outputs, isEditing, updateOutput]
     );
 
-    console.log(edges)
+    // ✅ Cleanup du throttle
+    useEffect(() => {
+        return () => {
+            if (throttleRef.current) {
+                clearTimeout(throttleRef.current);
+            }
+        };
+    }, []);
 
     return (
         <div
@@ -269,26 +343,20 @@ function CodeNode({ data }) {
                     runCode={runCode}
                 />
 
-                {/* ✅ CodeMirror avec key pour éviter les re-montages */}
+                {/* ✅ CodeMirror optimisé avec key stable et props memoized */}
                 <div style={{ width: '100%' }}>
                     <CodeMirror
-                        key={`code-${data.id}`}
                         value={data.code || ''}
                         height="auto"
-                        extensions={codeMirrorExtensions}
+                        extensions={CODE_EXTENSIONS}
                         onChange={handleCodeChange}
                         theme="dark"
-                        basicSetup={{
-                            lineNumbers: true,
-                            foldGutter: false, // ✅ Désactiver pour les performances
-                            dropCursor: false,
-                            allowMultipleSelections: false
-                        }}
+                        basicSetup={CODE_BASIC_SETUP}
                     />
                 </div>
 
-                {/* ✅ Output avec affichage conditionnel optimisé */}
-                {data.output && (
+                {/* ✅ Output avec rendu conditionnel optimisé */}
+                {data.output && data.output.trim() && (
                     <div style={{
                         marginTop: 8,
                         width: '100%',
@@ -296,17 +364,11 @@ function CodeNode({ data }) {
                         overflowX: 'auto',
                     }}>
                         <CodeMirror
-                            key={`output-${data.id}`}
                             value={data.output}
                             height="auto"
-                            extensions={outputExtensions}
+                            extensions={OUTPUT_EXTENSIONS}
                             theme="dark"
-                            basicSetup={{
-                                lineNumbers: true,
-                                foldGutter: false,
-                                dropCursor: false,
-                                allowMultipleSelections: false
-                            }}
+                            basicSetup={OUTPUT_BASIC_SETUP}
                             editable={false}
                         />
                     </div>
@@ -332,18 +394,31 @@ function CodeNode({ data }) {
     );
 }
 
-// ✅ Export avec memo pour éviter les re-renders inutiles
+// ✅ Export avec memo et comparaison optimisée
 export const nodeTypes = {
     functionNode: memo(CodeNode, (prevProps, nextProps) => {
-        // ✅ Comparaison personnalisée pour optimiser les re-renders
-        return (
-            prevProps.data.code === nextProps.data.code &&
-            prevProps.data.title === nextProps.data.title &&
-            prevProps.data.state === nextProps.data.state &&
-            prevProps.data.output === nextProps.data.output &&
-            JSON.stringify(prevProps.data.inputs) === JSON.stringify(nextProps.data.inputs) &&
-            JSON.stringify(prevProps.data.outputs) === JSON.stringify(nextProps.data.outputs) &&
-            prevProps.isConnectable === nextProps.isConnectable
-        );
+        // ✅ Comparaisons rapides en premier
+        if (prevProps.data === nextProps.data) return true;
+
+        const prev = prevProps.data;
+        const next = nextProps.data;
+
+        // ✅ Comparaisons primitives d'abord (plus rapides)
+        if (prev.id !== next.id) return false;
+        if (prev.code !== next.code) return false;
+        if (prev.title !== next.title) return false;
+        if (prev.state !== next.state) return false;
+        if (prev.output !== next.output) return false;
+
+        // ✅ Comparaisons d'arrays en dernier (plus coûteuses)
+        if (!arraysEqual(prev.inputs, next.inputs)) return false;
+        if (!arraysEqual(prev.outputs, next.outputs)) return false;
+
+        // ✅ Comparaison des fonctions callback (importantes pour éviter les re-renders)
+        if (prev.onChange !== next.onChange) return false;
+        if (prev.onUpdate !== next.onUpdate) return false;
+        if (prev.runCode !== next.runCode) return false;
+
+        return true;
     }),
 };
