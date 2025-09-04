@@ -5,13 +5,29 @@ import InputHandle from './InputHandle.jsx';
 import OutputHandle from './OutputHandle.jsx';
 import NodeHeader from './NodeHeader.jsx';
 import {
-    arraysEqual,
+
     CODE_EXTENSIONS,
     OUTPUT_EXTENSIONS,
     CODE_BASIC_SETUP,
     OUTPUT_BASIC_SETUP
 } from './constants.js';
 import './CustomNode.css';
+
+// ✅ Fonction utilitaire pour générer un ID unique
+const generateUniqueId = () => {
+    return `var_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
+// ✅ Fonction pour comparer les tableaux d'objets inputs/outputs
+const arraysEqualObjects = (a, b) => {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i].id !== b[i].id || a[i].name !== b[i].name) return false;
+    }
+    return true;
+};
 
 const CustomNode = memo(({ data }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -25,7 +41,7 @@ const CustomNode = memo(({ data }) => {
 
     const { edges } = useFlowContext();
 
-    // ✅ Synchronisation optimisée avec les props
+    // ✅ Synchronisation optimisée avec les props (adaptée pour les objets)
     useEffect(() => {
         const prevData = prevDataRef.current;
         let hasChanged = false;
@@ -37,14 +53,14 @@ const CustomNode = memo(({ data }) => {
             hasChanged = true;
         }
 
-        if (!prevData || !arraysEqual(prevData.inputs, data.inputs)) {
+        if (!prevData || !arraysEqualObjects(prevData.inputs, data.inputs)) {
             if (!isEditing) {
                 setInputs(data.inputs || []);
             }
             hasChanged = true;
         }
 
-        if (!prevData || !arraysEqual(prevData.outputs, data.outputs)) {
+        if (!prevData || !arraysEqualObjects(prevData.outputs, data.outputs)) {
             if (!isEditing) {
                 setOutputs(data.outputs || []);
             }
@@ -74,28 +90,64 @@ const CustomNode = memo(({ data }) => {
         setIsEditing(false);
     }, [data, tempTitle, inputs, outputs]);
 
-    const updateInput = useCallback((index, value) => {
+    const validVarRegex = useMemo(() => /^[A-Za-z_][A-Za-z0-9_]*$/, []);
+
+
+    // ✅ Mise à jour d'un input par son index
+    const updateInput = useCallback((index, newName) => {
         setInputs(prev => {
             const updated = [...prev];
-            updated[index] = value;
+            if (newName === '' || validVarRegex.test(newName)) {
+                updated[index] = {
+                    ...updated[index],
+                    name: newName
+                };
+            }
             return updated;
         });
-    }, []);
+    }, [validVarRegex]);
 
-    const updateOutput = useCallback((index, value) => {
+    // ✅ Mise à jour d'un output par son index
+    const updateOutput = useCallback((index, newName) => {
         setOutputs(prev => {
             const updated = [...prev];
-            updated[index] = value;
+            if (newName === '' || validVarRegex.test(newName)) {
+                updated[index] = {
+                    ...updated[index],
+                    name: newName
+                };
+            }
             return updated;
         });
-    }, []);
+    }, [validVarRegex]);
 
+
+    // ✅ Ajout d'un nouvel input avec ID unique
     const addInput = useCallback(() => {
-        setInputs(prev => [...prev, '']);
+        const newInput = {
+            id: generateUniqueId(),
+            name: ''
+        };
+        setInputs(prev => [...prev, newInput]);
     }, []);
 
+    // ✅ Ajout d'un nouvel output avec ID unique
     const addOutput = useCallback(() => {
-        setOutputs(prev => [...prev, '']);
+        const newOutput = {
+            id: generateUniqueId(),
+            name: ''
+        };
+        setOutputs(prev => [...prev, newOutput]);
+    }, []);
+
+    // ✅ Suppression d'un input par son index
+    const removeInput = useCallback((index) => {
+        setInputs(prev => prev.filter((_, i) => i !== index));
+    }, []);
+
+    // ✅ Suppression d'un output par son index
+    const removeOutput = useCallback((index) => {
+        setOutputs(prev => prev.filter((_, i) => i !== index));
     }, []);
 
     // ✅ Handler avec throttling pour CodeMirror
@@ -109,7 +161,7 @@ const CustomNode = memo(({ data }) => {
         }, 100);
     }, [data]);
 
-    // ✅ Calcul des connexions memoized
+    // ✅ Calcul des connexions memoized (adapté pour les objets)
     const connectionStatus = useMemo(() => {
         const nodeEdges = edges.filter(e => e.target === nodeId);
         return inputs.map((_, index) => {
@@ -118,32 +170,38 @@ const CustomNode = memo(({ data }) => {
         });
     }, [edges, inputs, nodeId]);
 
-    // ✅ Handles memoized - chaque handle ne re-render que si nécessaire
+
+
+    // ✅ Handles memoized (adapté pour les objets inputs/outputs)
     const inputHandles = useMemo(() =>
         inputs.map((input, index) => (
             <InputHandle
-                key={`input-${index}`}
-                input={input}
+                key={input.id} // ✅ Utilisation de l'ID unique comme clé
+                id={input.id}
+                input={input.name}
                 index={index}
                 isEditing={isEditing}
                 updateInput={updateInput}
+                removeInput={removeInput}
                 isConnectable={connectionStatus[index]}
             />
         )),
-        [inputs, isEditing, updateInput, connectionStatus]
+        [inputs, isEditing, updateInput, removeInput, connectionStatus]
     );
 
     const outputHandles = useMemo(() =>
         outputs.map((output, index) => (
             <OutputHandle
-                key={`output-${index}`}
-                output={output}
+                key={output.id} // ✅ Utilisation de l'ID unique comme clé
+                id={output.id}
+                output={output.name}
                 index={index}
                 isEditing={isEditing}
                 updateOutput={updateOutput}
+                removeOutput={removeOutput}
             />
         )),
-        [outputs, isEditing, updateOutput]
+        [outputs, isEditing, updateOutput, removeOutput]
     );
 
     // ✅ Cleanup du throttle
@@ -154,6 +212,8 @@ const CustomNode = memo(({ data }) => {
             }
         };
     }, []);
+
+    console.log(outputs);
 
     return (
         <div
@@ -246,7 +306,7 @@ const CustomNode = memo(({ data }) => {
         </div>
     );
 }, (prevProps, nextProps) => {
-    // ✅ Comparaison optimisée pour le composant principal
+    // ✅ Comparaison optimisée pour le composant principal (adaptée pour les objets)
     if (prevProps.data === nextProps.data) return true;
 
     const prev = prevProps.data;
@@ -259,9 +319,9 @@ const CustomNode = memo(({ data }) => {
     if (prev.state !== next.state) return false;
     if (prev.output !== next.output) return false;
 
-    // Comparaisons d'arrays
-    if (!arraysEqual(prev.inputs, next.inputs)) return false;
-    if (!arraysEqual(prev.outputs, next.outputs)) return false;
+    // Comparaisons d'arrays d'objets
+    if (!arraysEqualObjects(prev.inputs, next.inputs)) return false;
+    if (!arraysEqualObjects(prev.outputs, next.outputs)) return false;
 
     // Comparaisons des callbacks
     if (prev.onChange !== next.onChange) return false;

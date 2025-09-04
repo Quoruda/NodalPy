@@ -2,12 +2,12 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import AutosizeInput from 'react-input-autosize';
 
-const InputHandle = memo(({ input, index, isEditing, updateInput, isConnectable }) => (
+const InputHandle = memo(({ input, id, index, isEditing, updateInput, isConnectable }) => (
     <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
         <Handle
             type="target"
             position={Position.Left}
-            id={`in${index + 1}`}
+            id={id}
             style={{ background: 'blue' }}
             isConnectable={isConnectable}
         />

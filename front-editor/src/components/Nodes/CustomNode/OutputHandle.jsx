@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import AutosizeInput from 'react-input-autosize';
 
-const OutputHandle = memo(({ output, index, isEditing, updateOutput }) => (
+const OutputHandle = memo(({ output, id, index, isEditing, updateOutput }) => (
     <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
         {isEditing ? (
             <AutosizeInput
@@ -17,7 +17,7 @@ const OutputHandle = memo(({ output, index, isEditing, updateOutput }) => (
         <Handle
             type="source"
             position={Position.Right}
-            id={`ou${index + 1}`}
+            id={id}
             style={{ background: 'red' }}
             isConnectable={true}
         />
