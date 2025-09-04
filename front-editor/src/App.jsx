@@ -13,6 +13,7 @@ import { NodeTypes } from './components/Nodes/NodeTypes.jsx';
 import '@xyflow/react/dist/style.css';
 import './App.css';
 import { FlowProvider } from './components/FlowContext.jsx';
+import {CustomNodeOperations} from './components/Nodes/CustomNode/CustomNodeOperations.js';
 
 const initialNodes = [];
 const initialEdges = [];
@@ -28,28 +29,13 @@ export default function App() {
     // Ref pour éviter les re-renders inutiles
     const wsRef = useRef(null);
 
+    const { updateNode, updateNodeCode, runCode} = CustomNodeOperations(setNodes, wsRef);
+
+
     const onConnect = useCallback(
         (params) => setEdges((eds) => addEdge(params, eds)),
         [setEdges]
     );
-
-    // Optimisation: mémoisation de updateNode pour éviter les re-créations
-    const updateNode = useCallback((nodeId, updates) => {
-        console.log("updates: ", updates);
-        setNodes((nds) =>
-            nds.map((node) =>
-                node.id === nodeId
-                    ? {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            ...updates
-                        },
-                    }
-                    : node
-            )
-        );
-    }, [setNodes]); // Retirer 'nodes' des dépendances pour éviter les re-renders
 
     // Optimisation WebSocket: utiliser useRef pour éviter les re-créations
     useEffect(() => {
@@ -96,35 +82,7 @@ export default function App() {
         };
     }, [setNodes]); // Pas de dépendances pour éviter les reconnexions
 
-    // Optimisation: runCode stable avec useCallback
-    const runCode = useCallback((node) => {
-        const currentWs = wsRef.current;
-        if (currentWs && currentWs.readyState === WebSocket.OPEN) {
-            const variables = [];
-            const request_data = {
-                action: "run",
-                code: node.code,
-                variables: variables,
-                node: node.id,
-            };
-            currentWs.send(JSON.stringify(request_data));
 
-            setNodes((nds) =>
-                nds.map((n) =>
-                    n.id === node.id ? { ...n, data: { ...n.data, state: 1, output: "" } } : n
-                )
-            );
-        }
-    }, [setNodes]); // Pas de dépendances car on utilise la ref
-
-    // Optimisation: updateNodeCode stable
-    const updateNodeCode = useCallback((nodeId, newCode) => {
-        setNodes((nds) => nds.map((node) =>
-            node.id === nodeId
-                ? { ...node, data: { ...node.data, code: newCode } }
-                : node
-        ));
-    }, [setNodes]);
 
     // Optimisation des events handlers
     useEffect(() => {
