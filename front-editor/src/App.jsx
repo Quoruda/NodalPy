@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ReactFlow,
     useNodesState,
@@ -14,6 +14,7 @@ import '@xyflow/react/dist/style.css';
 import './App.css';
 import { FlowProvider } from './components/FlowContext.jsx';
 import {CustomNodeOperations} from './components/Nodes/CustomNode/CustomNodeOperations.js';
+import { useWebSocket } from './hooks/useWebSocket.js';
 
 const initialNodes = [];
 const initialEdges = [];
@@ -24,65 +25,17 @@ export default function App() {
     const [nodeCount, setNodeCount] = useState(3);
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
-    const [, setWs] = useState(null);
 
     // Ref pour éviter les re-renders inutiles
-    const wsRef = useRef(null);
+
+    const {wsRef} = useWebSocket("ws://localhost:8000/ws", setNodes);
 
     const { updateNode, updateNodeCode, runCode} = CustomNodeOperations(setNodes, wsRef);
 
-
-    const onConnect = useCallback(
+    const onConnectEdge = useCallback(
         (params) => setEdges((eds) => addEdge(params, eds)),
         [setEdges]
     );
-
-    // Optimisation WebSocket: utiliser useRef pour éviter les re-créations
-    useEffect(() => {
-        const socket = new WebSocket("ws://localhost:8000/ws");
-        wsRef.current = socket;
-
-        socket.onopen = () => console.log("✅ WebSocket connecté");
-        socket.onclose = () => console.log("❌ WebSocket fermé");
-        socket.onerror = (err) => console.error("⚠️ WS error", err);
-
-        socket.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
-            console.log("WS reçu:", msg);
-
-            setNodes((nds) =>
-                nds.map((n) => {
-                    if (n.id === msg.node) {
-                        if (msg.status === "running") {
-                            return { ...n, data: { ...n.data, state: 1 } };
-                        }
-                        if (msg.output) {
-                            return {
-                                ...n,
-                                data: {
-                                    ...n.data,
-                                    output: (n.data.output || "") + msg.output,
-                                },
-                            };
-                        }
-                        if (msg.status === "finished") {
-                            return { ...n, data: { ...n.data, state: 2 } };
-                        }
-                    }
-                    return n;
-                })
-            );
-        };
-
-        setWs(socket);
-
-        return () => {
-            socket.close();
-            wsRef.current = null;
-        };
-    }, [setNodes]); // Pas de dépendances pour éviter les reconnexions
-
-
 
     // Optimisation des events handlers
     useEffect(() => {
@@ -119,23 +72,7 @@ export default function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedEdges, selectedNodes, setEdges, setNodes]);
 
-    // Optimisation: addNode stable
-    const addNode = useCallback(() => {
-        const newNode = {
-            id: `fn${nodeCount}`,
-            type: 'CustomNode',
-            data: {
-                code: '',
-                title: `Node ${nodeCount}`,
-                inputs: [],
-                outputs: [],
-                state: 0
-            },
-            position: { x: 100 + nodeCount * 50, y: 100 + nodeCount * 50 },
-        };
-        setNodes((nds) => [...nds, newNode]);
-        setNodeCount((count) => count + 1);
-    }, [nodeCount, setNodes]);
+
 
     const saveProject = useCallback(() => {
         const data = {nodes: nodes, edges:edges}
@@ -158,6 +95,24 @@ export default function App() {
             },
         }))
     , [edges, selectedEdges]);
+
+    // Optimisation: addNode stable
+    const addNode = useCallback(() => {
+        const newNode = {
+            id: `fn${nodeCount}`,
+            type: 'CustomNode',
+            data: {
+                code: '',
+                title: `Node ${nodeCount}`,
+                inputs: [],
+                outputs: [],
+                state: 0
+            },
+            position: { x: 100 + nodeCount * 50, y: 100 + nodeCount * 50 },
+        };
+        setNodes((nds) => [...nds, newNode]);
+        setNodeCount((count) => count + 1);
+    }, [nodeCount, setNodes]);
 
     // CRITIQUE: Optimisation principale - éviter la re-création des nodes à chaque render
     const preparedNodes = useMemo(() =>
@@ -195,7 +150,7 @@ export default function App() {
                     onSelectionChange={onSelectionChange}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
-                    onConnect={onConnect}
+                    onConnect={onConnectEdge}
                     nodeTypes={NodeTypes}
                     fitView
                 >
