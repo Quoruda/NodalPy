@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import AutosizeInput from 'react-input-autosize';
 
-const InputHandle = memo(({ input, id, index, isEditing, updateInput, isConnectable }) => (
+const InputHandle = memo(({ input, id, index, isEditing, updateInput, isConnectable, removeInput }) => (
     <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
         <Handle
             type="target"
@@ -12,12 +12,15 @@ const InputHandle = memo(({ input, id, index, isEditing, updateInput, isConnecta
             isConnectable={isConnectable}
         />
         {isEditing ? (
-            <AutosizeInput
-                value={input}
-                onChange={(e) => updateInput(index, e.target.value)}
-                className="var-input"
-                placeholder="input"
-            />
+            <span>
+                <AutosizeInput
+                    value={input}
+                    onChange={(e) => updateInput(index, e.target.value)}
+                    className="var-input"
+                    placeholder="input"
+                />
+                <btn onClick={() => removeInput(index)}>❌</btn>
+            </span>
         ) : (
             <span style={{ marginLeft: 8, whiteSpace: 'nowrap' }}>{input}</span>
         )}

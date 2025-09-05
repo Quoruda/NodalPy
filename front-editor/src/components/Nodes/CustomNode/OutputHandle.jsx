@@ -2,15 +2,19 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import AutosizeInput from 'react-input-autosize';
 
-const OutputHandle = memo(({ output, id, index, isEditing, updateOutput }) => (
+const OutputHandle = memo(({ output, id, index, isEditing, updateOutput, removeOutput }) => (
     <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
         {isEditing ? (
-            <AutosizeInput
-                value={output}
-                onChange={(e) => updateOutput(index, e.target.value)}
-                className="var-input"
-                placeholder="output"
-            />
+            <span>
+                <btn onClick={() => removeOutput(index)}>❌</btn>
+                <AutosizeInput
+                    value={output}
+                    onChange={(e) => updateOutput(index, e.target.value)}
+                    className="var-input"
+                    placeholder="output"
+                />
+            </span>
+
         ) : (
             <span style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{output}</span>
         )}

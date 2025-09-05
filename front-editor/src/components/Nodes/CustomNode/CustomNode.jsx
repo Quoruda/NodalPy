@@ -165,7 +165,7 @@ const CustomNode = memo(({ data }) => {
     const connectionStatus = useMemo(() => {
         const nodeEdges = edges.filter(e => e.target === nodeId);
         return inputs.map((_, index) => {
-            const handleId = `in${index + 1}`;
+            const handleId = inputs[index].id;
             return nodeEdges.filter(e => e.targetHandle === handleId).length < 1;
         });
     }, [edges, inputs, nodeId]);
