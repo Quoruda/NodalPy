@@ -213,8 +213,6 @@ const CustomNode = memo(({ data }) => {
         };
     }, []);
 
-    console.log(outputs);
-
     return (
         <div
             className="custom-node"

@@ -30,7 +30,7 @@ export default function App() {
 
     const {wsRef} = useWebSocket("ws://localhost:8000/ws", setNodes);
 
-    const { updateNode, updateNodeCode, runCode} = CustomNodeOperations(setNodes, wsRef);
+    const { updateNode, updateNodeCode, runCode} = CustomNodeOperations(setNodes, wsRef,nodes, edges);
 
     const onConnectEdge = useCallback(
         (params) => setEdges((eds) => addEdge(params, eds)),
