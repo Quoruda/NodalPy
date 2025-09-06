@@ -66,7 +66,14 @@
   z-index: 10;
 }
 
-.add-node-button, .save-button {
+.import-button{
+  position: absolute;
+  top: 55px;
+  right: 10px;
+  z-index: 10;
+}
+
+.add-node-button, .save-button, .import-button {
   padding: 8px 12px;
   border-radius: 6px;
   border: none;

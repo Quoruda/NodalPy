@@ -85,6 +85,57 @@ export default function App() {
         URL.revokeObjectURL(url);
     }, [nodes, edges]);
 
+    const handleImportClick = () => {
+        document.getElementById('loading-file-input').click();
+    };
+
+    const loadProject = useCallback((event) => {
+        const file = event.target.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        // Vérifier que c'est bien un fichier JSON
+        if (file.type !== "application/json" && !file.name.endsWith('.json')) {
+            alert("Veuillez sélectionner un fichier JSON valide");
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+
+                // Vérifier que le fichier contient les propriétés attendues
+                if (data.nodes && data.edges) {
+                    // Ici vous devez utiliser vos setters d'état pour mettre à jour nodes et edges
+                    setNodes(data.nodes);
+                    setEdges(data.edges);
+
+                    console.log("Projet chargé avec succès");
+                } else {
+                    alert("Format de fichier invalide. Le fichier doit contenir 'nodes' et 'edges'");
+                }
+            } catch (error) {
+                console.error("Erreur lors du parsing du fichier:", error);
+                alert("Erreur lors de la lecture du fichier. Assurez-vous que c'est un fichier JSON valide.");
+            }
+        };
+
+        reader.onerror = () => {
+            console.error("Erreur lors de la lecture du fichier");
+            alert("Erreur lors de la lecture du fichier");
+        };
+
+        // Lire le fichier comme du texte
+        reader.readAsText(file);
+
+        // Réinitialiser la valeur de l'input pour permettre de recharger le même fichier
+        event.target.value = '';
+    }, [setNodes, setEdges]);
+
     // Optimisation: mémoisation des edges stylés
     const styledEdges = useMemo(() =>
         edges.map((edge) => ({
@@ -143,6 +194,16 @@ export default function App() {
             </button>
             <button className="save-button" onClick={saveProject}>
                 Sauvegarder
+            </button>
+            <input
+                type="file"
+                accept=".json"
+                onChange={loadProject}
+                style={{display: 'none'}}
+                id="loading-file-input"
+            />
+            <button className="import-button" onClick={handleImportClick}>
+                Importer
             </button>
                 <ReactFlow
                     nodes={preparedNodes}
