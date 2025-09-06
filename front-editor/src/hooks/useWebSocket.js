@@ -20,7 +20,7 @@ export const useWebSocket = (url, setNodes) => {
     const notifySucces = () => {
         clearNotifs()
         toast.success("Websocket ouvert ✅", {
-          position: "top-right",
+          position: "bottom-right",
           toastId: WEBSOCKET_CONNECTED_TOAST_ID,
           autoClose: 3000,
           hideProgressBar: false,
@@ -31,10 +31,10 @@ export const useWebSocket = (url, setNodes) => {
       };
 
     const notifyError = () => {
-        clearNotifs()
+        toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
         toast.error("WebSocket fermé ❌", {
           toastId: WEBSOCKET_ERROR_TOAST_ID,
-          position: "top-right",
+          position: "bottom-right",
           autoClose: false,
           hideProgressBar: false,
           closeOnClick: true,
@@ -44,10 +44,9 @@ export const useWebSocket = (url, setNodes) => {
     };
 
     const notifyReconnecting = (attemptNumber) => {
-        clearNotifs();
         toast.info(`Tentative de reconnexion ${attemptNumber}...`, {
           toastId: WEBSOCKET_RECONNECTING_TOAST_ID,
-          position: "top-right",
+          position: "bottom-right",
           autoClose: 2000,
           hideProgressBar: false,
           closeOnClick: true,

@@ -216,8 +216,8 @@ export default function App() {
                     fitView
                 >
                     <Background variant="dots" gap={16} size={1} />
-                    <MiniMap nodeColor={(n) => (n.type === 'functionNode' ? '#ffcc00' : '#aaa')} />
-                    <Controls />
+                    <MiniMap nodeColor={(n) => (n.type === 'CustomNode' ? '#ffcc00' : '#aaa')} position="bottom-left"/>
+                    <Controls position="bottom-left"/>
                 </ReactFlow>
         </div>
         </FlowProvider>

@@ -148,7 +148,8 @@
 .react-flow__controls {
   background: rgba(46, 45, 68, 0.8) !important;
   border-radius: 4px;
-  padding: 4px !important;
+  padding-bottom: 4px !important;
+  margin-left: 227px !important;
 }
 
 .react-flow__controls-button {
