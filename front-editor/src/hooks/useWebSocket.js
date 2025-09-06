@@ -1,16 +1,39 @@
 import { useEffect, useRef } from 'react';
+import {toast} from "react-toastify";
 
 
 // ✅ Hook WebSocket dédié et réutilisable
 export const useWebSocket = (url, setNodes) => {
     const wsRef = useRef(null);
 
+    const notifySucces = () => {
+        toast.success("Websocket ouvert ✅", {
+          position: "top-right",
+          autoClose: 3000, // disparaît après 3s
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      };
+
+    const notifyError = () => {
+        toast.error("WebSocket fermé ❌", {
+          position: "top-right",
+          autoClose: 3000, // disparaît après 3s
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      };
+
     useEffect(() => {
         const socket = new WebSocket(url);
         wsRef.current = socket;
 
-        socket.onopen = () => console.log("✅ WebSocket connecté");
-        socket.onclose = () => console.log("❌ WebSocket fermé");
+        socket.onopen = () => notifySucces();
+        socket.onclose = () => notifyError();
         socket.onerror = (err) => console.error("⚠️ WS error", err);
 
         // ✅ Debounce des messages pour éviter trop de re-renders
