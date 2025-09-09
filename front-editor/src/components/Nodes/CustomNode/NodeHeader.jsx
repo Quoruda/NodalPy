@@ -13,7 +13,7 @@ const NodeHeader = memo(({
 }) => (
     <div className="custom-node-header">
         {isEditing ? (
-            <div style={{ display: 'flex', gap: '4px' }}>
+            <div >
                 <AutosizeInput
                     value={tempTitle}
                     onChange={(e) => setTempTitle(e.target.value)}
@@ -25,7 +25,7 @@ const NodeHeader = memo(({
         ) : (
             <>
                 <span>{title || 'Code Node'}</span>
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+                <div >
                     <button
                         onClick={() => setIsEditing(true)}
                         title="Modifier le titre"

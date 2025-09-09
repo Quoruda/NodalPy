@@ -218,88 +218,96 @@ const CustomNode = memo(({ data }) => {
             className="custom-node"
             style={{
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: '8px',
-                padding: '8px',
+                flexDirection: "column",
                 maxWidth: '100%',
                 width: 'auto',
+                paddingBottom: "8px",
             }}
         >
-            {/* Colonne entrées */}
+            <NodeHeader
+                isEditing={isEditing}
+                tempTitle={tempTitle}
+                setTempTitle={setTempTitle}
+                handleSave={handleSave}
+                setIsEditing={setIsEditing}
+                title={data.title}
+                state={data.state}
+                runCode={runCode}
+            />
             <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                gap: '4px',
-                width: 'auto',
-            }}>
-                {inputHandles}
-                {isEditing && (
-                    <button onClick={addInput} style={{ fontSize: '0.8rem' }}>
-                        + entrée
-                    </button>
-                )}
-            </div>
+                     display: 'flex',
+                     flexDirection: 'row',
+                     width: '100%',
+                     gap: '8px',
+                 }}>
 
-            {/* Zone centrale */}
-            <div style={{ flexGrow: 1 }}>
-                <NodeHeader
-                    isEditing={isEditing}
-                    tempTitle={tempTitle}
-                    setTempTitle={setTempTitle}
-                    handleSave={handleSave}
-                    setIsEditing={setIsEditing}
-                    title={data.title}
-                    state={data.state}
-                    runCode={runCode}
-                />
-
-                {/* ✅ CodeMirror optimisé */}
-                <div style={{ width: '100%' }}>
-                    <CodeMirror
-                        value={data.code || ''}
-                        height="auto"
-                        extensions={CODE_EXTENSIONS}
-                        onChange={handleCodeChange}
-                        theme="dark"
-                        basicSetup={CODE_BASIC_SETUP}
-                    />
+                {/* Colonne entrées */}
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '4px',
+                    width: 'auto',
+                }}>
+                    {inputHandles}
+                    {isEditing && (
+                        <button onClick={addInput} style={{ fontSize: '0.8rem' }}>
+                            + entrée
+                        </button>
+                    )}
                 </div>
 
-                {/* ✅ Output avec rendu conditionnel optimisé */}
-                {data.output && data.output.trim() && (
-                    <div style={{
-                        marginTop: 8,
-                        width: '100%',
-                        maxWidth: '100%',
-                        overflowX: 'auto',
-                    }}>
+                {/* Zone centrale */}
+                <div style={{ flexGrow: 1 }}>
+
+
+                    {/* ✅ CodeMirror optimisé */}
+                    <div style={{ width: '100%' }}>
                         <CodeMirror
-                            value={data.output}
+                            value={data.code || ''}
                             height="auto"
-                            extensions={OUTPUT_EXTENSIONS}
+                            extensions={CODE_EXTENSIONS}
+                            onChange={handleCodeChange}
                             theme="dark"
-                            basicSetup={OUTPUT_BASIC_SETUP}
-                            editable={false}
+                            basicSetup={CODE_BASIC_SETUP}
                         />
                     </div>
-                )}
-            </div>
 
-            {/* Colonne sorties */}
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                gap: '4px',
-                width: 'auto',
-            }}>
-                {outputHandles}
-                {isEditing && (
-                    <button onClick={addOutput} style={{ fontSize: '0.8rem' }}>
-                        + sortie
-                    </button>
-                )}
+                    {/* ✅ Output avec rendu conditionnel optimisé */}
+                    {data.output && data.output.trim() && (
+                        <div style={{
+                            marginTop: 8,
+                            width: '100%',
+                            maxWidth: '100%',
+                            overflowX: 'auto',
+                        }}>
+                            <CodeMirror
+                                value={data.output}
+                                height="auto"
+                                extensions={OUTPUT_EXTENSIONS}
+                                theme="dark"
+                                basicSetup={OUTPUT_BASIC_SETUP}
+                                editable={false}
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Colonne sorties */}
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '4px',
+                    width: 'auto',
+                }}>
+                    {outputHandles}
+                    {isEditing && (
+                        <button onClick={addOutput} style={{ fontSize: '0.8rem' }}>
+                            + sortie
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
