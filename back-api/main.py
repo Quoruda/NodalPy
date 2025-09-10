@@ -1,12 +1,22 @@
 import asyncio
 import copy
 import sys
+import threading
 import traceback
+import os
 
+import webview
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import uvicorn
+import argparse
 
 app = FastAPI()
+
+frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "front"))
+app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dir, "assets")), name="assets")
 
 # Ajoute ce middleware CORS
 app.add_middleware(
@@ -206,3 +216,41 @@ async def websocket_endpoint(websocket: WebSocket):
         print("❌ Client déconnecté")
     except Exception as e:
         print("⚠️ Erreur WebSocket:", e)
+
+# Catch-all: retourner index.html pour React Router
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    index_path = os.path.join(frontend_dir, "index.html")
+    return FileResponse(index_path)
+
+def main():
+    def start_server():
+        uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+
+    parser = argparse.ArgumentParser(
+        description="Lancer l'application React + Python",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument(
+        "mode",
+        choices=["desktop", "local"],
+        nargs="?",
+        default="help",
+    )
+
+    args = parser.parse_args()
+
+    if args.mode == "desktop":
+        server_thread = threading.Thread(target=start_server, daemon=True)
+        server_thread.start()
+        webview.create_window("NodalPy", "http://127.0.0.1:8000")
+        webview.start(gui='qt')
+    elif args.mode == "local":
+        uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
+    elif args.mode == "help":
+        print("Mode disponible: ")
+        print("desktop -> Lance l'application dans une fenètre.")
+        print("local -> Lance l'application en mode serveur accessible via une interface web.")
+
+if __name__ == "__main__":
+    main()
