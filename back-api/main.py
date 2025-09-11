@@ -233,7 +233,7 @@ def main():
     )
     parser.add_argument(
         "mode",
-        choices=["desktop", "local"],
+        choices=["desktop", "local", "help"],
         nargs="?",
         default="help",
     )
@@ -246,7 +246,7 @@ def main():
         webview.create_window("NodalPy", "http://127.0.0.1:8000")
         webview.start(gui='qt')
     elif args.mode == "local":
-        uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
+        start_server()
     elif args.mode == "help":
         print("Mode disponible: ")
         print("desktop -> Lance l'application dans une fenètre.")

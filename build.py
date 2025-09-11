@@ -27,6 +27,7 @@ def move_build():
 
 def move_backend():
     shutil.copy(os.path.join(BACKEND_DIR, 'main.py'), TARGET_DIR)
+    shutil.copy(os.path.join(BACKEND_DIR, 'requirements.txt'), TARGET_DIR)
     print("✅ Backend déplacé avec succès !")
 
 if __name__ == "__main__":
