@@ -11,6 +11,7 @@ export const useWebSocket = (url, setNodes) => {
     const WEBSOCKET_RECONNECTING_TOAST_ID = "websocket-reconnecting";
     const WEBSOCKET_CONNECTED_TOAST_ID = "websocket-connected";
 
+
     const clearNotifs = () => {
         toast.dismiss(WEBSOCKET_ERROR_TOAST_ID);
         toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
@@ -46,6 +47,18 @@ export const useWebSocket = (url, setNodes) => {
     const notifyReconnecting = (attemptNumber) => {
         toast.info(`Tentative de reconnexion ${attemptNumber}...`, {
           toastId: WEBSOCKET_RECONNECTING_TOAST_ID,
+          position: "bottom-right",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+    };
+
+    const notifyExecution = (name,id) => {
+        toast.info(`L'exécution du noeud '${name}' est terminée`, {
+          toastId: id,
           position: "bottom-right",
           autoClose: 2000,
           hideProgressBar: false,
@@ -132,6 +145,7 @@ export const useWebSocket = (url, setNodes) => {
                         }
                         if (msg.status === "finished") {
                             newData.state = 2;
+                            notifyExecution(node.data.title, node.id);
                         }
 
                         updatedNodes[nodeIndex] = {
