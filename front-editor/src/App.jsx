@@ -37,6 +37,19 @@ export default function App() {
         [setEdges]
     );
 
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+          e.preventDefault();
+          e.returnValue = "";    
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+
+        return () => {
+          window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+      }, []);
+
     // Optimisation des events handlers
     useEffect(() => {
         const handleKeyDown = (event) => {
