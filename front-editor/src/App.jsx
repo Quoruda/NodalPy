@@ -134,8 +134,21 @@ export default function App() {
                 // Vérifier que le fichier contient les propriétés attendues
                 if (data.nodes && data.edges) {
                     // Ici vous devez utiliser vos setters d'état pour mettre à jour nodes et edges
-                    setNodes(data.nodes);
-                    setEdges(data.edges);
+                    let newNodes = [];
+                    newNodes.splice(0,nodes.length);
+                    for(let node of data.nodes){
+                        node.data.state = 0;
+                        newNodes.push(node);
+                    }
+
+                    let newEdges = [];
+                    edges.splice(0,edges.length);
+                    for(let edge of data.edges){
+                        newEdges.push(edge);
+                    }
+
+                    setNodes(newNodes);
+                    setEdges(newEdges);
 
                     console.log("Projet chargé avec succès");
                 } else {
@@ -157,7 +170,7 @@ export default function App() {
 
         // Réinitialiser la valeur de l'input pour permettre de recharger le même fichier
         event.target.value = '';
-    }, [setNodes, setEdges]);
+    }, [nodes, setNodes, edges, setEdges]);
 
     // Optimisation: mémoisation des edges stylés
     const styledEdges = useMemo(() =>
@@ -170,13 +183,16 @@ export default function App() {
         }))
     , [edges, selectedEdges]);
 
+    const generateUniqueId = () => {
+        return `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    };
+
     // Optimisation: addNode stable
     const addNode = useCallback(() => {
         const newNode = {
-            id: `fn${nodeCount}`,
+            id: generateUniqueId(),
             type: 'CustomNode',
             data: {
-                id: `fn${nodeCount}`,
                 code: '',
                 title: `Node ${nodeCount}`,
                 inputs: [],
@@ -209,6 +225,8 @@ export default function App() {
         setSelectedNodes(nodes || []);
         setSelectedEdges(edges || []);
     }, []);
+
+    console.log(nodes);
 
     return (
         <FlowProvider edges={edges} nodes={nodes}>
