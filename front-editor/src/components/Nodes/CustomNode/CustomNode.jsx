@@ -78,7 +78,7 @@ const CustomNode = memo(({ data }) => {
 
     // ✅ Callbacks stables
     const runCode = useCallback(() => {
-        data.runCode?.(data, edges); 
+        data.addNodeToQueue?.(data, edges);
     }, [data, edges]);
 
     const handleSave = useCallback(() => {

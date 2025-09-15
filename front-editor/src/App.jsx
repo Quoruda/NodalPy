@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     ReactFlow,
     useNodesState,
@@ -28,9 +28,19 @@ export default function App() {
 
     // Ref pour éviter les re-renders inutiles
 
-    const {wsRef} = useWebSocket("ws://localhost:8000/ws", setNodes);
+    const processQueueRef = useRef(() => {})
 
-    const { updateNode, updateNodeCode, runCode} = CustomNodeOperations(setNodes, wsRef,nodes, edges);
+    const {wsRef} = useWebSocket("ws://localhost:8000/ws", setNodes, processQueueRef);
+
+    const { updateNode, updateNodeCode, runCode, addNodeToQueue, processQueue} = CustomNodeOperations(setNodes, wsRef,nodes, edges);
+    processQueueRef.current = processQueue;
+
+
+    // ✅ 3. Passer le callback au WebSocket via useEffect
+    useEffect(() => {
+        // Stocker la référence du callback dans le wsRef pour que le WebSocket puisse l'utiliser
+        wsRef.current.processQueue = processQueue;
+    }, [processQueue, wsRef]);
 
     const onConnectEdge = useCallback(
         (params) => setEdges((eds) => addEdge(params, eds)),
@@ -166,6 +176,7 @@ export default function App() {
             id: `fn${nodeCount}`,
             type: 'CustomNode',
             data: {
+                id: `fn${nodeCount}`,
                 code: '',
                 title: `Node ${nodeCount}`,
                 inputs: [],
@@ -178,7 +189,6 @@ export default function App() {
         setNodeCount((count) => count + 1);
     }, [nodeCount, setNodes]);
 
-    // CRITIQUE: Optimisation principale - éviter la re-création des nodes à chaque render
     const preparedNodes = useMemo(() =>
         nodes.map((node) => ({
             ...node,
@@ -188,10 +198,11 @@ export default function App() {
                 onChange: updateNodeCode,
                 onUpdate: updateNode,
                 runCode: runCode,
+                addNodeToQueue: addNodeToQueue,
             },
             edges: edges,
         }))
-    , [nodes, updateNodeCode, updateNode, runCode, edges]);
+    , [nodes, updateNodeCode, updateNode, runCode, addNodeToQueue, edges]);
 
     // Optimisation: handler de selection stable
     const onSelectionChange = useCallback(({ nodes, edges }) => {
