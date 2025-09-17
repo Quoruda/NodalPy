@@ -25,11 +25,11 @@ export default function App() {
     const [nodeCount, setNodeCount] = useState(3);
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
+    const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
     // Ref pour éviter les re-renders inutiles
 
     const processQueueRef = useRef(() => {})
-
     const {wsRef} = useWebSocket("ws://localhost:8000/ws", setNodes, processQueueRef);
 
     const { updateNode, updateNodeCode, runCode, addNodeToQueue, processQueue} = CustomNodeOperations(setNodes, wsRef,nodes, edges);
@@ -190,22 +190,59 @@ export default function App() {
     // Optimisation: addNode stable
     const addNode = useCallback(() => {
         const id = generateUniqueId();
-        const newNode = {
-            id: id,
-            type: 'CustomNode',
-            data: {
+        if(!reactFlowInstance) return;
+
+        console.log(reactFlowInstance)
+
+        const flowElement = document.querySelector('.react-flow');
+        const bounds = flowElement?.getBoundingClientRect();
+
+        if (bounds) {
+            const centerX = bounds.width / 2;
+            const centerY = bounds.height / 2;
+
+            // Utiliser project au lieu de screenToFlowPosition
+            const position = reactFlowInstance.screenToFlowPosition({
+                x: centerX,
+                y: centerY
+            });
+
+            let canBePlaced = false;
+
+            while(!canBePlaced){
+                canBePlaced = true
+                for(let node of nodes){
+                    if(node.position.x === position.x && node.position.y === position.y){
+                        console.log("TRUE")
+                        canBePlaced = false;
+                    }
+                }
+                if(!canBePlaced){
+                    position.x += 50;
+                    position.y += 50;
+                }
+            }
+
+
+            const newNode = {
                 id: id,
-                code: '',
-                title: `Node ${nodeCount}`,
-                inputs: [],
-                outputs: [],
-                state: 0
-            },
-            position: { x: 100 + nodeCount * 50, y: 100 + nodeCount * 50 },
-        };
-        setNodes((nds) => [...nds, newNode]);
-        setNodeCount((count) => count + 1);
-    }, [nodeCount, setNodes]);
+                type: 'CustomNode',
+                data: {
+                    id: id,
+                    code: '',
+                    title: `Node ${nodeCount}`,
+                    inputs: [],
+                    outputs: [],
+                    state: 0
+                },
+                position: position,
+            };
+            setNodes((nds) => [...nds, newNode]);
+            setNodeCount((count) => count + 1);
+        }
+
+
+    }, [nodeCount, reactFlowInstance, setNodes]);
 
     const preparedNodes = useMemo(() =>
         nodes.map((node) => ({
@@ -250,6 +287,7 @@ export default function App() {
                 Importer
             </button>
                 <ReactFlow
+                    onInit={setReactFlowInstance}
                     nodes={preparedNodes}
                     edges={styledEdges}
                     onSelectionChange={onSelectionChange}
