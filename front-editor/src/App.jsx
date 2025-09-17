@@ -189,10 +189,12 @@ export default function App() {
 
     // Optimisation: addNode stable
     const addNode = useCallback(() => {
+        const id = generateUniqueId();
         const newNode = {
-            id: generateUniqueId(),
+            id: id,
             type: 'CustomNode',
             data: {
+                id: id,
                 code: '',
                 title: `Node ${nodeCount}`,
                 inputs: [],
