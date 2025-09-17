@@ -172,7 +172,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
             runCodeWithPrerequisites(next)
         }
 
-    }, [getNextNodeInQueue, runCode])
+    }, [getNextNodeInQueue, runCode, setNodes])
 
 
     const processQueue = useCallback( () => {
