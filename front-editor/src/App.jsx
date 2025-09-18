@@ -146,11 +146,15 @@ export default function App() {
                     for(let edge of data.edges){
                         newEdges.push(edge);
                     }
-
                     setNodes(newNodes);
                     setEdges(newEdges);
 
                     console.log("Projet chargé avec succès");
+
+                    if(wsRef.current){
+                        setTimeout(() => wsRef.current.send({"action":  "get_ouput"}), 0.1)
+                    }
+
                 } else {
                     alert("Format de fichier invalide. Le fichier doit contenir 'nodes' et 'edges'");
                 }
@@ -200,7 +204,7 @@ export default function App() {
         if (bounds) {
             const centerX = bounds.width / 2;
             const centerY = bounds.height / 2;
-
+            //
             // Utiliser project au lieu de screenToFlowPosition
             const position = reactFlowInstance.screenToFlowPosition({
                 x: centerX,

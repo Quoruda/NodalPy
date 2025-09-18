@@ -78,6 +78,17 @@ export const useWebSocket = (url, setNodes, processQueueRef) => {
         }
     };
 
+    // ✅ Fonction pour envoyer des messages
+    const sendMessage = useCallback((message) => {
+        const currentWs = wsRef.current;
+        if (currentWs && currentWs.readyState === WebSocket.OPEN) {
+            currentWs.send(JSON.stringify(message));
+            return true;
+        }
+        console.warn("⚠️ Impossible d'envoyer le message : WebSocket non connecté");
+        return false;
+    }, []);
+
     // Fonction pour créer la connexion WebSocket
     const connect = useCallback(() => {
         // Nettoyer la connexion existante
@@ -98,6 +109,8 @@ export const useWebSocket = (url, setNodes, processQueueRef) => {
                 clearTimeout(reconnectTimeoutRef.current);
                 reconnectTimeoutRef.current = null;
             }
+
+            sendMessage({"action":  "get_ouput"})
 
             reconnectAttemptsRef.current = 0; // Reset des tentatives
             notifySucces();
@@ -163,6 +176,25 @@ export const useWebSocket = (url, setNodes, processQueueRef) => {
             const msg = JSON.parse(event.data);
             console.log("WS reçu:", msg);
 
+            if (msg["action"] && msg["action"] === "get_outputs_response") {
+                let outputs = msg.outputs;
+                console.log("outputs", outputs);
+                setNodes((nds) => {
+                    let updatedNodes = [...nds];
+
+                    for(let node of updatedNodes){
+                        if(outputs?.hasOwnProperty(node.id)){
+                            node.data.output = outputs[node.id];
+                        }else{
+                            node.data.state = 0;
+                        }
+                    }
+
+                    return updatedNodes
+                })
+                return;
+            }
+
             messageQueue.push(msg);
 
             // Debounce : traiter les messages par batch toutes les 16ms (60fps)
@@ -178,7 +210,7 @@ export const useWebSocket = (url, setNodes, processQueueRef) => {
             }
         });
 
-    }, [url, setNodes]);
+    }, [url, setNodes, sendMessage]);
 
     // Fonction pour programmer la reconnexion
     const scheduleReconnect = useCallback(() => {
@@ -220,16 +252,7 @@ export const useWebSocket = (url, setNodes, processQueueRef) => {
         };
     }, [connect]);
 
-    // ✅ Fonction pour envoyer des messages
-    const sendMessage = useCallback((message) => {
-        const currentWs = wsRef.current;
-        if (currentWs && currentWs.readyState === WebSocket.OPEN) {
-            currentWs.send(JSON.stringify(message));
-            return true;
-        }
-        console.warn("⚠️ Impossible d'envoyer le message : WebSocket non connecté");
-        return false;
-    }, []);
+
 
     // ✅ Fonction pour vérifier l'état de connexion
     const isConnected = useCallback(() => {

@@ -41,11 +41,13 @@ class ThreadStdout:
     """
     Objet stdout utilisé DANS LE THREAD.
     Bufferise jusqu'à newline et poste des messages threadsafe dans la queue via loop.call_soon_threadsafe.
+Capture aussi tout le contenu dans un buffer pour __output__.
     """
-    def __init__(self, loop: asyncio.AbstractEventLoop, queue: asyncio.Queue, node: str):
+    def __init__(self, loop: asyncio.AbstractEventLoop, queue: asyncio.Queue, node: str, output_buffer: list):
         self.loop = loop
         self.queue = queue
         self.node = node
+        self.output_buffer = output_buffer  # référence partagée pour capturer tout l'output
         self._buffer = ""
 
     def write(self, data):
@@ -53,6 +55,10 @@ class ThreadStdout:
             return
         s = str(data)
         self._buffer += s
+
+        # Ajouter à l'output_buffer pour __output__
+        self.output_buffer.append(s)
+
         while "\n" in self._buffer:
             line, self._buffer = self._buffer.split("\n", 1)
             payload = {"type": "stdout", "node": self.node, "text": line + "\n"}
@@ -118,18 +124,22 @@ S'arrête quand il reçoit un payload {"type":"status","status":"thread_finished
 def run_user_code_in_thread(code: str, imports_context: dict, node: str, loop: asyncio.AbstractEventLoop, queue: asyncio.Queue):
     """
 Exécutée dans un thread. Prépare un local_scope, redirige stdout/stderr vers ThreadStdout,
-exécute le code, poste le contexte final (deepcopied) dans la queue.
+exécute le code, poste le contexte final (deepcopied) dans la queue avec __output__.
     """
     local_scope = {}
     # injecte les imports (déjà deepcopied avant d'appeler cette fonction)
     local_scope.update(imports_context)
 
+    # Buffer partagé pour capturer tout l'output
+    output_buffer = []
+
     old_stdout = sys.stdout
     old_stderr = sys.stderr
     try:
-        thread_stdout = ThreadStdout(loop, queue, node)
+        thread_stdout = ThreadStdout(loop, queue, node, output_buffer)
+        thread_stderr = ThreadStdout(loop, queue, node, output_buffer)
         sys.stdout = thread_stdout
-        sys.stderr = thread_stdout
+        sys.stderr = thread_stderr
 
         # Exécuter avec un globals minimal mais avec builtins
         exec_globals = {"__builtins__": __builtins__}
@@ -137,6 +147,10 @@ exécute le code, poste le contexte final (deepcopied) dans la queue.
 
         # flush final pour envoyer tout ce qui reste dans le buffer
         thread_stdout.flush()
+        thread_stderr.flush()
+
+        # Ajouter __output__ au contexte local
+        local_scope["__output__"] = "".join(output_buffer)
 
         # Poster le contexte final (deepcopy pour éviter aliasing)
         loop.call_soon_threadsafe(queue.put_nowait, {
@@ -146,8 +160,15 @@ exécute le code, poste le contexte final (deepcopied) dans la queue.
         })
     except Exception:
         err = traceback.format_exc()
+        # Ajouter l'erreur à l'output buffer aussi
+        output_buffer.append(err)
+
         # poster l'erreur comme stdout/error pour que le client la reçoive immédiatement
         loop.call_soon_threadsafe(queue.put_nowait, {"type": "error", "node": node, "text": err})
+
+        # Ajouter __output__ au contexte même en cas d'erreur
+        local_scope["__output__"] = "".join(output_buffer)
+
         # Poster quand même le contexte (même si incomplet) pour garder cohérence
         loop.call_soon_threadsafe(queue.put_nowait, {
             "type": "context",
@@ -176,7 +197,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 variables = data["variables"]
                 node = data["node"]
 
-                # Prévenir le front que l’exécution démarre
+                # Prévenir le front que l'exécution démarre
                 await websocket.send_json({"node": node, "status": "running"})
 
                 # Préparer les imports (deepcopy)
@@ -209,8 +230,21 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 # contexts a été mis à jour par forward_queue_to_ws via le payload "context"
 
-                # Prévenir que l’exécution est terminée
+                # Prévenir que l'exécution est terminée
                 await websocket.send_json({"node": node, "status": "finished"})
+            if data.get("action") == "get_ouput":
+                print("get_output")
+                outputs = {}
+                for node_id, node_context in contexts.items():
+                    outputs[node_id] = node_context.get("__output__", None)
+
+                await websocket.send_json({
+                    "action": "get_outputs_response",
+                    "outputs": outputs
+                })
+
+
+
 
     except WebSocketDisconnect:
         print("❌ Client déconnecté")
@@ -249,7 +283,7 @@ def main():
         start_server()
     elif args.mode == "help":
         print("Mode disponible: ")
-        print("desktop -> Lance l'application dans une fenètre.")
+        print("desktop -> Lance l'application dans une fenêtre.")
         print("local -> Lance l'application en mode serveur accessible via une interface web.")
 
 if __name__ == "__main__":
