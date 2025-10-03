@@ -12,6 +12,7 @@ import {
     OUTPUT_BASIC_SETUP
 } from './constants.js';
 import './CustomNode.css';
+import {CustomNodeOperations} from "./CustomNodeOperations.js";
 
 // ✅ Fonction utilitaire pour générer un ID unique
 const generateUniqueId = () => {
@@ -39,7 +40,8 @@ const CustomNode = memo(({ data }) => {
     const throttleRef = useRef(null);
     const nodeId = data.id;
 
-    const { edges } = useFlowContext();
+    const {processQueue} = CustomNodeOperations(setNodes, wsRef,nodes, edges);
+    const { edges, nodes, setNodes } = useFlowContext();
 
     // ✅ Synchronisation optimisée avec les props (adaptée pour les objets)
     useEffect(() => {
@@ -331,7 +333,6 @@ const CustomNode = memo(({ data }) => {
 
     // Comparaisons des callbacks
     if (prev.onChange !== next.onChange) return false;
-    if (prev.onUpdate !== next.onUpdate) return false;
     if (prev.runCode !== next.runCode) return false;
 
     return true;

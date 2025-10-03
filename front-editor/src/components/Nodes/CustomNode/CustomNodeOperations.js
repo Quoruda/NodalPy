@@ -6,7 +6,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     const nodesRef = useRef(nodes);
     const edgesRef = useRef(edges);
     const executionQueueRef = useRef([]);
-    //const isAutoExecutingRef = useRef(false);
 
 
     // Mettre à jour les refs à chaque render
@@ -50,14 +49,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
                     : node
             )
         );
-    }, [setNodes]);
-
-    const updateNodeCode = useCallback((nodeId, newCode) => {
-        setNodes((nds) => nds.map((node) =>
-            node.id === nodeId
-                ? { ...node, data: { ...node.data, code: newCode } }
-                : node
-        ));
     }, [setNodes]);
 
     // ✅ SOLUTION CORRECTE : Callbacks stables avec useRef
@@ -189,5 +180,5 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         processQueue()
     }, [processQueue])
 
-    return {updateNode, updateNodeCode, runCode, addNodeToQueue, processQueue}
+    return {updateNode, runCode, addNodeToQueue, processQueue}
 }

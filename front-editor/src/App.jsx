@@ -13,7 +13,6 @@ import { NodeTypes } from './components/Nodes/NodeTypes.jsx';
 import '@xyflow/react/dist/style.css';
 import './App.css';
 import { FlowProvider } from './components/FlowContext.jsx';
-import {CustomNodeOperations} from './components/Nodes/CustomNode/CustomNodeOperations.js';
 import { useWebSocket } from './hooks/useWebSocket.js';
 
 const initialNodes = [];
@@ -27,30 +26,18 @@ export default function App() {
     const [selectedNodes, setSelectedNodes] = useState([]);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-    // Ref pour éviter les re-renders inutiles
-
-    const processQueueRef = useRef(() => {})
-    const {wsRef} = useWebSocket("ws://localhost:8000/ws", setNodes, processQueueRef);
-
-    const { updateNode, updateNodeCode, runCode, addNodeToQueue, processQueue} = CustomNodeOperations(setNodes, wsRef,nodes, edges);
-    processQueueRef.current = processQueue;
-
-
-    // ✅ 3. Passer le callback au WebSocket via useEffect
-    useEffect(() => {
-        // Stocker la référence du callback dans le wsRef pour que le WebSocket puisse l'utiliser
-        wsRef.current.processQueue = processQueue;
-    }, [processQueue, wsRef]);
+    const {wsRef} = useWebSocket("ws://localhost:8000/ws", setNodes);
 
     const onConnectEdge = useCallback(
         (params) => setEdges((eds) => addEdge(params, eds)),
         [setEdges]
     );
 
+    /*
     useEffect(() => {
         const handleBeforeUnload = (e) => {
           e.preventDefault();
-          e.returnValue = "";    
+          e.returnValue = "";
         };
 
         window.addEventListener("beforeunload", handleBeforeUnload);
@@ -59,6 +46,8 @@ export default function App() {
           window.removeEventListener("beforeunload", handleBeforeUnload);
         };
       }, []);
+
+     */
 
     // Optimisation des events handlers
     useEffect(() => {
@@ -94,8 +83,6 @@ export default function App() {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedEdges, selectedNodes, setEdges, setNodes]);
-
-
 
     const saveProject = useCallback(() => {
         const data = {nodes: nodes, edges:edges}
@@ -174,7 +161,7 @@ export default function App() {
 
         // Réinitialiser la valeur de l'input pour permettre de recharger le même fichier
         event.target.value = '';
-    }, [nodes, setNodes, edges, setEdges]);
+    }, [nodes.length, edges, setNodes, setEdges, wsRef]);
 
     // Optimisation: mémoisation des edges stylés
     const styledEdges = useMemo(() =>
@@ -227,7 +214,6 @@ export default function App() {
                 }
             }
 
-
             const newNode = {
                 id: id,
                 type: 'CustomNode',
@@ -240,28 +226,14 @@ export default function App() {
                     state: 0
                 },
                 position: position,
+
             };
             setNodes((nds) => [...nds, newNode]);
             setNodeCount((count) => count + 1);
         }
 
 
-    }, [nodeCount, reactFlowInstance, setNodes]);
-
-    const preparedNodes = useMemo(() =>
-        nodes.map((node) => ({
-            ...node,
-            data: {
-                ...node.data,
-                id: node.id,
-                onChange: updateNodeCode,
-                onUpdate: updateNode,
-                runCode: runCode,
-                addNodeToQueue: addNodeToQueue,
-            },
-            edges: edges,
-        }))
-    , [nodes, updateNodeCode, updateNode, runCode, addNodeToQueue, edges]);
+    }, [nodeCount, nodes, reactFlowInstance, setNodes]);
 
     // Optimisation: handler de selection stable
     const onSelectionChange = useCallback(({ nodes, edges }) => {
@@ -272,7 +244,7 @@ export default function App() {
     console.log(nodes);
 
     return (
-        <FlowProvider edges={edges} nodes={nodes}>
+        <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges}>
         <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
             <button className="add-node-button" onClick={addNode}>
                 Ajouter un nœud
@@ -292,7 +264,7 @@ export default function App() {
             </button>
                 <ReactFlow
                     onInit={setReactFlowInstance}
-                    nodes={preparedNodes}
+                    nodes={nodes}
                     edges={styledEdges}
                     onSelectionChange={onSelectionChange}
                     onNodesChange={onNodesChange}

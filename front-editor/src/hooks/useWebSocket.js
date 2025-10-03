@@ -2,7 +2,7 @@ import {useCallback, useEffect, useRef} from 'react';
 import {toast} from "react-toastify";
 
 // ✅ Hook WebSocket dédié et réutilisable avec reconnexion automatique
-export const useWebSocket = (url, setNodes, processQueueRef) => {
+export const useWebSocket = (url, setNodes) => {
     const wsRef = useRef(null);
     const reconnectAttemptsRef = useRef(0);
     const reconnectTimeoutRef = useRef(null);
@@ -158,7 +158,7 @@ export const useWebSocket = (url, setNodes, processQueueRef) => {
                         if (msg.status === "finished") {
                             newData.state = 2;
                             notifyExecution(node.data.title, node.id);
-                            setTimeout(() => processQueueRef.current(), 0);
+                            //setTimeout(() => processQueueRef.current(), 0);
                         }
 
                         updatedNodes[nodeIndex] = {

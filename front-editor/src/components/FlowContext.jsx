@@ -4,10 +4,13 @@ import React, { createContext, useContext } from 'react';
 const FlowContext = createContext({
     edges: [],
     nodes: [],
+    setNodes: () => {},
+    setEdges: () => {},
     // Vous pouvez ajouter d'autres données partagées ici
 });
 
 // ✅ Hook personnalisé pour utiliser le contexte facilement
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFlowContext = () => {
     const context = useContext(FlowContext);
     if (!context) {
