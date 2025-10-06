@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
     ReactFlow,
     useNodesState,
@@ -163,7 +163,7 @@ export default function App() {
         event.target.value = '';
     }, [nodes.length, edges, setNodes, setEdges, wsRef]);
 
-    // Optimisation: mémoisation des edges stylés
+    // Optimisation: mémorisation des edges stylés
     const styledEdges = useMemo(() =>
         edges.map((edge) => ({
             ...edge,
@@ -240,8 +240,6 @@ export default function App() {
         setSelectedNodes(nodes || []);
         setSelectedEdges(edges || []);
     }, []);
-
-    console.log(nodes);
 
     return (
         <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges}>

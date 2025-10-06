@@ -6,10 +6,19 @@ export const useWebSocket = (url, setNodes) => {
     const wsRef = useRef(null);
     const reconnectAttemptsRef = useRef(0);
     const reconnectTimeoutRef = useRef(null);
-    const isManualCloseRef = useRef(false); // Pour éviter la reconnexion lors de la fermeture manuelle
+    const isManualCloseRef = useRef(false);
+
+    // ✅ SOLUTION : Utiliser une ref pour setNodes au lieu de la dépendance directe
+    const setNodesRef = useRef(setNodes);
+
     const WEBSOCKET_ERROR_TOAST_ID = "websocket-error";
     const WEBSOCKET_RECONNECTING_TOAST_ID = "websocket-reconnecting";
     const WEBSOCKET_CONNECTED_TOAST_ID = "websocket-connected";
+
+    // ✅ Mettre à jour la ref à chaque render
+    useEffect(() => {
+        setNodesRef.current = setNodes;
+    }, [setNodes]);
 
     const clearNotifs = () => {
         toast.dismiss(WEBSOCKET_ERROR_TOAST_ID);
@@ -17,68 +26,65 @@ export const useWebSocket = (url, setNodes) => {
         toast.dismiss(WEBSOCKET_CONNECTED_TOAST_ID);
     }
 
-    const notifySucces = () => {
+    const notifySuccess = () => {
         clearNotifs()
         toast.success("Websocket ouvert ✅", {
-          position: "bottom-right",
-          toastId: WEBSOCKET_CONNECTED_TOAST_ID,
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
+            position: "bottom-right",
+            toastId: WEBSOCKET_CONNECTED_TOAST_ID,
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
         });
-      };
+    };
 
     const notifyError = () => {
         toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
         toast.error("WebSocket fermé ❌", {
-          toastId: WEBSOCKET_ERROR_TOAST_ID,
-          position: "bottom-right",
-          autoClose: false,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
+            toastId: WEBSOCKET_ERROR_TOAST_ID,
+            position: "bottom-right",
+            autoClose: false,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
         });
     };
 
     const notifyReconnecting = (attemptNumber) => {
         toast.info(`Tentative de reconnexion ${attemptNumber}...`, {
-          toastId: WEBSOCKET_RECONNECTING_TOAST_ID,
-          position: "bottom-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
+            toastId: WEBSOCKET_RECONNECTING_TOAST_ID,
+            position: "bottom-right",
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
         });
     };
 
     const notifyExecution = (name,id) => {
         toast.info(`L'exécution du noeud '${name}' est terminée`, {
-          toastId: id,
-          position: "bottom-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
+            toastId: id,
+            position: "bottom-right",
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
         });
     };
 
-    // Fonction pour calculer le délai de reconnexion
     const getReconnectDelay = (attemptNumber) => {
         if (attemptNumber <= 10) {
-            // 10 premières tentatives : toutes les 3 secondes
             return 3000;
         } else {
-            // Après 10 tentatives : toutes les minutes
             return 60000;
         }
     };
 
-    // ✅ Fonction pour envoyer des messages
+    // ✅ sendMessage n'a plus besoin de dépendances
     const sendMessage = useCallback((message) => {
         const currentWs = wsRef.current;
         if (currentWs && currentWs.readyState === WebSocket.OPEN) {
@@ -89,9 +95,38 @@ export const useWebSocket = (url, setNodes) => {
         return false;
     }, []);
 
-    // Fonction pour créer la connexion WebSocket
+    // ✅ readRunMessage utilise maintenant setNodesRef.current au lieu de setNodes
+    const readRunMessage = useCallback((msg) => {
+        setNodesRef.current((nds) => {
+            let updatedNodes = [...nds];
+
+            const nodeIndex = updatedNodes.findIndex(n => n.id === msg.node);
+            if (nodeIndex !== -1) {
+                const node = updatedNodes[nodeIndex];
+                let newData = { ...node.data };
+
+                if (msg.status === "running") {
+                    newData.state = 1;
+                }
+                if (msg.output) {
+                    newData.output = (newData.output || "") + msg.output;
+                }
+                if (msg.status === "finished") {
+                    newData.state = 2;
+                    notifyExecution(node.data.title, node.id);
+                }
+
+                updatedNodes[nodeIndex] = {
+                    ...node,
+                    data: newData
+                };
+            }
+            return updatedNodes;
+        });
+    }, []); // ✅ Plus de dépendances !
+
+    // ✅ connect n'a plus readRunMessage dans ses dépendances
     const connect = useCallback(() => {
-        // Nettoyer la connexion existante
         if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
             isManualCloseRef.current = true;
             wsRef.current.close();
@@ -104,7 +139,6 @@ export const useWebSocket = (url, setNodes) => {
         socket.onopen = () => {
             console.log("🔗 WebSocket connecté");
 
-            // ✅ IMPORTANT: Annuler toute tentative de reconnexion en cours
             if (reconnectTimeoutRef.current) {
                 clearTimeout(reconnectTimeoutRef.current);
                 reconnectTimeoutRef.current = null;
@@ -112,14 +146,13 @@ export const useWebSocket = (url, setNodes) => {
 
             sendMessage({"action":  "get_ouput"})
 
-            reconnectAttemptsRef.current = 0; // Reset des tentatives
-            notifySucces();
+            reconnectAttemptsRef.current = 0;
+            notifySuccess();
         };
 
         socket.onclose = (event) => {
             console.log("❌ WebSocket fermé", event.code, event.reason);
 
-            // Ne pas reconnecter si c'est une fermeture manuelle ou si le composant est démonté
             if (!isManualCloseRef.current) {
                 notifyError();
                 scheduleReconnect();
@@ -130,7 +163,6 @@ export const useWebSocket = (url, setNodes) => {
             console.error("⚠️ WS error", err);
         };
 
-        // ✅ Debounce des messages pour éviter trop de re-renders
         let messageQueue = [];
         let timeoutId = null;
 
@@ -140,69 +172,27 @@ export const useWebSocket = (url, setNodes) => {
             const messages = [...messageQueue];
             messageQueue = [];
 
-            setNodes((nds) => {
-                let updatedNodes = [...nds];
-
-                messages.forEach(msg => {
-                    const nodeIndex = updatedNodes.findIndex(n => n.id === msg.node);
-                    if (nodeIndex !== -1) {
-                        const node = updatedNodes[nodeIndex];
-                        let newData = { ...node.data };
-
-                        if (msg.status === "running") {
-                            newData.state = 1;
-                        }
-                        if (msg.output) {
-                            newData.output = (newData.output || "") + msg.output;
-                        }
-                        if (msg.status === "finished") {
-                            newData.state = 2;
-                            notifyExecution(node.data.title, node.id);
-                            //setTimeout(() => processQueueRef.current(), 0);
-                        }
-
-                        updatedNodes[nodeIndex] = {
-                            ...node,
-                            data: newData
-                        };
-                    }
-                });
-
-                return updatedNodes;
-            });
+            for(let msg of messages){
+                if(!msg.action) console.log("Message sans action ?", msg)
+                else if(msg.action === "run"){
+                    readRunMessage(msg);
+                }
+                else {
+                    console.log("Message WS inconnu :", msg);
+                }
+            }
         };
 
         socket.onmessage = (event) => {
             const msg = JSON.parse(event.data);
             console.log("WS reçu:", msg);
 
-            if (msg["action"] && msg["action"] === "get_outputs_response") {
-                let outputs = msg.outputs;
-                console.log("outputs", outputs);
-                setNodes((nds) => {
-                    let updatedNodes = [...nds];
-
-                    for(let node of updatedNodes){
-                        if(outputs?.hasOwnProperty(node.id)){
-                            node.data.output = outputs[node.id];
-                        }else{
-                            node.data.state = 0;
-                        }
-                    }
-
-                    return updatedNodes
-                })
-                return;
-            }
-
             messageQueue.push(msg);
 
-            // Debounce : traiter les messages par batch toutes les 16ms (60fps)
             if (timeoutId) clearTimeout(timeoutId);
             timeoutId = setTimeout(processMessageQueue, 16);
         };
 
-        // Cleanup function pour les timeouts de messages
         socket.addEventListener('close', () => {
             if (timeoutId) {
                 clearTimeout(timeoutId);
@@ -210,11 +200,9 @@ export const useWebSocket = (url, setNodes) => {
             }
         });
 
-    }, [url, setNodes, sendMessage]);
+    }, [url, sendMessage]); // ✅ Plus de dépendance à readRunMessage !
 
-    // Fonction pour programmer la reconnexion
     const scheduleReconnect = useCallback(() => {
-        // Annuler toute tentative de reconnexion en cours
         if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
             reconnectTimeoutRef.current = null;
@@ -232,12 +220,11 @@ export const useWebSocket = (url, setNodes) => {
         }, delay);
     }, [connect]);
 
-    // Effet principal pour initialiser la connexion
+    // ✅ Ce useEffect ne se déclenchera plus à chaque déplacement de nœud
     useEffect(() => {
         connect();
 
         return () => {
-            // Cleanup lors du démontage
             isManualCloseRef.current = true;
 
             if (reconnectTimeoutRef.current) {
@@ -252,14 +239,10 @@ export const useWebSocket = (url, setNodes) => {
         };
     }, [connect]);
 
-
-
-    // ✅ Fonction pour vérifier l'état de connexion
     const isConnected = useCallback(() => {
         return wsRef.current && wsRef.current.readyState === WebSocket.OPEN;
     }, []);
 
-    // ✅ Fonction pour fermer manuellement la connexion (sans reconnexion)
     const disconnect = useCallback(() => {
         isManualCloseRef.current = true;
 
@@ -273,7 +256,6 @@ export const useWebSocket = (url, setNodes) => {
         }
     }, []);
 
-    // ✅ Fonction pour forcer une reconnexion
     const reconnect = useCallback(() => {
         reconnectAttemptsRef.current = 0;
         connect();

@@ -40,8 +40,8 @@ const CustomNode = memo(({ data }) => {
     const throttleRef = useRef(null);
     const nodeId = data.id;
 
-    const {processQueue} = CustomNodeOperations(setNodes, wsRef,nodes, edges);
     const { edges, nodes, setNodes } = useFlowContext();
+    const {processQueue} = CustomNodeOperations(setNodes,nodes, edges);
 
     // ✅ Synchronisation optimisée avec les props (adaptée pour les objets)
     useEffect(() => {
@@ -275,7 +275,7 @@ const CustomNode = memo(({ data }) => {
                         />
                     </div>
 
-                    {/* ✅ Output avec rendu conditionnel optimisé */}
+                    {/*
                     {data.output && data.output.trim() && (
                         <div style={{
                             marginTop: 8,
@@ -293,6 +293,7 @@ const CustomNode = memo(({ data }) => {
                             />
                         </div>
                     )}
+                    */}
                 </div>
 
                 {/* Colonne sorties */}
