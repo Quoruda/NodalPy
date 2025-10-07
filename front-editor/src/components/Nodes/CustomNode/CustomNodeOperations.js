@@ -173,7 +173,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         }
     }, [getNextNodeInQueue, runCodeWithPrerequisites])
 
-    const addNodeToQueue = useCallback((node, edges) => {
+    const addNodeToQueue = useCallback((node) => {
         console.log("addNodeToQueue", node);
         if(executionQueueRef.current.length > 0) return ;
         executionQueueRef.current.push(node.id);

@@ -214,20 +214,33 @@ export default function App() {
                 }
             }
 
-            const newNode = {
-                id: id,
-                type: 'CustomNode',
-                data: {
-                    id: id,
-                    code: '',
-                    title: `Node ${nodeCount}`,
-                    inputs: [],
-                    outputs: [],
-                    state: 0
-                },
-                position: position,
+            let newNode;
 
-            };
+            if(nodeCount%2 === 0){
+                newNode = {
+                    id: id,
+                    type: 'CustomNode',
+                    data: {
+                        id: id,
+                        code: '',
+                        title: `Node ${nodeCount}`,
+                        inputs: [],
+                        outputs: [],
+                        state: 0
+                    },
+                    position: position,
+
+                };
+            }else{
+                newNode = {
+                    id: id,
+                    type: 'ObserverNode',
+                    data: {},
+                    position: position,
+                }
+            }
+
+
             setNodes((nds) => [...nds, newNode]);
             setNodeCount((count) => count + 1);
         }

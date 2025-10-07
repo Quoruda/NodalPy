@@ -326,7 +326,6 @@ const CustomNode = memo(({ data }) => {
     if (prev.code !== next.code) return false;
     if (prev.title !== next.title) return false;
     if (prev.state !== next.state) return false;
-    if (prev.output !== next.output) return false;
 
     // Comparaisons d'arrays d'objets
     if (!arraysEqualObjects(prev.inputs, next.inputs)) return false;
