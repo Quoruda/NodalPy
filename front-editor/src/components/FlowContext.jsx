@@ -6,6 +6,8 @@ const FlowContext = createContext({
     nodes: [],
     setNodes: () => {},
     setEdges: () => {},
+    //
+    wsRef: { current: null },
     // Vous pouvez ajouter d'autres données partagées ici
 });
 
@@ -20,9 +22,9 @@ export const useFlowContext = () => {
 };
 
 // ✅ Provider pour envelopper ReactFlow
-export const FlowProvider = ({ children, edges, nodes }) => {
+export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef }) => {
     return (
-        <FlowContext.Provider value={{ edges, nodes }}>
+        <FlowContext.Provider value={{ nodes, edges, setNodes, setEdges, wsRef }}>
             {children}
         </FlowContext.Provider>
     );

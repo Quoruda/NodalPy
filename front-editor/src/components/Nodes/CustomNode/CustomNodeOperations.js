@@ -29,6 +29,9 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
                 executionQueueRef.current.pop();
             }
         }
+        console.log("getNextNodeInQueue", node);
+        console.log(executionQueueRef.current)
+
         if(node === null){
             return null;
         }
@@ -104,8 +107,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
                 variables: variables,
                 node: node.id,
             };
-            console.log(request_data);
-            console.log(node);
 
             currentWs.send(JSON.stringify(request_data));
 
@@ -120,6 +121,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     }, [setNodes, wsRef]); // ✅ Plus de dépendance sur nodes et edges !
 
     const runCodeWithPrerequisites = useCallback( (node) => {
+        console.log("runCodeWithPrerequisites", node);
         const currentEdges = edgesRef.current;
         const currentNodes = nodesRef.current;
 
@@ -152,6 +154,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         }
 
         if(! hasPrerequisites){
+            console.log("No prerequisites, running", node);
             executionQueueRef.current.splice(executionQueueRef.current.indexOf(node.id), 1)
             runCode(node);
             return;
@@ -163,15 +166,18 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
             runCodeWithPrerequisites(next)
         }
 
-    }, [getNextNodeInQueue, runCode, setNodes])
+    }, [getNextNodeInQueue, runCode, setNodes]);
 
 
-    const processQueue = useCallback( () => {
-        let node = getNextNodeInQueue();
-        if(node !== null){
-            runCodeWithPrerequisites(node)
+    const processQueue = useCallback(() => {
+        console.log("processQueue");
+        while (executionQueueRef.current.length > 0) {
+            let node = getNextNodeInQueue();
+            if (node !== null) {
+                runCodeWithPrerequisites(node);
+            }
         }
-    }, [getNextNodeInQueue, runCodeWithPrerequisites])
+    }, [getNextNodeInQueue, runCodeWithPrerequisites]);
 
     const addNodeToQueue = useCallback((node) => {
         console.log("addNodeToQueue", node);

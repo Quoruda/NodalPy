@@ -28,6 +28,8 @@ export default function App() {
 
     const {wsRef} = useWebSocket("ws://localhost:8000/ws", setNodes);
 
+
+
     const onConnectEdge = useCallback(
         (params) => setEdges((eds) => addEdge(params, eds)),
         [setEdges]
@@ -138,9 +140,6 @@ export default function App() {
 
                     console.log("Projet chargé avec succès");
 
-                    if(wsRef.current){
-                        setTimeout(() => wsRef.current.send({"action":  "get_ouput"}), 0.1)
-                    }
 
                 } else {
                     alert("Format de fichier invalide. Le fichier doit contenir 'nodes' et 'edges'");
@@ -161,7 +160,7 @@ export default function App() {
 
         // Réinitialiser la valeur de l'input pour permettre de recharger le même fichier
         event.target.value = '';
-    }, [nodes.length, edges, setNodes, setEdges, wsRef]);
+    }, [nodes.length, edges, setNodes, setEdges]);
 
     // Optimisation: mémorisation des edges stylés
     const styledEdges = useMemo(() =>
@@ -255,7 +254,7 @@ export default function App() {
     }, []);
 
     return (
-        <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges}>
+        <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef}>
         <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
             <button className="add-node-button" onClick={addNode}>
                 Ajouter un nœud

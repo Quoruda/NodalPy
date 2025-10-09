@@ -174,8 +174,6 @@ export const useWebSocket = (url, setNodes) => {
                 reconnectTimeoutRef.current = null;
             }
 
-            sendMessage({"action": "get_ouput"});
-
             reconnectAttemptsRef.current = 0;
             notifySuccess();
         };

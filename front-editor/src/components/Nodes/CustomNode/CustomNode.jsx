@@ -37,12 +37,13 @@ const CustomNode = memo(({ data }) => {
     const [inputs, setInputs] = useState(data.inputs || []);
     const [outputs, setOutputs] = useState(data.outputs || []);
 
-    const prevDataRef = useRef();
+    const prevDataRef = useRef({});
     const throttleRef = useRef(null);
     const nodeId = data.id;
 
-    const { edges, nodes, setNodes } = useFlowContext();
-    const {processQueue} = CustomNodeOperations(setNodes,nodes, edges);
+    const { edges, nodes, setNodes, wsRef } = useFlowContext();
+
+    const {addNodeToQueue, updateNode} = CustomNodeOperations(setNodes,wsRef,nodes, edges);
 
     // ✅ Synchronisation optimisée avec les props (adaptée pour les objets)
     useEffect(() => {
@@ -81,8 +82,9 @@ const CustomNode = memo(({ data }) => {
 
     // ✅ Callbacks stables
     const runCode = useCallback(() => {
-        data.addNodeToQueue?.(data, edges);
-    }, [data, edges]);
+        console.log("Run code");
+        addNodeToQueue?.(data);
+    }, [addNodeToQueue, data]);
 
     const handleSave = useCallback(() => {
         data.onUpdate?.(data.id, {
@@ -159,10 +161,12 @@ const CustomNode = memo(({ data }) => {
             clearTimeout(throttleRef.current);
         }
 
+        updateNode(data.id, { code: value });
+
         throttleRef.current = setTimeout(() => {
             data.onChange?.(data.id, value);
         }, 100);
-    }, [data]);
+    }, [data, updateNode]);
 
     // ✅ Calcul des connexions memoized (adapté pour les objets)
     const connectionStatus = useMemo(() => {
