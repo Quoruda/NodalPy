@@ -11,6 +11,7 @@ import {
     CODE_BASIC_SETUP,
     OUTPUT_BASIC_SETUP
 } from './constants.js';
+import '../nodes.css'
 import './CustomNode.css';
 import {CustomNodeOperations} from "./CustomNodeOperations.js";
 
@@ -217,7 +218,7 @@ const CustomNode = memo(({ data }) => {
 
     return (
         <div
-            className="custom-node"
+            className="node custom-node"
             style={{
                 display: 'flex',
                 flexDirection: "column",

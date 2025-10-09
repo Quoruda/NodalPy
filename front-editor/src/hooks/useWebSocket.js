@@ -7,27 +7,24 @@ export const useWebSocket = (url, setNodes) => {
     const reconnectAttemptsRef = useRef(0);
     const reconnectTimeoutRef = useRef(null);
     const isManualCloseRef = useRef(false);
-
-    // ✅ SOLUTION : Utiliser une ref pour setNodes au lieu de la dépendance directe
     const setNodesRef = useRef(setNodes);
 
     const WEBSOCKET_ERROR_TOAST_ID = "websocket-error";
     const WEBSOCKET_RECONNECTING_TOAST_ID = "websocket-reconnecting";
     const WEBSOCKET_CONNECTED_TOAST_ID = "websocket-connected";
 
-    // ✅ Mettre à jour la ref à chaque render
     useEffect(() => {
         setNodesRef.current = setNodes;
     }, [setNodes]);
 
-    const clearNotifs = () => {
+    const clearNotifs = useCallback(() => {
         toast.dismiss(WEBSOCKET_ERROR_TOAST_ID);
         toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
         toast.dismiss(WEBSOCKET_CONNECTED_TOAST_ID);
-    }
+    }, []);
 
-    const notifySuccess = () => {
-        clearNotifs()
+    const notifySuccess = useCallback(() => {
+        clearNotifs();
         toast.success("Websocket ouvert ✅", {
             position: "bottom-right",
             toastId: WEBSOCKET_CONNECTED_TOAST_ID,
@@ -37,9 +34,9 @@ export const useWebSocket = (url, setNodes) => {
             pauseOnHover: true,
             draggable: true,
         });
-    };
+    }, [clearNotifs]);
 
-    const notifyError = () => {
+    const notifyError = useCallback(() => {
         toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
         toast.error("WebSocket fermé ❌", {
             toastId: WEBSOCKET_ERROR_TOAST_ID,
@@ -50,21 +47,23 @@ export const useWebSocket = (url, setNodes) => {
             pauseOnHover: true,
             draggable: true,
         });
-    };
+    }, []);
 
-    const notifyReconnecting = (attemptNumber) => {
+    const notifyReconnecting = useCallback((attemptNumber) => {
+        console.log(`🔄 Programmation reconnexion ${reconnectAttemptsRef.current}`);
+
         toast.info(`Tentative de reconnexion ${attemptNumber}...`, {
             toastId: WEBSOCKET_RECONNECTING_TOAST_ID,
             position: "bottom-right",
-            autoClose: 2000,
+            autoClose: 1500,
             hideProgressBar: false,
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
         });
-    };
+    }, []);
 
-    const notifyExecution = (name,id) => {
+    const notifyExecution = useCallback((name, id) => {
         toast.info(`L'exécution du noeud '${name}' est terminée`, {
             toastId: id,
             position: "bottom-right",
@@ -74,17 +73,16 @@ export const useWebSocket = (url, setNodes) => {
             pauseOnHover: true,
             draggable: true,
         });
-    };
+    }, []);
 
-    const getReconnectDelay = (attemptNumber) => {
+    const getReconnectDelay = useCallback((attemptNumber) => {
         if (attemptNumber <= 10) {
             return 3000;
         } else {
             return 60000;
         }
-    };
+    }, []);
 
-    // ✅ sendMessage n'a plus besoin de dépendances
     const sendMessage = useCallback((message) => {
         const currentWs = wsRef.current;
         if (currentWs && currentWs.readyState === WebSocket.OPEN) {
@@ -95,7 +93,6 @@ export const useWebSocket = (url, setNodes) => {
         return false;
     }, []);
 
-    // ✅ readRunMessage utilise maintenant setNodesRef.current au lieu de setNodes
     const readRunMessage = useCallback((msg) => {
         setNodesRef.current((nds) => {
             let updatedNodes = [...nds];
@@ -107,9 +104,6 @@ export const useWebSocket = (url, setNodes) => {
 
                 if (msg.status === "running") {
                     newData.state = 1;
-                }
-                if (msg.output) {
-                    newData.output = (newData.output || "") + msg.output;
                 }
                 if (msg.status === "finished") {
                     newData.state = 2;
@@ -123,9 +117,45 @@ export const useWebSocket = (url, setNodes) => {
             }
             return updatedNodes;
         });
-    }, []); // ✅ Plus de dépendances !
+    }, [notifyExecution]);
 
-    // ✅ connect n'a plus readRunMessage dans ses dépendances
+    // 🔥 Créer une ref pour readRunMessage
+    const readRunMessageRef = useRef(readRunMessage);
+
+    useEffect(() => {
+        readRunMessageRef.current = readRunMessage;
+    }, [readRunMessage]);
+
+    // 🔥 SOLUTION : Créer connect et scheduleReconnect avec des refs pour briser la dépendance circulaire
+    const connectRef = useRef(null);
+
+    const scheduleReconnect = useCallback(() => {
+        if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+        }
+
+        reconnectAttemptsRef.current++;
+        const delay = getReconnectDelay(reconnectAttemptsRef.current);
+
+        notifyReconnecting(reconnectAttemptsRef.current);
+
+        reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectTimeoutRef.current = null;
+            // 🔥 Utiliser connectRef au lieu de connect directement
+            if (connectRef.current) {
+                connectRef.current();
+            }
+        }, delay);
+    }, [getReconnectDelay, notifyReconnecting]);
+
+    // 🔥 Créer une ref pour scheduleReconnect
+    const scheduleReconnectRef = useRef(scheduleReconnect);
+
+    useEffect(() => {
+        scheduleReconnectRef.current = scheduleReconnect;
+    }, [scheduleReconnect]);
+
     const connect = useCallback(() => {
         if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
             isManualCloseRef.current = true;
@@ -144,7 +174,7 @@ export const useWebSocket = (url, setNodes) => {
                 reconnectTimeoutRef.current = null;
             }
 
-            sendMessage({"action":  "get_ouput"})
+            sendMessage({"action": "get_ouput"});
 
             reconnectAttemptsRef.current = 0;
             notifySuccess();
@@ -155,7 +185,8 @@ export const useWebSocket = (url, setNodes) => {
 
             if (!isManualCloseRef.current) {
                 notifyError();
-                scheduleReconnect();
+                // 🔥 Utiliser scheduleReconnectRef au lieu de scheduleReconnect
+                scheduleReconnectRef.current();
             }
         };
 
@@ -172,10 +203,10 @@ export const useWebSocket = (url, setNodes) => {
             const messages = [...messageQueue];
             messageQueue = [];
 
-            for(let msg of messages){
-                if(!msg.action) console.log("Message sans action ?", msg)
-                else if(msg.action === "run"){
-                    readRunMessage(msg);
+            for (let msg of messages) {
+                if (!msg.action) console.log("Message sans action ?", msg);
+                else if (msg.action === "run") {
+                    readRunMessageRef.current(msg);
                 }
                 else {
                     console.log("Message WS inconnu :", msg);
@@ -200,27 +231,14 @@ export const useWebSocket = (url, setNodes) => {
             }
         });
 
-    }, [url, sendMessage]); // ✅ Plus de dépendance à readRunMessage !
+    }, [url, sendMessage, notifySuccess, notifyError]);
 
-    const scheduleReconnect = useCallback(() => {
-        if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-            reconnectTimeoutRef.current = null;
-        }
-
-        reconnectAttemptsRef.current++;
-        const delay = getReconnectDelay(reconnectAttemptsRef.current);
-
-        console.log(`🔄 Programmation reconnexion ${reconnectAttemptsRef.current} dans ${delay/1000}s`);
-        notifyReconnecting(reconnectAttemptsRef.current);
-
-        reconnectTimeoutRef.current = setTimeout(() => {
-            reconnectTimeoutRef.current = null;
-            connect();
-        }, delay);
+    // 🔥 Mettre à jour connectRef à chaque fois que connect change
+    useEffect(() => {
+        connectRef.current = connect;
     }, [connect]);
 
-    // ✅ Ce useEffect ne se déclenchera plus à chaque déplacement de nœud
+    // ✅ Ce useEffect ne se déclenchera qu'une seule fois au montage
     useEffect(() => {
         connect();
 
