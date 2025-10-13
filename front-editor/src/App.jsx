@@ -15,12 +15,22 @@ import './App.css';
 import { FlowProvider } from './components/FlowContext.jsx';
 import { useWebSocket } from './hooks/useWebSocket.js';
 
-const initialNodes = [];
-const initialEdges = [];
+let defaultNodes = []
+let defaultEdges = []
+
+const flowData = localStorage.getItem('flowData');
+if (flowData) {
+    const parsedData = JSON.parse(flowData);
+    console.log("Loaded flow data from localStorage:", parsedData);
+    if (parsedData.nodes && parsedData.edges) {
+        defaultNodes = parsedData.nodes;
+        defaultEdges = parsedData.edges;
+    }
+}
 
 export default function App() {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
     const [nodeCount, setNodeCount] = useState(3);
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
@@ -35,7 +45,7 @@ export default function App() {
         [setEdges]
     );
 
-    /*
+
     useEffect(() => {
         const handleBeforeUnload = (e) => {
           e.preventDefault();
@@ -44,12 +54,11 @@ export default function App() {
 
         window.addEventListener("beforeunload", handleBeforeUnload);
 
+
         return () => {
           window.removeEventListener("beforeunload", handleBeforeUnload);
         };
       }, []);
-
-     */
 
     // Optimisation des events handlers
     useEffect(() => {
@@ -86,7 +95,19 @@ export default function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedEdges, selectedNodes, setEdges, setNodes]);
 
-    const saveProject = useCallback(() => {
+    const saveProjectToLocalStorage = useCallback(() => {
+        const data = {nodes: nodes, edges:edges}
+        const json_data = JSON.stringify(data)
+        localStorage.setItem("flowData", json_data);
+        console.log("Project saved to localStorage", json_data);
+    }, [nodes, edges]);
+
+    useEffect(() => {
+        saveProjectToLocalStorage()
+    }, [nodes, edges, saveProjectToLocalStorage]);
+
+
+    const saveProjectToFile = useCallback(() => {
         const data = {nodes: nodes, edges:edges}
         const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -259,7 +280,7 @@ export default function App() {
             <button className="add-node-button" onClick={addNode}>
                 Ajouter un nœud
             </button>
-            <button className="save-button" onClick={saveProject}>
+            <button className="save-button" onClick={saveProjectToFile}>
                 Sauvegarder
             </button>
             <input
