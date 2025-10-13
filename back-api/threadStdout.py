@@ -29,6 +29,7 @@ Capture aussi tout le contenu dans un buffer pour __output__.
             # threadsafe post to asyncio queue
             self.loop.call_soon_threadsafe(self.queue.put_nowait, payload)
 
+
     def flush(self):
         if self._buffer:
             payload = {"type": "stdout", "node": self.node, "text": self._buffer}
