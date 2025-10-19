@@ -5,10 +5,10 @@ class UserData:
     def __init__(self, identifier: str):
         self.userId = identifier
         self.nodeContexts = {}
-        self.thread = None
+        self.is_running_code = False
 
     def can_run_code(self):
-        return self.thread is None or not self.thread.is_alive()
+        return not self.is_running_code
 
     def get_variable(self, node: str, name: str):
         node_context = self.nodeContexts.get(node, {})
@@ -30,11 +30,16 @@ class UserData:
         exec_globals, local_scope = prepare_contexts(new_context)
         self.nodeContexts[node] = local_scope
 
+        self.is_running_code = True
         try:
             exec(code, exec_globals, local_scope)
         except Exception as e:
+            print(e)
             pass
+        self.is_running_code = False
 
+
+        print(local_scope)
         return local_scope["__stdout__"].getvalue() if "__stdout__" in local_scope else ""
 
 
