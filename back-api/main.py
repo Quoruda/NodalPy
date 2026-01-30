@@ -29,15 +29,7 @@ if __name__ == "__main__":
         webview.start(gui='qt')
     elif args.mode == "local":
         start_server()
-    elif args.mode == "help":
-        print("Mode disponible: ")
-        print("desktop -> Lance l'application dans une fenêtre.")
-        print("local -> Lance l'application en mode serveur accessible via une interface web.")
-        webview.create_window("NodalPy", "http://127.0.0.1:8000")
-        webview.start(gui='qt')
-    elif args.mode == "local":
-        start_server()
-    elif args.mode == "help":
+    else:  # help
         print("Mode disponible: ")
         print("desktop -> Lance l'application dans une fenêtre.")
         print("local -> Lance l'application en mode serveur accessible via une interface web.")

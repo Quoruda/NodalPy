@@ -26,8 +26,31 @@ def move_build():
 
 
 def move_backend():
-    shutil.copy(os.path.join(BACKEND_DIR, 'main.py'), TARGET_DIR)
-    shutil.copy(os.path.join(BACKEND_DIR, 'requirements.txt'), TARGET_DIR)
+    print(f"📂 Déplacement du backend depuis {BACKEND_DIR} ...")
+    
+    # Liste des dossiers/fichiers à exclure
+    exclusions = {
+        "__pycache__", 
+        ".venv", 
+        ".idea",
+        "front"  # Le dossier front est géré par move_build
+    }
+
+    for item in os.listdir(BACKEND_DIR):
+        if item in exclusions:
+            continue
+            
+        src_path = os.path.join(BACKEND_DIR, item)
+        dst_path = os.path.join(TARGET_DIR, item)
+
+        if os.path.isfile(src_path):
+            shutil.copy(src_path, dst_path)
+        elif os.path.isdir(src_path):
+             # On copie recursivement les dossiers qui ne sont pas exclus
+            if os.path.exists(dst_path):
+                shutil.rmtree(dst_path)
+            shutil.copytree(src_path, dst_path)
+            
     print("✅ Backend déplacé avec succès !")
 
 if __name__ == "__main__":
