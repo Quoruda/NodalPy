@@ -1,5 +1,5 @@
-import {useCallback, useEffect, useRef} from 'react';
-import {toast} from "react-toastify";
+import { useCallback, useEffect, useRef } from 'react';
+import { toast } from "react-toastify";
 
 // ✅ Hook WebSocket dédié et réutilisable avec reconnexion automatique
 export const useWebSocket = (url, setNodes) => {
@@ -119,12 +119,41 @@ export const useWebSocket = (url, setNodes) => {
         });
     }, [notifyExecution]);
 
-    // 🔥 Créer une ref pour readRunMessage
-    const readRunMessageRef = useRef(readRunMessage);
+    const readVariableMessage = useCallback((msg) => {
+        setNodesRef.current((nds) => {
+            return nds.map((node) => {
+                if (node.id === msg.node) {
+                    const newOutputs = node.data.outputs.map((output) => {
+                        if (output.name === msg.name) {
+                            return {
+                                ...output,
+                                value: msg.value,
+                                type: msg.type
+                            };
+                        }
+                        return output;
+                    });
+
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            outputs: newOutputs
+                        }
+                    };
+                }
+                return node;
+            });
+        });
+    }, []);
+
+    // 🔥 Créer une ref pour readVariableMessage
+    const readVariableMessageRef = useRef(readVariableMessage);
 
     useEffect(() => {
-        readRunMessageRef.current = readRunMessage;
-    }, [readRunMessage]);
+        readVariableMessageRef.current = readVariableMessage;
+    }, [readVariableMessage]);
+
 
     // 🔥 SOLUTION : Créer connect et scheduleReconnect avec des refs pour briser la dépendance circulaire
     const connectRef = useRef(null);
@@ -203,8 +232,11 @@ export const useWebSocket = (url, setNodes) => {
 
             for (let msg of messages) {
                 if (!msg.action) console.log("Message sans action ?", msg);
-                else if (msg.action === "run") {
+                else if (msg.action === "run_code") {
                     readRunMessageRef.current(msg);
+                }
+                else if (msg.action === "get_variable") {
+                    readVariableMessageRef.current(msg);
                 }
                 else {
                     console.log("Message WS inconnu :", msg);

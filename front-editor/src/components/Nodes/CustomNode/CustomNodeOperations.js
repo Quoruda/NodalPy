@@ -16,23 +16,23 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         let node = null;
         const currentNodes = nodesRef.current;
 
-        while(executionQueueRef.current.length > 0){
-            const IdNode = executionQueueRef.current.at(executionQueueRef.current.length-1);
+        while (executionQueueRef.current.length > 0) {
+            const IdNode = executionQueueRef.current.at(executionQueueRef.current.length - 1);
             for (let n of currentNodes) {
-                if(n.id === IdNode){
+                if (n.id === IdNode) {
                     node = n;
                 }
             }
-            if(node !== null){
+            if (node !== null) {
                 break;
-            }else{
+            } else {
                 executionQueueRef.current.pop();
             }
         }
         console.log("getNextNodeInQueue", node);
         console.log(executionQueueRef.current)
 
-        if(node === null){
+        if (node === null) {
             return null;
         }
         return node.data;
@@ -73,16 +73,16 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
                     const var_targetHandle = edge.targetHandle;
                     let var_target_name = "";
 
-                    for(let v of node.inputs){
-                        if(v.id === var_targetHandle){
+                    for (let v of node.inputs) {
+                        if (v.id === var_targetHandle) {
                             var_target_name = v.name;
                         }
                     }
 
                     for (let n of currentNodes) {
                         if (n.id === var_node) {
-                            for(let output of n.data.outputs){
-                                if(output.id === var_sourceHandle){
+                            for (let output of n.data.outputs) {
+                                if (output.id === var_sourceHandle) {
 
                                     const var_source_name = output.name;
                                     const variable = {
@@ -102,7 +102,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
             // ✅ Envoyer le message WebSocket UNE SEULE FOIS (en dehors de setNodes)
             const request_data = {
-                action: "run",
+                action: "run_node",
                 code: node.code,
                 variables: variables,
                 node: node.id,
@@ -120,7 +120,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         }
     }, [setNodes, wsRef]); // ✅ Plus de dépendance sur nodes et edges !
 
-    const runCodeWithPrerequisites = useCallback( (node) => {
+    const runCodeWithPrerequisites = useCallback((node) => {
         console.log("runCodeWithPrerequisites", node);
         const currentEdges = edgesRef.current;
         const currentNodes = nodesRef.current;
@@ -135,17 +135,17 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         const edgeInputs = [];
 
         for (let edge of currentEdges) {
-            if(edge.target === node.id){
+            if (edge.target === node.id) {
                 edgeInputs.push(edge.source)
             }
         }
 
         let hasPrerequisites = false
 
-        for( let n of currentNodes){
-            if( edgeInputs.includes(n.id) ){
-                if (n.data.state !== 2){
-                    if( ! executionQueueRef.current.includes(n.id) ){
+        for (let n of currentNodes) {
+            if (edgeInputs.includes(n.id)) {
+                if (n.data.state !== 2) {
+                    if (!executionQueueRef.current.includes(n.id)) {
                         hasPrerequisites = true;
                         executionQueueRef.current.push(n.id);
                     }
@@ -153,7 +153,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
             }
         }
 
-        if(! hasPrerequisites){
+        if (!hasPrerequisites) {
             console.log("No prerequisites, running", node);
             executionQueueRef.current.splice(executionQueueRef.current.indexOf(node.id), 1)
             runCode(node);
@@ -162,7 +162,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
 
         let next = getNextNodeInQueue();
-        if(next !== null){
+        if (next !== null) {
             runCodeWithPrerequisites(next)
         }
 
@@ -181,10 +181,10 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
     const addNodeToQueue = useCallback((node) => {
         console.log("addNodeToQueue", node);
-        if(executionQueueRef.current.length > 0) return ;
+        if (executionQueueRef.current.length > 0) return;
         executionQueueRef.current.push(node.id);
         processQueue()
     }, [processQueue])
 
-    return {updateNode, runCode, addNodeToQueue, processQueue}
+    return { updateNode, runCode, addNodeToQueue, processQueue }
 }
