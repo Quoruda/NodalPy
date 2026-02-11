@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ReactFlow,
     useNodesState,
@@ -36,7 +36,7 @@ export default function App() {
     const [selectedNodes, setSelectedNodes] = useState([]);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-    const {wsRef} = useWebSocket("ws://localhost:8000/ws", setNodes);
+    const { wsRef } = useWebSocket("ws://localhost:8000/ws", setNodes);
 
 
 
@@ -48,17 +48,17 @@ export default function App() {
 
     useEffect(() => {
         const handleBeforeUnload = (e) => {
-          e.preventDefault();
-          e.returnValue = "";
+            e.preventDefault();
+            e.returnValue = "";
         };
 
         window.addEventListener("beforeunload", handleBeforeUnload);
 
 
         return () => {
-          window.removeEventListener("beforeunload", handleBeforeUnload);
+            window.removeEventListener("beforeunload", handleBeforeUnload);
         };
-      }, []);
+    }, []);
 
     // Optimisation des events handlers
     useEffect(() => {
@@ -66,7 +66,7 @@ export default function App() {
             if (event.key === 'Delete' || event.key === 'Backspace') {
                 const activeTag = document.activeElement.tagName;
                 const isTyping = activeTag === 'INPUT' || activeTag === 'TEXTAREA' ||
-                               document.activeElement.isContentEditable;
+                    document.activeElement.isContentEditable;
                 const isInCodeMirror = document.activeElement.closest('.cm-editor');
 
                 if (isTyping || isInCodeMirror) {
@@ -96,7 +96,7 @@ export default function App() {
     }, [selectedEdges, selectedNodes, setEdges, setNodes]);
 
     const saveProjectToLocalStorage = useCallback(() => {
-        const data = {nodes: nodes, edges:edges}
+        const data = { nodes: nodes, edges: edges }
         const json_data = JSON.stringify(data)
         localStorage.setItem("flowData", json_data);
         console.log("Project saved to localStorage", json_data);
@@ -108,7 +108,7 @@ export default function App() {
 
 
     const saveProjectToFile = useCallback(() => {
-        const data = {nodes: nodes, edges:edges}
+        const data = { nodes: nodes, edges: edges }
         const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -145,15 +145,15 @@ export default function App() {
                 if (data.nodes && data.edges) {
                     // Ici vous devez utiliser vos setters d'état pour mettre à jour nodes et edges
                     let newNodes = [];
-                    newNodes.splice(0,nodes.length);
-                    for(let node of data.nodes){
+                    newNodes.splice(0, nodes.length);
+                    for (let node of data.nodes) {
                         node.data.state = 0;
                         newNodes.push(node);
                     }
 
                     let newEdges = [];
-                    edges.splice(0,edges.length);
-                    for(let edge of data.edges){
+                    edges.splice(0, edges.length);
+                    for (let edge of data.edges) {
                         newEdges.push(edge);
                     }
                     setNodes(newNodes);
@@ -192,18 +192,18 @@ export default function App() {
                 strokeWidth: selectedEdges.some(sel => sel.id === edge.id) ? 3 : 1.5,
             },
         }))
-    , [edges, selectedEdges]);
+        , [edges, selectedEdges]);
 
     const generateUniqueId = () => {
         return `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     };
 
     // Optimisation: addNode stable
-    const addNode = useCallback(() => {
+    const addNode = useCallback((type = 'CustomNode') => {
         const id = generateUniqueId();
-        if(!reactFlowInstance) return;
+        if (!reactFlowInstance) return;
 
-        console.log(reactFlowInstance)
+        console.log("Adding node type:", type);
 
         const flowElement = document.querySelector('.react-flow');
         const bounds = flowElement?.getBoundingClientRect();
@@ -220,15 +220,14 @@ export default function App() {
 
             let canBePlaced = false;
 
-            while(!canBePlaced){
+            while (!canBePlaced) {
                 canBePlaced = true
-                for(let node of nodes){
-                    if(node.position.x === position.x && node.position.y === position.y){
-                        console.log("TRUE")
+                for (let node of nodes) {
+                    if (node.position.x === position.x && node.position.y === position.y) {
                         canBePlaced = false;
                     }
                 }
-                if(!canBePlaced){
+                if (!canBePlaced) {
                     position.x += 50;
                     position.y += 50;
                 }
@@ -236,28 +235,28 @@ export default function App() {
 
             let newNode;
 
-            if(nodeCount%2 === 0){
-                newNode = {
-                    id: id,
-                    type: 'CustomNode',
-                    data: {
-                        id: id,
-                        code: '',
-                        title: `Node ${nodeCount}`,
-                        inputs: [],
-                        outputs: [],
-                        state: 0
-                    },
-                    position: position,
-
-                };
-            }else{
+            if (type === 'ObserverNode') {
                 newNode = {
                     id: id,
                     type: 'ObserverNode',
                     data: {},
                     position: position,
                 }
+            } else {
+                // CustomNode or FastNode
+                newNode = {
+                    id: id,
+                    type: type,
+                    data: {
+                        id: id,
+                        code: '',
+                        title: type === 'FastNode' ? `Fast Node ${nodeCount}` : `Node ${nodeCount}`,
+                        inputs: [],
+                        outputs: [],
+                        state: 0
+                    },
+                    position: position,
+                };
             }
 
 
@@ -276,23 +275,29 @@ export default function App() {
 
     return (
         <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef}>
-        <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-            <button className="add-node-button" onClick={addNode}>
-                Ajouter un nœud
-            </button>
-            <button className="save-button" onClick={saveProjectToFile}>
-                Sauvegarder
-            </button>
-            <input
-                type="file"
-                accept=".json"
-                onChange={loadProject}
-                style={{display: 'none'}}
-                id="loading-file-input"
-            />
-            <button className="import-button" onClick={handleImportClick}>
-                Importer
-            </button>
+            <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+                <button className="add-node-button" onClick={() => addNode('CustomNode')}>
+                    Ajouter Node (Manuel)
+                </button>
+                <button className="add-node-button" onClick={() => addNode('FastNode')} style={{ marginLeft: '10px', background: '#e056fd' }}>
+                    Ajouter Fast Node ⚡
+                </button>
+                <button className="add-node-button" onClick={() => addNode('ObserverNode')} style={{ marginLeft: '10px', background: '#2bad60' }}>
+                    Ajouter Observer 👀
+                </button>
+                <button className="save-button" onClick={saveProjectToFile}>
+                    Sauvegarder
+                </button>
+                <input
+                    type="file"
+                    accept=".json"
+                    onChange={loadProject}
+                    style={{ display: 'none' }}
+                    id="loading-file-input"
+                />
+                <button className="import-button" onClick={handleImportClick}>
+                    Importer
+                </button>
                 <ReactFlow
                     onInit={setReactFlowInstance}
                     nodes={nodes}
@@ -305,10 +310,10 @@ export default function App() {
                     fitView
                 >
                     <Background variant="dots" gap={16} size={1} />
-                    <MiniMap nodeColor={(n) => (n.type === 'CustomNode' ? '#ffcc00' : '#aaa')} position="bottom-left"/>
-                    <Controls position="bottom-left"/>
+                    <MiniMap nodeColor={(n) => (n.type === 'CustomNode' ? '#ffcc00' : '#aaa')} position="bottom-left" />
+                    <Controls position="bottom-left" />
                 </ReactFlow>
-        </div>
+            </div>
         </FlowProvider>
     );
 }

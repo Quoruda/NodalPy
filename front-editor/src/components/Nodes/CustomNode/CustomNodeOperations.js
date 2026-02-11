@@ -55,7 +55,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     }, [setNodes]);
 
     // ✅ SOLUTION CORRECTE : Callbacks stables avec useRef
-    const runCode = useCallback((node) => {
+    const runCode = useCallback((node, timeout = null) => {
 
         const currentWs = wsRef.current;
         if (currentWs && currentWs.readyState === WebSocket.OPEN) {
@@ -106,6 +106,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
                 code: node.code,
                 variables: variables,
                 node: node.id,
+                timeout: timeout
             };
 
             currentWs.send(JSON.stringify(request_data));
@@ -113,7 +114,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
             // ✅ Mettre à jour le state séparément
             setNodes((nds) =>
                 nds.map((n) =>
-                    n.id === node.id ? { ...n, data: { ...n.data, state: 1, output: "" } } : n
+                    n.id === node.id ? { ...n, data: { ...n.data, state: 1, output: "", error: null } } : n
                 )
             );
 
@@ -186,5 +187,31 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         processQueue()
     }, [processQueue])
 
-    return { updateNode, runCode, addNodeToQueue, processQueue }
+    const triggerDownstreamNodes = useCallback((sourceNodeId) => {
+        const currentEdges = edgesRef.current;
+        const currentNodes = nodesRef.current;
+
+        // Find connected target nodes
+        const targetIds = currentEdges
+            .filter(e => e.source === sourceNodeId)
+            .map(e => e.target);
+
+        // Deduplicate
+        const uniqueTargetIds = [...new Set(targetIds)];
+
+        uniqueTargetIds.forEach(targetId => {
+            const targetNode = currentNodes.find(n => n.id === targetId);
+            // Check if target is a FastNode (we can check type if available, otherwise assume manual nodes don't auto-run)
+            // But requirement says: "FastNode ... execute toute la branche d'affile rapide"
+            // So we should trigger FastNodes.
+            if (targetNode && targetNode.type === 'FastNode') {
+                console.log(`⚡ Triggering downstream FastNode: ${targetNode.id}`);
+                // We pass a short timeout for downstream nodes too
+                runCode(targetNode, 1.0);
+            }
+        });
+
+    }, [runCode]);
+
+    return { updateNode, runCode, addNodeToQueue, processQueue, triggerDownstreamNodes }
 }

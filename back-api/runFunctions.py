@@ -5,9 +5,33 @@ import sys
 def _run_code(code: str, global_context: dict, local_context: dict):
     exec(code, global_context, local_context)
 
-def run_code_in_thread(code: str, global_context: dict, local_context: dict):
-    thread = threading.Thread(target=_run_code, args=(code, global_context, local_context), daemon=True)
+def run_code_in_thread(code: str, global_context: dict, local_context: dict, timeout: float = None):
+    # Create a mutable object to store exception from thread
+    result_container = {"error": None}
+    
+    def target():
+        try:
+            _run_code(code, global_context, local_context)
+        except Exception as e:
+            result_container["error"] = e
+
+    thread = threading.Thread(target=target, daemon=True)
     thread.start()
+    
+    if timeout:
+        thread.join(timeout)
+        if thread.is_alive():
+             # We cannot really kill the thread in Python easily without ctypes or subprocess
+             # For now, we just stop waiting and raise TimeoutError
+             # The thread will continue in background (potentially bad for infinite loops)
+             # Ideally we should use multiprocessing for true isolation and killing
+             raise TimeoutError(f"Execution timed out after {timeout}s")
+    else:
+        thread.join()
+        
+    if result_container["error"]:
+        raise result_container["error"]
+
     return thread
 
 def observe_variable(local_context: dict, var_name: str ):

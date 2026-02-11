@@ -14,7 +14,7 @@ class UserData:
         node_context = self.nodeContexts.get(node, {})
         return node_context.get(name, None)
 
-    def run_node(self, node: str, code: str, variables: list[dict]):
+    def run_node(self, node: str, code: str, variables: list[dict], timeout: float = None) -> tuple[str, str]:
         if not self.can_run_code():
             raise RuntimeError("Code is already running")
 
@@ -31,15 +31,27 @@ class UserData:
         self.nodeContexts[node] = local_scope
 
         self.is_running_code = True
+        
+        status = "finished"
+        output = ""
+        error_msg = ""
+        
         try:
-            exec(code, exec_globals, local_scope)
+            run_code_in_thread(code, exec_globals, local_scope, timeout)
+        except TimeoutError:
+             status = "timeout"
+             error_msg = f"Execution timed out ({timeout}s)"
+             print(error_msg)
         except Exception as e:
+            status = "error"
+            error_msg = str(e)
             print(e)
-            pass
+            
         self.is_running_code = False
-
-
-        print(local_scope)
-        return local_scope["__stdout__"].getvalue() if "__stdout__" in local_scope else ""
+        
+        if "__stdout__" in local_scope:
+            output = local_scope["__stdout__"].getvalue()
+            
+        return status, output, error_msg
 
 

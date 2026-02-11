@@ -37,14 +37,32 @@ class UserWebSocket:
             await self.websocket.send_json({"error": "code is already running"})
             return
 
-        await self.websocket.send_json({"action": "run_code", "status": "running"})
-        await asyncio.to_thread(
-            self.user.run_node,
-            data["node"],
-            data["code"],
-            data["variables"]
-        )
-        await self.websocket.send_json({"action": "run_code", "status": "finished"}),
+        timeout = data.get("timeout", None)
+
+        await self.websocket.send_json({"action": "run_code", "status": "running", "node": data["node"]})
+        
+        try:
+            status, output, error = await asyncio.to_thread(
+                self.user.run_node,
+                data["node"],
+                data["code"],
+                data["variables"],
+                timeout
+            )
+            await self.websocket.send_json({
+                "action": "run_code", 
+                "status": status, 
+                "node": data["node"],
+                "output": output,
+                "error": error
+            })
+        except Exception as e:
+            await self.websocket.send_json({
+                "action": "run_code", 
+                "status": "error", 
+                "node": data["node"],
+                "error": str(e)
+            })
 
     async def ws_get_variable(self, data: dict):
         if not verif_args(data, ["node", "name"]):
