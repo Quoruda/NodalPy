@@ -1,0 +1,31 @@
+/* Shared style for limiting node content size */
+.node-content-container {
+    max-width: 400px;
+    max-height: 300px;
+    overflow: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px;
+    /* Custom scrollbar for webkit */
+    scrollbar-width: thin;
+    scrollbar-color: #00d2d3 rgba(0, 0, 0, 0.1);
+}
+
+.node-content-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.node-content-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.node-content-container::-webkit-scrollbar-thumb {
+    background: #00d2d3;
+    border-radius: 3px;
+}
+
+.node-content-container::-webkit-scrollbar-thumb:hover {
+    background: #00a8a9;
+}
