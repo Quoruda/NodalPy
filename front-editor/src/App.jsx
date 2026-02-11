@@ -258,6 +258,7 @@ export default function App() {
                 newNode = {
                     id: id,
                     type: 'IntegerNode',
+                    width: 140,
                     data: {
                         id: id,
                         title: `Integer ${nodeCount}`,
@@ -265,6 +266,22 @@ export default function App() {
                         code: 'output = 0',
                         inputs: [],
                         outputs: [{ id: 'output', name: 'output', type: 'int' }], // Pre-defined output
+                        state: 0
+                    },
+                    position: position,
+                };
+            } else if (type === 'FloatNode') {
+                newNode = {
+                    id: id,
+                    type: 'FloatNode',
+                    width: 140,
+                    data: {
+                        id: id,
+                        title: `Float ${nodeCount}`,
+                        value: 0.0,
+                        code: 'output = 0.0',
+                        inputs: [],
+                        outputs: [{ id: 'output', name: 'output', type: 'float' }],
                         state: 0
                     },
                     position: position,
@@ -312,6 +329,9 @@ export default function App() {
                     </button>
                     <button className="add-node-button" onClick={() => addNode('IntegerNode')} style={{ background: '#007bff' }}>
                         Integer 1️⃣
+                    </button>
+                    <button className="add-node-button" onClick={() => addNode('FloatNode')} style={{ background: '#00cec9' }}>
+                        Float 0.0
                     </button>
                     <button className="add-node-button" onClick={() => addNode('ObserverNode')} style={{ background: '#2bad60' }}>
                         Observer 👀
