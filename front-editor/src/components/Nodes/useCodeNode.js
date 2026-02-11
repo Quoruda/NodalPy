@@ -144,6 +144,7 @@ export const useCodeNode = (data, timeout = null) => {
         updateInput, removeInput, addInput,
         updateOutput, removeOutput, addOutput,
         handleCodeChange,
-        triggerDownstreamNodes
+        triggerDownstreamNodes,
+        updateNode
     };
 };

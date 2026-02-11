@@ -254,6 +254,21 @@ export default function App() {
                     data: {},
                     position: position,
                 }
+            } else if (type === 'IntegerNode') {
+                newNode = {
+                    id: id,
+                    type: 'IntegerNode',
+                    data: {
+                        id: id,
+                        title: `Integer ${nodeCount}`,
+                        value: 0,
+                        code: 'output = 0',
+                        inputs: [],
+                        outputs: [{ id: 'output', name: 'output', type: 'int' }], // Pre-defined output
+                        state: 0
+                    },
+                    position: position,
+                };
             } else {
                 // CustomNode or FastNode
                 newNode = {
@@ -293,10 +308,13 @@ export default function App() {
                         Ajouter Node (Manuel)
                     </button>
                     <button className="add-node-button" onClick={() => addNode('FastNode')} style={{ background: '#e056fd' }}>
-                        Ajouter Fast Node ⚡
+                        Fast Node ⚡
+                    </button>
+                    <button className="add-node-button" onClick={() => addNode('IntegerNode')} style={{ background: '#007bff' }}>
+                        Integer 1️⃣
                     </button>
                     <button className="add-node-button" onClick={() => addNode('ObserverNode')} style={{ background: '#2bad60' }}>
-                        Ajouter Observer 👀
+                        Observer 👀
                     </button>
                 </div>
                 <button className="save-button" onClick={saveProjectToFile}>
