@@ -149,10 +149,12 @@ export const useWebSocket = (url, setNodes) => {
 
     // 🔥 Créer une ref pour readVariableMessage
     const readVariableMessageRef = useRef(readVariableMessage);
+    const readRunMessageRef = useRef(readRunMessage);
 
     useEffect(() => {
         readVariableMessageRef.current = readVariableMessage;
-    }, [readVariableMessage]);
+        readRunMessageRef.current = readRunMessage;
+    }, [readVariableMessage, readRunMessage]);
 
 
     // 🔥 SOLUTION : Créer connect et scheduleReconnect avec des refs pour briser la dépendance circulaire
@@ -205,6 +207,14 @@ export const useWebSocket = (url, setNodes) => {
 
             reconnectAttemptsRef.current = 0;
             notifySuccess();
+
+            // 🔥 Send login
+            // Using a fixed ID for now or generate one and store it?
+            // "default_user" is fine for single-user desktop app.
+            socket.send(JSON.stringify({
+                action: "login",
+                identifier: "default_user"
+            }));
         };
 
         socket.onclose = (event) => {

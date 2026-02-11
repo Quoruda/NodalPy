@@ -65,19 +65,28 @@ class UserWebSocket:
             })
 
     async def ws_get_variable(self, data: dict):
-        if not verif_args(data, ["node", "name"]):
-            await self.websocket.send_json({"error": "missing arguments for get_variable"})
-            return
-        value = self.user.get_variable(data["node"], data["name"])
-        convertion = convert_variable(value)
-        print(convertion)
-        await self.websocket.send_json({
-            "action": "get_variable",
-            "node": data["node"],
-            "name": data["name"],
-            "value": convertion["value"],
-            "type": convertion["type"]
-        })
+        try:
+            if not verif_args(data, ["node", "name"]):
+                await self.websocket.send_json({"error": "missing arguments for get_variable"})
+                return
+            value = self.user.get_variable(data["node"], data["name"])
+            convertion = convert_variable(value)
+            print(convertion)
+            await self.websocket.send_json({
+                "action": "get_variable",
+                "node": data["node"],
+                "name": data["name"],
+                "value": convertion["value"],
+                "type": convertion["type"]
+            })
+        except Exception as e:
+            print(f"Error in ws_get_variable: {e}")
+            await self.websocket.send_json({
+                "action": "get_variable",
+                "node": data.get("node"),
+                "name": data.get("name"),
+                "error": str(e)
+            })
 
     async def loop(self):
         try:

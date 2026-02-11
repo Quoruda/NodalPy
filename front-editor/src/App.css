@@ -4,9 +4,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -15,6 +17,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -34,7 +37,7 @@
   color: #888;
 }
 
-.react-flow__attribution{
+.react-flow__attribution {
   display: None;
 }
 
@@ -52,28 +55,34 @@
   stroke-width: 4px !important;
 }
 
-.add-node-button{
+.toolbar-container {
   position: absolute;
   top: 10px;
   left: 10px;
   z-index: 10;
+  display: flex;
+  gap: 10px;
 }
 
-.save-button{
+/* .add-node-button style removed as it is now handled by container/shared styles */
+
+.save-button {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 10;
 }
 
-.import-button{
+.import-button {
   position: absolute;
   top: 55px;
   right: 10px;
   z-index: 10;
 }
 
-.add-node-button, .save-button, .import-button {
+.add-node-button,
+.save-button,
+.import-button {
   padding: 8px 12px;
   border-radius: 6px;
   border: none;

@@ -6,4 +6,6 @@ class UserManager:
         self.users = {}
 
     def get_user(self, user_id) -> UserData:
-        return self.users.get(user_id, UserData(user_id))
+        if user_id not in self.users:
+            self.users[user_id] = UserData(user_id)
+        return self.users[user_id]

@@ -276,15 +276,17 @@ export default function App() {
     return (
         <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef}>
             <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-                <button className="add-node-button" onClick={() => addNode('CustomNode')}>
-                    Ajouter Node (Manuel)
-                </button>
-                <button className="add-node-button" onClick={() => addNode('FastNode')} style={{ marginLeft: '10px', background: '#e056fd' }}>
-                    Ajouter Fast Node ⚡
-                </button>
-                <button className="add-node-button" onClick={() => addNode('ObserverNode')} style={{ marginLeft: '10px', background: '#2bad60' }}>
-                    Ajouter Observer 👀
-                </button>
+                <div className="toolbar-container">
+                    <button className="add-node-button" onClick={() => addNode('CustomNode')}>
+                        Ajouter Node (Manuel)
+                    </button>
+                    <button className="add-node-button" onClick={() => addNode('FastNode')} style={{ background: '#e056fd' }}>
+                        Ajouter Fast Node ⚡
+                    </button>
+                    <button className="add-node-button" onClick={() => addNode('ObserverNode')} style={{ background: '#2bad60' }}>
+                        Ajouter Observer 👀
+                    </button>
+                </div>
                 <button className="save-button" onClick={saveProjectToFile}>
                     Sauvegarder
                 </button>

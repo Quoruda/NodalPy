@@ -1,4 +1,4 @@
 pillow
 fastapi
-uvicorn
+uvicorn[standard]
 pywebview[Qt]
