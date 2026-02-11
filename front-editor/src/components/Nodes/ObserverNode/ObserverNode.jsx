@@ -11,35 +11,88 @@ const ObserverNode = memo(({ data, id }) => {
     const [variableType, setVariableType] = useState(null);
     const [connectedSource, setConnectedSource] = useState(null);
 
+    // Track previous connection to detect changes
+    const [prevConnection, setPrevConnection] = useState(null);
+
     // Find the connected source
     useEffect(() => {
         const edge = edges.find(e => e.target === id);
         if (edge) {
             const sourceNode = nodes.find(n => n.id === edge.source);
             if (sourceNode) {
-                const output = sourceNode.data.outputs?.find(o => o.id === edge.sourceHandle);
+                // Debug logs with JSON.stringify to see content
+                // console.log("Observer checking connection:", JSON.stringify({ 
+                //    edgeHandle: edge.sourceHandle, 
+                //    sourceOutputs: sourceNode.data.outputs 
+                // }));
+
+                // --- START SEARCH ---
+
+                // 1. Try exact ID match
+                let output = sourceNode.data.outputs?.find(o => o.id === edge.sourceHandle);
+
+                // 2. Try fallback: if only 1 output, use it (robustness)
+                if (!output && sourceNode.data.outputs?.length === 1) {
+                    // console.log("Observer: Fallback to single available output");
+                    output = sourceNode.data.outputs[0];
+                }
+
                 if (output) {
-                    setConnectedSource({
+                    const newConnection = {
                         nodeId: sourceNode.id,
                         variableName: output.name,
-                        // Check if value is already cached in source node
                         cachedValue: output.value,
                         cachedType: output.type
-                    });
+                    };
 
-                    // Update local state if source has value
-                    if (output.value !== undefined) {
-                        setVariableValue(output.value);
-                        setVariableType(output.type);
+                    // Only update state if something actually changed to avoid render loops
+                    if (!connectedSource ||
+                        connectedSource.nodeId !== newConnection.nodeId ||
+                        connectedSource.variableName !== newConnection.variableName ||
+                        connectedSource.cachedValue !== newConnection.cachedValue ||
+                        connectedSource.cachedType !== newConnection.cachedType) {
+
+                        setConnectedSource(newConnection);
+
+                        // Update local state immediately if value is present
+                        if (output.value !== undefined) {
+                            setVariableValue(output.value);
+                            setVariableType(output.type);
+                        }
                     }
+
+                    // Check if connection changed
+                    if (!prevConnection ||
+                        prevConnection.nodeId !== newConnection.nodeId ||
+                        prevConnection.variableName !== newConnection.variableName) {
+                        setPrevConnection(newConnection);
+                        // Trigger fetch on new connection
+                        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                            setTimeout(() => {
+                                wsRef.current.send(JSON.stringify({
+                                    action: "get_variable",
+                                    node: newConnection.nodeId,
+                                    name: newConnection.variableName
+                                }));
+                            }, 100);
+                        }
+                    }
+                } else {
+                    // Check if we already warned to avoid spam? 
+                    // For now just fix the log format
+                    // console.warn("Observer: Connected but output handle not found in source node outputs. Details: " + JSON.stringify({
+                    //    edgeHandle: edge.sourceHandle,
+                    //    outputs: sourceNode.data.outputs
+                    // }));
                 }
             }
         } else {
             setConnectedSource(null);
+            setPrevConnection(null);
             setVariableValue(null);
             setVariableType(null);
         }
-    }, [edges, nodes, id]);
+    }, [edges, nodes, id, prevConnection, wsRef]);
 
     const handleRefresh = useCallback(() => {
         if (connectedSource && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -51,23 +104,18 @@ const ObserverNode = memo(({ data, id }) => {
         }
     }, [connectedSource, wsRef]);
 
-    // Auto-refresh when source node finishes execution
-    useEffect(() => {
-        if (connectedSource) {
-            const sourceNode = nodes.find(n => n.id === connectedSource.nodeId);
-            if (sourceNode && sourceNode.data.state === 2) { // Finished state
-                handleRefresh();
-            }
-        }
-    }, [nodes, connectedSource, handleRefresh]);
 
-    // Also update if source node output value changes directly (via useWebSocket update)
+
+    // Better Auto-refresh logic:
+    // Watch specifically the source node's state
+    const sourceNodeState = nodes.find(n => connectedSource && n.id === connectedSource.nodeId)?.data?.state;
+
     useEffect(() => {
-        if (connectedSource && connectedSource.cachedValue !== undefined) {
-            setVariableValue(connectedSource.cachedValue);
-            setVariableType(connectedSource.cachedType);
+        if (connectedSource && sourceNodeState === 2) {
+            handleRefresh();
         }
-    }, [connectedSource]);
+    }, [sourceNodeState, connectedSource?.nodeId, connectedSource?.variableName]); // Only run when state changes to 2
+
 
     return (
         <div className="node observer-node">
@@ -75,7 +123,7 @@ const ObserverNode = memo(({ data, id }) => {
                 type="target"
                 position={Position.Left}
                 style={{ background: '#555' }}
-                isConnectable={true}
+                isConnectable={!connectedSource} // Only allow one connection
             />
 
             <div className="observer-header">

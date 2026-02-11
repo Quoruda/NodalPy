@@ -126,6 +126,14 @@ export const useCodeNode = (data, timeout = null) => {
         };
     }, []);
 
+    // Auto-sync inputs/outputs to global state for other nodes (like Observer) to see them
+    useEffect(() => {
+        // Prevent infinite loops: only update if data actually changed
+        if (!arraysEqualObjects(data.inputs, inputs) || !arraysEqualObjects(data.outputs, outputs)) {
+            updateNode(data.id, { inputs, outputs });
+        }
+    }, [inputs, outputs, updateNode, data.id, data.inputs, data.outputs]);
+
     return {
         isEditing, setIsEditing,
         tempTitle, setTempTitle,
