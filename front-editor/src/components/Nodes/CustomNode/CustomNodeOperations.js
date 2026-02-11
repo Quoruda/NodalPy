@@ -2,13 +2,11 @@ import { useCallback, useRef } from 'react';
 
 export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
-    // ✅ Utiliser des refs pour accéder aux valeurs actuelles sans dépendances
     const nodesRef = useRef(nodes);
     const edgesRef = useRef(edges);
     const executionQueueRef = useRef([]);
 
-
-    // Mettre à jour les refs à chaque render
+    // Update refs on each render
     nodesRef.current = nodes;
     edgesRef.current = edges;
 
@@ -29,8 +27,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
                 executionQueueRef.current.pop();
             }
         }
-        console.log("getNextNodeInQueue", node);
-        console.log(executionQueueRef.current)
 
         if (node === null) {
             return null;
@@ -54,13 +50,11 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         );
     }, [setNodes]);
 
-    // ✅ SOLUTION CORRECTE : Callbacks stables avec useRef
     const runCode = useCallback((node, timeout = null) => {
 
         const currentWs = wsRef.current;
         if (currentWs && currentWs.readyState === WebSocket.OPEN) {
 
-            // ✅ Utiliser les refs pour accéder aux valeurs actuelles
             const currentNodes = nodesRef.current;
             const currentEdges = edgesRef.current;
 
@@ -100,7 +94,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
                 }
             }
 
-            // ✅ Envoyer le message WebSocket UNE SEULE FOIS (en dehors de setNodes)
             const request_data = {
                 action: "run_node",
                 code: node.code,
@@ -111,7 +104,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
             currentWs.send(JSON.stringify(request_data));
 
-            // ✅ Mettre à jour le state séparément
             setNodes((nds) =>
                 nds.map((n) =>
                     n.id === node.id ? { ...n, data: { ...n.data, state: 1, output: "", error: null } } : n
@@ -119,19 +111,11 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
             );
 
         }
-    }, [setNodes, wsRef]); // ✅ Plus de dépendance sur nodes et edges !
+    }, [setNodes, wsRef]);
 
     const runCodeWithPrerequisites = useCallback((node) => {
-        console.log("runCodeWithPrerequisites", node);
         const currentEdges = edgesRef.current;
         const currentNodes = nodesRef.current;
-
-        // ✅ Mettre à jour le state séparément
-        setNodes((nds) =>
-            nds.map((n) =>
-                n.id === node.id ? { ...n, data: { ...n.data, state: 1, output: "" } } : n
-            )
-        );
 
         const edgeInputs = [];
 
@@ -145,9 +129,13 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
         for (let n of currentNodes) {
             if (edgeInputs.includes(n.id)) {
+                // Check if prerequisite is NOT finished (state != 2)
                 if (n.data.state !== 2) {
-                    if (!executionQueueRef.current.includes(n.id)) {
-                        hasPrerequisites = true;
+                    hasPrerequisites = true;
+
+                    // If prerequisite is not running yet (state 0) and not in queue, add it.
+                    // If it is Running (state 1), we just wait.
+                    if (n.data.state === 0 && !executionQueueRef.current.includes(n.id)) {
                         executionQueueRef.current.push(n.id);
                     }
                 }
@@ -155,36 +143,48 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         }
 
         if (!hasPrerequisites) {
-            console.log("No prerequisites, running", node);
-            executionQueueRef.current.splice(executionQueueRef.current.indexOf(node.id), 1)
+            // Remove self from queue
+            const index = executionQueueRef.current.indexOf(node.id);
+            if (index !== -1) executionQueueRef.current.splice(index, 1);
+
             runCode(node);
             return;
+        } else {
+            // Remove self from queue to prevent spinloop
+            // It will be re-added by the prerequisite's triggerDownstreamNodes when it finishes.
+            const index = executionQueueRef.current.indexOf(node.id);
+            if (index !== -1) executionQueueRef.current.splice(index, 1);
         }
 
-
+        // Process next in queue if any
         let next = getNextNodeInQueue();
         if (next !== null) {
             runCodeWithPrerequisites(next)
         }
 
-    }, [getNextNodeInQueue, runCode, setNodes]);
+    }, [getNextNodeInQueue, runCode]);
 
 
     const processQueue = useCallback(() => {
-        console.log("processQueue");
+        // Loop until queue empty or blocked
         while (executionQueueRef.current.length > 0) {
             let node = getNextNodeInQueue();
             if (node !== null) {
                 runCodeWithPrerequisites(node);
+            } else {
+                break;
             }
         }
     }, [getNextNodeInQueue, runCodeWithPrerequisites]);
 
-    const addNodeToQueue = useCallback((node) => {
-        console.log("addNodeToQueue", node);
-        if (executionQueueRef.current.length > 0) return;
+    const addNodeToQueue = useCallback((node, timeout = null) => {
+        if (executionQueueRef.current.includes(node.id)) return;
+
         executionQueueRef.current.push(node.id);
-        processQueue()
+
+        // Use timeout 0 to break call stack and allow UI updates
+        setTimeout(() => processQueue(), 0);
+
     }, [processQueue])
 
     const triggerDownstreamNodes = useCallback((sourceNodeId) => {
@@ -201,17 +201,14 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
         uniqueTargetIds.forEach(targetId => {
             const targetNode = currentNodes.find(n => n.id === targetId);
-            // Check if target is a FastNode (we can check type if available, otherwise assume manual nodes don't auto-run)
-            // But requirement says: "FastNode ... execute toute la branche d'affile rapide"
-            // So we should trigger FastNodes.
+
             if (targetNode && targetNode.type === 'FastNode') {
-                console.log(`⚡ Triggering downstream FastNode: ${targetNode.id}`);
-                // We pass a short timeout for downstream nodes too
-                runCode(targetNode, 1.0);
+                // Fix: Use addNodeToQueue to ensure prerequisites are checked!
+                addNodeToQueue(targetNode.data);
             }
         });
 
-    }, [runCode]);
+    }, [addNodeToQueue]);
 
     return { updateNode, runCode, addNodeToQueue, processQueue, triggerDownstreamNodes }
 }

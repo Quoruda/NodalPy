@@ -108,7 +108,10 @@ export const useWebSocket = (url, setNodes) => {
                 if (msg.status === "finished") {
                     newData.state = 2;
                     newData.error = null; // Clear previous errors
-                    notifyExecution(node.data.title, node.id);
+                    // Only notify for CustomNode (type 'custom')
+                    if (node.type === 'custom') {
+                        notifyExecution(node.data.title, node.id);
+                    }
                 }
                 if (msg.status === "error") {
                     newData.state = 3; // Error state

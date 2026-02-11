@@ -54,6 +54,10 @@ export const useCodeNode = (data, timeout = null) => {
         }
     }, [data.title, data.inputs, data.outputs, isEditing]);
 
+    // Use ref to access current data in callbacks without adding dependencies
+    const dataRef = useRef(data);
+    dataRef.current = data;
+
     const runCode = useCallback(() => {
         // We pass the validation/queuing logic to runCodeOp
         // Note: runCodeOp in CustomNodeOperations needs to handle timeout if we pass it
@@ -62,8 +66,8 @@ export const useCodeNode = (data, timeout = null) => {
         // ACTUALLY, runCodeOp calls ws.send. We should probably update runCodeOp signature.
 
         // However, addNodeToQueue is mostly for prerequisites.
-        addNodeToQueue?.(data, timeout);
-    }, [addNodeToQueue, data, timeout]);
+        addNodeToQueue?.(dataRef.current, timeout);
+    }, [addNodeToQueue, timeout]);
 
     const handleSave = useCallback(() => {
         data.onUpdate?.(data.id, {
@@ -126,7 +130,7 @@ export const useCodeNode = (data, timeout = null) => {
         };
     }, []);
 
-    // Auto-sync inputs/outputs to global state for other nodes (like Observer) to see them
+    // Auto-sync inputs/outputs to global state
     useEffect(() => {
         // Prevent infinite loops: only update if data actually changed
         if (!arraysEqualObjects(data.inputs, inputs) || !arraysEqualObjects(data.outputs, outputs)) {

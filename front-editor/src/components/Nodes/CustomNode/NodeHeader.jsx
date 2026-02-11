@@ -9,7 +9,8 @@ const NodeHeader = memo(({
     setIsEditing,
     title,
     state,
-    runCode
+    runCode,
+    hideState = false
 }) => (
     <div className="custom-node-header">
         {isEditing ? (
@@ -32,7 +33,7 @@ const NodeHeader = memo(({
                     >
                         ✏️
                     </button>
-                    {state === 0 && (
+                    {!hideState && state === 0 && (
                         <button
                             onClick={runCode}
                             className="execute-button"
@@ -41,12 +42,12 @@ const NodeHeader = memo(({
                             ▶
                         </button>
                     )}
-                    {state === 1 && (
+                    {!hideState && state === 1 && (
                         <div className="running-button" title="Attendre">
                             ⏱
                         </div>
                     )}
-                    {state === 2 && (
+                    {!hideState && state === 2 && (
                         <button
                             onClick={runCode}
                             className="execute-button"
@@ -62,13 +63,14 @@ const NodeHeader = memo(({
 ), (prevProps, nextProps) => {
     // ✅ Comparaison fine pour éviter les re-renders inutiles
     return prevProps.isEditing === nextProps.isEditing &&
-           prevProps.tempTitle === nextProps.tempTitle &&
-           prevProps.title === nextProps.title &&
-           prevProps.state === nextProps.state &&
-           prevProps.handleSave === nextProps.handleSave &&
-           prevProps.setTempTitle === nextProps.setTempTitle &&
-           prevProps.setIsEditing === nextProps.setIsEditing &&
-           prevProps.runCode === nextProps.runCode;
+        prevProps.tempTitle === nextProps.tempTitle &&
+        prevProps.title === nextProps.title &&
+        prevProps.state === nextProps.state &&
+        prevProps.handleSave === nextProps.handleSave &&
+        prevProps.setTempTitle === nextProps.setTempTitle &&
+        prevProps.setIsEditing === nextProps.setIsEditing &&
+        prevProps.runCode === nextProps.runCode &&
+        prevProps.hideState === nextProps.hideState;
 });
 
 NodeHeader.displayName = 'NodeHeader';

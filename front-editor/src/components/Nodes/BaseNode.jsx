@@ -102,6 +102,7 @@ const BaseNode = ({
                 title={data.title}
                 state={data.state}
                 runCode={runCode}
+                hideState={nodeTypeClass === 'fast-node'}
             />
             <div style={{
                 display: 'flex',

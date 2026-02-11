@@ -2,6 +2,7 @@
 import React, { memo, useEffect, useRef } from 'react';
 import BaseNode from '../BaseNode.jsx';
 import { useCodeNode } from '../useCodeNode.js';
+import { useFlowContext } from '../../FlowContext.jsx';
 
 const FastNode = memo(({ data }) => {
     // FastNode uses 1s timeout
@@ -40,12 +41,40 @@ const FastNode = memo(({ data }) => {
     // Chain Reaction Logic: Watch for state change to "finished" (2)
     const { triggerDownstreamNodes } = nodeState;
 
+    const prevStateRef = useRef(data.state);
+
     useEffect(() => {
-        if (data.state === 2 && !data.error) {
+        if (data.state === 2 && !data.error && prevStateRef.current !== 2) {
             // console.log(`✅ FastNode ${data.id} finished, checking downstream`);
             triggerDownstreamNodes(data.id);
         }
+        prevStateRef.current = data.state;
     }, [data.state, data.error, data.id, triggerDownstreamNodes]);
+
+    // React to newly added/removed incoming connections
+    const { edges } = useFlowContext();
+    const prevInputsRef = useRef([]);
+
+    useEffect(() => {
+        // Find current incoming edges
+        const incomingEdges = edges.filter(e => e.target === data.id);
+        const incomingIds = incomingEdges.map(e => e.source + '->' + e.targetHandle).sort();
+        const prevIds = prevInputsRef.current;
+
+        // Compare with previous check
+        const isDifferent = incomingIds.length !== prevIds.length ||
+            !incomingIds.every((val, index) => val === prevIds[index]);
+
+        if (isDifferent) {
+            console.log(`⚡ FastNode ${data.id} detected connection change, auto-running.`);
+            prevInputsRef.current = incomingIds;
+            // Debounce run
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            timeoutRef.current = setTimeout(() => {
+                runCode();
+            }, 300);
+        }
+    }, [edges, data.id, runCode]);
 
     return (
         <BaseNode
