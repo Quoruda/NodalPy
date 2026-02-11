@@ -3,6 +3,7 @@ import ObserverNode from "./ObserverNode/ObserverNode.jsx";
 import FastNode from "./FastNode/FastNode.jsx";
 import IntegerNode from "./ValueNodes/IntegerNode.jsx";
 import FloatNode from "./ValueNodes/FloatNode.jsx";
+import BooleanNode from "./ValueNodes/BooleanNode.jsx";
 
 // ✅ Export simple et propre - Fast Refresh compatible
 export const NodeTypes = {
@@ -10,5 +11,6 @@ export const NodeTypes = {
     ObserverNode: ObserverNode,
     FastNode: FastNode,
     IntegerNode: IntegerNode,
-    FloatNode: FloatNode
+    FloatNode: FloatNode,
+    BooleanNode: BooleanNode
 };

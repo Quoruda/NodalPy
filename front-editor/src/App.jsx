@@ -286,6 +286,22 @@ export default function App() {
                     },
                     position: position,
                 };
+            } else if (type === 'BooleanNode') {
+                newNode = {
+                    id: id,
+                    type: 'BooleanNode',
+                    width: 140,
+                    data: {
+                        id: id,
+                        title: `Boolean ${nodeCount}`,
+                        value: true,
+                        code: 'output = True',
+                        inputs: [],
+                        outputs: [{ id: 'output', name: 'output', type: 'bool' }],
+                        state: 0
+                    },
+                    position: position,
+                };
             } else {
                 // CustomNode or FastNode
                 newNode = {
@@ -332,6 +348,9 @@ export default function App() {
                     </button>
                     <button className="add-node-button" onClick={() => addNode('FloatNode')} style={{ background: '#00cec9' }}>
                         Float 0.0
+                    </button>
+                    <button className="add-node-button" onClick={() => addNode('BooleanNode')} style={{ background: '#fd79a8' }}>
+                        Boolean ✅
                     </button>
                     <button className="add-node-button" onClick={() => addNode('ObserverNode')} style={{ background: '#2bad60' }}>
                         Observer 👀
