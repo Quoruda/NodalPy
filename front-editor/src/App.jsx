@@ -109,7 +109,19 @@ export default function App() {
 
     const saveProjectToFile = useCallback(() => {
         const data = { nodes: nodes, edges: edges }
-        const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+        const jsonString = JSON.stringify(data);
+
+        // Check for pywebview API (Desktop Mode)
+        if (window.pywebview && window.pywebview.api) {
+            console.log("Saving via PyWebView API...");
+            window.pywebview.api.save_file(jsonString).then((response) => {
+                console.log("Save response:", response);
+            }).catch(err => console.error("PyWebView Save Error:", err));
+            return;
+        }
+
+        // Fallback for browser (Local Mode)
+        const blob = new Blob([jsonString], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;

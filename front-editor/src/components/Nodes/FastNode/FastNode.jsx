@@ -10,7 +10,7 @@ const FastNode = memo(({ data }) => {
 
     // Auto-run effect with debounce
     const timeoutRef = useRef(null);
-    const codeRef = useRef(data.code);
+    const codeRef = useRef(null);
 
     // Run on mount if not already executed/running (optional, maybe dangerous on load)
     // For now, let's only run on change.
