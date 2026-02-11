@@ -1,16 +1,17 @@
 
-import React, { memo, useMemo, useEffect, useRef } from 'react';
+import React, { memo, useMemo, useEffect, useRef, useCallback } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { useFlowContext } from '../FlowContext.jsx';
 import InputHandle from './CustomNode/InputHandle.jsx';
 import OutputHandle from './CustomNode/OutputHandle.jsx';
 import NodeHeader from './CustomNode/NodeHeader.jsx';
-import {
-    CODE_EXTENSIONS,
-    CODE_BASIC_SETUP
-} from './CustomNode/constants.js';
 import './nodes.css';
 import './CustomNode/CustomNode.css';
+import './BaseNode.css';
+import './node_content.css';
+import { useCodeNode } from './useCodeNode';
 
 const BaseNode = ({
     data,
@@ -35,6 +36,11 @@ const BaseNode = ({
 }) => {
     const { edges } = useFlowContext();
     const nodeId = data.id;
+
+    // Stop drag propagation when interacting with editor
+    const handleEditorMouseDown = useCallback((e) => {
+        e.stopPropagation();
+    }, []);
 
     // Connection status calculation
     const connectionStatus = useMemo(() => {
@@ -120,42 +126,49 @@ const BaseNode = ({
                 </div>
 
                 <div style={{ flexGrow: 1 }}>
-                    <div style={{ width: '100%' }}>
-                        <CodeMirror
-                            value={data.code || ''}
-                            height="auto"
-                            extensions={CODE_EXTENSIONS}
-                            onChange={handleCodeChange}
-                            theme="dark"
-                            basicSetup={CODE_BASIC_SETUP}
-                        />
-
-                        {/* Error display if present */}
-                        {data.error && (
-                            <div className="node-error" style={{
-                                color: '#ff4d4d',
-                                fontSize: '0.8em',
-                                marginTop: '4px',
-                                maxWidth: '300px',
-                                wordBreak: 'break-word'
-                            }}>
-                                {data.error}
-                            </div>
-                        )}
-                        {/* Output display if present (optional) */}
-                        {data.output && (
-                            <div className="node-output" style={{
-                                color: '#00d2d3',
-                                fontSize: '0.8em',
-                                marginTop: '4px',
-                                whiteSpace: 'pre-wrap',
-                                maxHeight: '100px',
-                                overflowY: 'auto'
-                            }}>
-                                {data.output.substring(0, 200) + (data.output.length > 200 ? '...' : '')}
-                            </div>
-                        )}
+                    <div className="nodrag" style={{ padding: '8px', cursor: 'text' }} onMouseDown={handleEditorMouseDown}>
+                        <div className="node-content-container" style={{ resize: 'both', overflow: 'auto' }}>
+                            <CodeMirror
+                                value={data.code || ''}
+                                height="auto" // Let container control scroll
+                                extensions={[python()]}
+                                onChange={handleCodeChange}
+                                theme={vscodeDark}
+                                basicSetup={{
+                                    lineNumbers: true,
+                                    foldGutter: true,
+                                    dropCursor: true,
+                                    allowMultipleSelections: true,
+                                    indentOnInput: true,
+                                    bracketMatching: true,
+                                    closeBrackets: true,
+                                    autocompletion: true,
+                                    highlightActiveLine: true,
+                                    highlightSelectionMatches: true,
+                                }}
+                            />
+                        </div>
                     </div>
+
+                    {/* Output Display */}
+                    {data.output && (
+                        <div className="node-output" style={{ padding: '8px', borderTop: '1px solid #444' }}>
+                            <strong>Output:</strong>
+                            <div className="node-content-container" style={{ marginTop: '5px', maxHeight: '100px' }}>
+                                <pre style={{ margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap' }}>{data.output}</pre>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Error Display */}
+                    {data.error && (
+                        <div className="node-error" style={{ padding: '8px', borderTop: '1px solid #ff4444', color: '#ff4444' }}>
+                            <strong>Error:</strong>
+                            <div className="node-content-container" style={{ marginTop: '5px', maxHeight: '100px', borderColor: '#ff4444' }}>
+                                <pre style={{ margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap' }}>{data.error}</pre>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div style={{

@@ -1,5 +1,5 @@
 import asyncio
-from variable_converter import convert_variable
+from variable_converter import convert_value
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from user_manager import UserManager
@@ -70,7 +70,7 @@ class UserWebSocket:
                 await self.websocket.send_json({"error": "missing arguments for get_variable"})
                 return
             value = self.user.get_variable(data["node"], data["name"])
-            convertion = convert_variable(value)
+            convertion = convert_value(value)
             print(convertion)
             await self.websocket.send_json({
                 "action": "get_variable",

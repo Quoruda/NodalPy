@@ -1,4 +1,9 @@
 pillow
 fastapi
 uvicorn[standard]
-pywebview[Qt]
+pywebview
+websockets
+Pillow
+matplotlib
+pandas
+numpy

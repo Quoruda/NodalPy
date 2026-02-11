@@ -3,6 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { useFlowContext } from '../../FlowContext.jsx';
 
 import '../nodes.css'
+import '../node_content.css'
 import './ObserverNode.css'
 
 const ObserverNode = memo(({ data, id }) => {
@@ -143,10 +144,35 @@ const ObserverNode = memo(({ data, id }) => {
             <div className="observer-content">
                 {connectedSource ? (
                     <div className="variable-display">
-                        <div className="value">
-                            {variableValue !== null ? String(variableValue) : "Waiting..."}
+                        <div className="value node-content-container">
+                            {variableType === "image" ? (
+                                <img
+                                    src={`data:image/png;base64,${variableValue}`}
+                                    alt="Output"
+                                    style={{ maxWidth: '100%', objectFit: 'contain' }}
+                                />
+                            ) : variableType === "table" ? (
+                                <div
+                                    className="table-container"
+                                    dangerouslySetInnerHTML={{ __html: variableValue }}
+                                />
+                            ) : variableType === "list" ? (
+                                <pre style={{ textAlign: 'left', margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                    {JSON.stringify(variableValue)}
+                                </pre>
+                            ) : variableType === "tuple" ? (
+                                <pre style={{ textAlign: 'left', margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                    {"(" + JSON.stringify(variableValue).slice(1, -1) + ")"}
+                                </pre>
+                            ) : variableType === "dict" ? (
+                                <pre style={{ textAlign: 'left', margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap' }}>
+                                    {JSON.stringify(variableValue, null, 2)}
+                                </pre>
+                            ) : (
+                                String(variableValue) !== "null" ? String(variableValue) : "Waiting..."
+                            )}
                         </div>
-                        {variableType && <div className="type">({variableType})</div>}
+                        {variableType && variableType !== "image" && variableType !== "table" && <div className="type">({variableType})</div>}
                         <button className="refresh-btn" onClick={handleRefresh} title="Refresh Value">
                             🔄
                         </button>

@@ -17,6 +17,7 @@
     "20": "^1.0.0",
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/view": "^6.38.1",
+    "@uiw/codemirror-theme-vscode": "^4.25.4",
     "@uiw/react-codemirror": "^4.24.1",
     "@xyflow/react": "^12.8.2",
     "react": "^19.1.0",
