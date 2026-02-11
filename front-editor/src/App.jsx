@@ -302,6 +302,22 @@ export default function App() {
                     },
                     position: position,
                 };
+            } else if (type === 'StringNode') {
+                newNode = {
+                    id: id,
+                    type: 'StringNode',
+                    width: 160,
+                    data: {
+                        id: id,
+                        title: `String ${nodeCount}`,
+                        value: '',
+                        code: 'output = ""',
+                        inputs: [],
+                        outputs: [{ id: 'output', name: 'output', type: 'str' }],
+                        state: 0
+                    },
+                    position: position,
+                };
             } else {
                 // CustomNode or FastNode
                 newNode = {
@@ -351,6 +367,9 @@ export default function App() {
                     </button>
                     <button className="add-node-button" onClick={() => addNode('BooleanNode')} style={{ background: '#fd79a8' }}>
                         Boolean ✅
+                    </button>
+                    <button className="add-node-button" onClick={() => addNode('StringNode')} style={{ background: '#FFC312' }}>
+                        String 📝
                     </button>
                     <button className="add-node-button" onClick={() => addNode('ObserverNode')} style={{ background: '#2bad60' }}>
                         Observer 👀

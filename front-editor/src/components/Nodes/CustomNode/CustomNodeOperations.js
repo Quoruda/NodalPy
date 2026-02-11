@@ -35,6 +35,18 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     }, []);
 
     const updateNode = useCallback((nodeId, updates) => {
+        // Optimistic update of the Ref for immediate consistency in specific callbacks (like runCode)
+        const nodeIndex = nodesRef.current.findIndex(n => n.id === nodeId);
+        if (nodeIndex !== -1) {
+            const updatedNode = {
+                ...nodesRef.current[nodeIndex],
+                data: { ...nodesRef.current[nodeIndex].data, ...updates }
+            };
+            const newNodes = [...nodesRef.current];
+            newNodes[nodeIndex] = updatedNode;
+            nodesRef.current = newNodes;
+        }
+
         setNodes((nds) =>
             nds.map((node) =>
                 node.id === nodeId

@@ -4,6 +4,7 @@ import FastNode from "./FastNode/FastNode.jsx";
 import IntegerNode from "./ValueNodes/IntegerNode.jsx";
 import FloatNode from "./ValueNodes/FloatNode.jsx";
 import BooleanNode from "./ValueNodes/BooleanNode.jsx";
+import StringNode from "./ValueNodes/StringNode.jsx";
 
 // ✅ Export simple et propre - Fast Refresh compatible
 export const NodeTypes = {
@@ -12,5 +13,6 @@ export const NodeTypes = {
     FastNode: FastNode,
     IntegerNode: IntegerNode,
     FloatNode: FloatNode,
-    BooleanNode: BooleanNode
+    BooleanNode: BooleanNode,
+    StringNode: StringNode
 };
