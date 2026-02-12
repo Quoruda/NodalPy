@@ -20,6 +20,7 @@
     "@uiw/codemirror-theme-vscode": "^4.25.4",
     "@uiw/react-codemirror": "^4.24.1",
     "@xyflow/react": "^12.8.2",
+    "idb-keyval": "^6.2.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-input-autosize": "^3.0.0",

@@ -15,18 +15,11 @@ import './App.css';
 import { FlowProvider } from './components/FlowContext.jsx';
 import { useWebSocket } from './hooks/useWebSocket.js';
 
-let defaultNodes = []
-let defaultEdges = []
+import { get, set } from 'idb-keyval';
 
-const flowData = localStorage.getItem('flowData');
-if (flowData) {
-    const parsedData = JSON.parse(flowData);
-    console.log("Loaded flow data from localStorage:", parsedData);
-    if (parsedData.nodes && parsedData.edges) {
-        defaultNodes = parsedData.nodes;
-        defaultEdges = parsedData.edges;
-    }
-}
+// Default empty state
+const defaultNodes = [];
+const defaultEdges = [];
 
 export default function App() {
     const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
@@ -35,9 +28,35 @@ export default function App() {
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
+    const [isLoaded, setIsLoaded] = useState(false); // Track initial load
 
     const { wsRef } = useWebSocket("ws://localhost:8000/ws", setNodes);
 
+    // Load from IndexedDB on mount
+    useEffect(() => {
+        const loadFromIDB = async () => {
+            try {
+                const flowData = await get('flowData');
+                if (flowData) {
+                    const parsedData = JSON.parse(flowData);
+                    console.log("Loaded flow data from IndexedDB");
+                    if (parsedData.nodes && parsedData.edges) {
+                        setNodes(parsedData.nodes);
+                        setEdges(parsedData.edges);
+
+                        // Calculate next node ID based on existing nodes to avoid collision
+                        // Simple heuristic: count nodes + 1, or use max ID + 1 if integer IDs (but we use custom strings now)
+                        setNodeCount(parsedData.nodes.length + 1);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load from IndexedDB:", err);
+            } finally {
+                setIsLoaded(true);
+            }
+        };
+        loadFromIDB();
+    }, [setNodes, setEdges]);
 
 
     const onConnectEdge = useCallback(
@@ -95,7 +114,9 @@ export default function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedEdges, selectedNodes, setEdges, setNodes]);
 
-    const saveProjectToLocalStorage = useCallback(() => {
+    const saveProjectToIDB = useCallback(() => {
+        if (!isLoaded) return; // Don't save before initial load completes
+
         // Sanitize nodes to remove heavy execution data (output, error)
         const sanitizedNodes = nodes.map(node => ({
             ...node,
@@ -110,31 +131,22 @@ export default function App() {
         const data = { nodes: sanitizedNodes, edges: edges }
         const json_data = JSON.stringify(data)
 
-        try {
-            localStorage.setItem("flowData", json_data);
-            console.log("Project saved to localStorage", json_data.length);
-        } catch (e) {
-            console.error("Storage Quota Exceeded. Clearing storage and retrying...");
-            if (e.name === 'QuotaExceededError') {
-                // Emergency clear if full
-                localStorage.removeItem("flowData");
-                try {
-                    localStorage.setItem("flowData", json_data);
-                } catch (retryErr) {
-                    console.error("Failed to save even after clear:", retryErr);
-                }
-            }
-        }
-    }, [nodes, edges]);
+        set('flowData', json_data)
+            .then(() => console.log("Project saved to IndexedDB (async)"))
+            .catch(err => console.error("Failed to save to IndexedDB:", err));
 
-    // Debounce saving to avoid lag during drag/resize
+    }, [nodes, edges, isLoaded]);
+
     useEffect(() => {
+        // Debounce saving to avoid lag during drag/resize
         const timeoutId = setTimeout(() => {
-            saveProjectToLocalStorage();
-        }, 1000); // Wait 1 second after last change
+            if (isLoaded) {
+                saveProjectToIDB();
+            }
+        }, 1000); // 1 second debounce
 
         return () => clearTimeout(timeoutId);
-    }, [nodes, edges, saveProjectToLocalStorage]);
+    }, [nodes, edges, saveProjectToIDB, isLoaded]);
 
 
     const saveProjectToFile = useCallback(() => {
