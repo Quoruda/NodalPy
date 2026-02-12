@@ -96,14 +96,44 @@ export default function App() {
     }, [selectedEdges, selectedNodes, setEdges, setNodes]);
 
     const saveProjectToLocalStorage = useCallback(() => {
-        const data = { nodes: nodes, edges: edges }
+        // Sanitize nodes to remove heavy execution data (output, error)
+        const sanitizedNodes = nodes.map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                output: undefined, // Clear large outputs
+                error: undefined,
+                state: 0 // Reset state on save
+            }
+        }));
+
+        const data = { nodes: sanitizedNodes, edges: edges }
         const json_data = JSON.stringify(data)
-        localStorage.setItem("flowData", json_data);
-        console.log("Project saved to localStorage", json_data);
+
+        try {
+            localStorage.setItem("flowData", json_data);
+            console.log("Project saved to localStorage", json_data.length);
+        } catch (e) {
+            console.error("Storage Quota Exceeded. Clearing storage and retrying...");
+            if (e.name === 'QuotaExceededError') {
+                // Emergency clear if full
+                localStorage.removeItem("flowData");
+                try {
+                    localStorage.setItem("flowData", json_data);
+                } catch (retryErr) {
+                    console.error("Failed to save even after clear:", retryErr);
+                }
+            }
+        }
     }, [nodes, edges]);
 
+    // Debounce saving to avoid lag during drag/resize
     useEffect(() => {
-        saveProjectToLocalStorage()
+        const timeoutId = setTimeout(() => {
+            saveProjectToLocalStorage();
+        }, 1000); // Wait 1 second after last change
+
+        return () => clearTimeout(timeoutId);
     }, [nodes, edges, saveProjectToLocalStorage]);
 
 
@@ -318,6 +348,22 @@ export default function App() {
                     },
                     position: position,
                 };
+            } else if (type === 'FileNode') {
+                newNode = {
+                    id: id,
+                    type: 'FileNode',
+                    width: 200,
+                    data: {
+                        id: id,
+                        title: `File ${nodeCount}`,
+                        fileName: 'No file',
+                        code: 'output = None',
+                        inputs: [],
+                        outputs: [{ id: 'output', name: 'output', type: 'file' }],
+                        state: 0
+                    },
+                    position: position,
+                };
             } else {
                 // CustomNode or FastNode
                 newNode = {
@@ -370,6 +416,9 @@ export default function App() {
                     </button>
                     <button className="add-node-button" onClick={() => addNode('StringNode')} style={{ background: '#FFC312' }}>
                         String 📝
+                    </button>
+                    <button className="add-node-button" onClick={() => addNode('FileNode')} style={{ background: '#5f27cd' }}>
+                        File 📂
                     </button>
                     <button className="add-node-button" onClick={() => addNode('ObserverNode')} style={{ background: '#2bad60' }}>
                         Observer 👀

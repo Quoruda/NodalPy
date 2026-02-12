@@ -5,6 +5,7 @@ import IntegerNode from "./ValueNodes/IntegerNode.jsx";
 import FloatNode from "./ValueNodes/FloatNode.jsx";
 import BooleanNode from "./ValueNodes/BooleanNode.jsx";
 import StringNode from "./ValueNodes/StringNode.jsx";
+import FileNode from "./ValueNodes/FileNode.jsx";
 
 // ✅ Export simple et propre - Fast Refresh compatible
 export const NodeTypes = {
@@ -14,5 +15,6 @@ export const NodeTypes = {
     IntegerNode: IntegerNode,
     FloatNode: FloatNode,
     BooleanNode: BooleanNode,
-    StringNode: StringNode
+    StringNode: StringNode,
+    FileNode: FileNode
 };

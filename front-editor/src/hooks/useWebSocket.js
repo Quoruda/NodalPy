@@ -217,12 +217,21 @@ export const useWebSocket = (url, setNodes) => {
             reconnectAttemptsRef.current = 0;
             notifySuccess();
 
-            // 🔥 Send login
-            // Using a fixed ID for now or generate one and store it?
-            // "default_user" is fine for single-user desktop app.
+            // 🔥 Send login with persistent User ID
+            let userId = localStorage.getItem("nodal_user_id");
+            if (!userId) {
+                // Simple UUID generation if crypto.randomUUID not available (older browsers)
+                if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                    userId = crypto.randomUUID();
+                } else {
+                    userId = 'user_' + Math.random().toString(36).substr(2, 9) + Date.now();
+                }
+                localStorage.setItem("nodal_user_id", userId);
+            }
+
             socket.send(JSON.stringify({
                 action: "login",
-                identifier: "default_user"
+                identifier: userId
             }));
         };
 
