@@ -28,6 +28,20 @@ class UserData:
 
 
         exec_globals, local_scope = prepare_contexts(new_context)
+        
+        # Inject STORAGE_DIR and 'os' for portability
+        # Use absolute path for robustness. 
+        # Assuming storage is at project root / storage / userId
+        import os
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        storage_dir = os.path.join(base_dir, "storage", self.userId)
+        
+        # Ensure directory exists (execution safety)
+        os.makedirs(storage_dir, exist_ok=True)
+        
+        exec_globals['STORAGE_DIR'] = storage_dir
+        exec_globals['os'] = os # Expose os module directly
+        
         self.nodeContexts[node] = local_scope
 
         self.is_running_code = True
@@ -37,7 +51,8 @@ class UserData:
         error_msg = ""
         
         try:
-            run_code_in_thread(code, exec_globals, local_scope, timeout)
+            # Pass storage_dir as cwd to allow relative path access (e.g. open("file.txt"))
+            run_code_in_thread(code, exec_globals, local_scope, timeout, cwd=storage_dir)
         except TimeoutError:
              status = "timeout"
              error_msg = f"Execution timed out ({timeout}s)"

@@ -7,9 +7,9 @@ import '../node_content.css'
 import './ObserverNode.css'
 
 const ObserverNode = memo(({ data, id }) => {
-    const { edges, nodes, wsRef } = useFlowContext();
-    const [variableValue, setVariableValue] = useState(null);
-    const [variableType, setVariableType] = useState(null);
+    const { edges, nodes, wsRef, setNodes } = useFlowContext();
+    const [variableValue, setVariableValue] = useState(data.cachedValue || null);
+    const [variableType, setVariableType] = useState(data.cachedType || null);
     const [connectedSource, setConnectedSource] = useState(null);
 
     // Track previous connection to detect changes
@@ -59,6 +59,21 @@ const ObserverNode = memo(({ data, id }) => {
                         if (output.value !== undefined) {
                             setVariableValue(output.value);
                             setVariableType(output.type);
+
+                            // Sync to global node data for persistence (Save/Load)
+                            setNodes((nds) => nds.map(n => {
+                                if (n.id === id) {
+                                    return {
+                                        ...n,
+                                        data: {
+                                            ...n.data,
+                                            cachedValue: output.value,
+                                            cachedType: output.type
+                                        }
+                                    };
+                                }
+                                return n;
+                            }));
                         }
                     }
 

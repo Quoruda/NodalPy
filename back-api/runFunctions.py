@@ -1,19 +1,39 @@
 import threading
+import os
 from io import StringIO
 import sys
+
+# Global lock to prevent race conditions when changing CWD
+EXECUTION_LOCK = threading.Lock()
 
 def _run_code(code: str, global_context: dict, local_context: dict):
     exec(code, global_context, local_context)
 
-def run_code_in_thread(code: str, global_context: dict, local_context: dict, timeout: float = None):
+def run_code_in_thread(code: str, global_context: dict, local_context: dict, timeout: float = None, cwd: str = None):
     # Create a mutable object to store exception from thread
     result_container = {"error": None}
     
     def target():
-        try:
-            _run_code(code, global_context, local_context)
-        except Exception as e:
-            result_container["error"] = e
+        # If CWD is specified, we must acquire the global lock to change process CWD safely
+        # This serializes execution for all users, but ensures relative paths work correctly.
+        if cwd:
+            with EXECUTION_LOCK:
+                original_cwd = os.getcwd()
+                try:
+                    # Change to user storage directory
+                    os.chdir(cwd)
+                    _run_code(code, global_context, local_context)
+                except Exception as e:
+                    result_container["error"] = e
+                finally:
+                    # Always restore original CWD
+                    os.chdir(original_cwd)
+        else:
+            # Standard execution without CWD change
+            try:
+                _run_code(code, global_context, local_context)
+            except Exception as e:
+                result_container["error"] = e
 
     thread = threading.Thread(target=target, daemon=True)
     thread.start()
@@ -21,10 +41,6 @@ def run_code_in_thread(code: str, global_context: dict, local_context: dict, tim
     if timeout:
         thread.join(timeout)
         if thread.is_alive():
-             # We cannot really kill the thread in Python easily without ctypes or subprocess
-             # For now, we just stop waiting and raise TimeoutError
-             # The thread will continue in background (potentially bad for infinite loops)
-             # Ideally we should use multiprocessing for true isolation and killing
              raise TimeoutError(f"Execution timed out after {timeout}s")
     else:
         thread.join()

@@ -68,18 +68,18 @@ const FileNode = memo(({ id, data }) => {
 
             if (isMounted.current) {
                 // Update Node Data
-                const newCode = `output = r"${result.path}"`; // Raw string for paths
+                // Use result.saved_name (relative filename)
+                // Execution CWD will be set to storage dir by backend
+                const newCode = `output = "${result.saved_name}"`;
 
                 updateNode(data.id, {
-                    fileName: result.filename,
-                    filePath: result.path, // Store path in data provided useful
-                    value: result.path,
+                    fileName: result.filename, // Display name
+                    savedName: result.saved_name, // Storage name
+                    value: result.saved_name,
                     code: newCode
                 });
 
                 // Run immediately
-                // Small delay to ensure state update propagates?
-                // The fix in "CustomNodeOperations" ensures runCode sees updated data.
                 setTimeout(() => runCode(), 50);
             }
 
