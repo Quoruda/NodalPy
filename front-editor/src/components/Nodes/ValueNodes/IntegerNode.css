@@ -62,24 +62,104 @@
     }
 }
 
-/* Header Removed */
-.constant-header,
-.title-section,
-.constant-icon,
-.number-display,
-.lock-icon,
-.title-input,
-.type-badge {
-    display: none;
+/* Header (Restored Gradient from Template) */
+.constant-header {
+    background: linear-gradient(135deg, #5f8dd3 0%, #74b9ff 100%);
+    padding: 6px 8px;
+    /* Slightly more padding for the "premium" feel */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 2px solid #4a7bb7;
+    margin-bottom: 0;
+    /* Remove margin, content has padding */
 }
 
-/* Compact Content */
+/* Premium Title Input */
+.title-input {
+    font-size: 11px;
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    /* More visible bg */
+    color: white;
+    /* White text on blue gradient */
+    font-weight: 600;
+    text-align: center;
+    width: 80%;
+    /* Wider to look good */
+    outline: none;
+    transition: all 0.2s;
+    font-family: 'Segoe UI', sans-serif;
+    /* Clean font for title */
+}
+
+.title-input:focus,
+.title-input:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+    opacity: 1;
+}
+
+.title-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Range Config at bottom - Integrated look */
+.range-config {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    /* More spacing */
+    padding-top: 6px;
+    border-top: 1px solid rgba(116, 185, 255, 0.15);
+    /* Solid subtle line */
+}
+
+.range-input {
+    width: 35px;
+    background: rgba(0, 0, 0, 0.2);
+    /* Darker bg like main input */
+    border: 1px solid rgba(116, 185, 255, 0.2);
+    border-radius: 3px;
+    color: #636e72;
+    /* Dimmed text */
+    font-size: 9px;
+    text-align: center;
+    font-family: monospace;
+    outline: none;
+    padding: 2px;
+    transition: all 0.2s;
+}
+
+.range-input:focus {
+    color: #dfe6e9;
+    /* Bright on focus */
+    border-color: #74b9ff;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.range-separator {
+    color: #74b9ff;
+    /* Blue separator */
+    font-size: 10px;
+    opacity: 0.5;
+}
+
+/* Compact Content with Darker BG? No, keeps node bg */
 .constant-content {
-    padding: 6px;
+    padding: 10px;
+    /* More breathing room */
     color: #dfe6e9;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
+    /* Spaced out elements */
 }
 
 /* Simplified Input Container */
