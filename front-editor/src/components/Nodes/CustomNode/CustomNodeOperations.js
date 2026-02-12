@@ -63,7 +63,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     }, [setNodes]);
 
     const runCode = useCallback((node, timeout = null) => {
-        console.log("Executing runCode for:", node.id);
         const currentWs = wsRef.current;
         if (currentWs && currentWs.readyState === WebSocket.OPEN) {
             // ...
@@ -130,7 +129,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     }, [setNodes, wsRef]);
 
     const runCodeWithPrerequisites = useCallback((node) => {
-        console.log("Checking prerequisites for:", node.id);
         const currentEdges = edgesRef.current;
         const currentNodes = nodesRef.current;
         // ... (lines 132-156 unchanged)
@@ -159,7 +157,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         }
 
         if (!hasPrerequisites) {
-            console.log("No prereqs, running:", node.id);
             // Remove self from queue
             const index = executionQueueRef.current.indexOf(node.id);
             if (index !== -1) executionQueueRef.current.splice(index, 1);
@@ -167,7 +164,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
             runCode(node);
             return;
         } else {
-            console.log("Has prereqs, waiting:", node.id);
             const index = executionQueueRef.current.indexOf(node.id);
             if (index !== -1) executionQueueRef.current.splice(index, 1);
         }
@@ -180,16 +176,13 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     }, [getNextNodeInQueue, runCode]);
 
     const processQueue = useCallback(() => {
-        console.log("Processing queue:", executionQueueRef.current);
         try {
             // Loop until queue empty or blocked
             while (executionQueueRef.current.length > 0) {
                 let node = getNextNodeInQueue();
                 if (node !== null) {
-                    console.log("Running from queue:", node.id);
                     runCodeWithPrerequisites(node);
                 } else {
-                    console.log("Queue empty or node not found.");
                     break;
                 }
             }
@@ -201,9 +194,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     }, [getNextNodeInQueue, runCodeWithPrerequisites]);
 
     const addNodeToQueue = useCallback((node, timeout = null) => {
-        console.log("Adding to queue:", node.id, "Queue:", executionQueueRef.current);
         if (executionQueueRef.current.includes(node.id)) {
-            console.warn("Node already in queue:", node.id);
             return;
         }
 
