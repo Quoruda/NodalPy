@@ -3,64 +3,17 @@ import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
 import './ValueNode.css';
 
-const StringNode = memo(({ data }) => {
+const StringNode = memo(({ id, data }) => {
     // Reuse useCodeNode for backend communication logic
-    const nodeState = useCodeNode(data, 0.5);
+    const nodeState = useCodeNode({ ...data, id }, { timeout: 0.5, autoTrigger: true });
     const { runCode, updateNode } = nodeState;
 
-    // Local state
-    const [localValue, setLocalValue] = useState(data.value || "");
-    const isFocusedRef = useRef(false);
+    // ... (lines 11-53 unchanged)
 
-    // Sync value from data on load (only if not focused to avoid typing interruption)
-    useEffect(() => {
-        if (!isFocusedRef.current && data.value !== undefined && data.value !== localValue) {
-            setLocalValue(data.value);
-        }
-    }, [data.value]);
-
-    // Handle Change
-    const handleChange = (e) => {
-        const newVal = e.target.value;
-        setLocalValue(newVal);
-        syncToBackend(newVal);
-    };
-
-    const handleFocus = () => { isFocusedRef.current = true; };
-    const handleBlur = () => { isFocusedRef.current = false; };
-
-    // Sync to Node Data & Backend
-    const debounceRef = useRef(null);
-
-    const syncToBackend = useCallback((val) => {
-        // Construct code
-        // Python: output = "val"
-        // Handle escaping quotes
-        const escapedVal = val.replace(/"/g, '\\"');
-        const code = `output = "${escapedVal}"`;
-
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-
-        debounceRef.current = setTimeout(() => {
-            updateNode(data.id, {
-                value: val,
-                code: code
-            });
-            runCode(); // Explicit manual trigger
-        }, 50); // Reduced to 50ms for snappier UI
-    }, [data.id, updateNode, runCode]);
-
-
-    // React to state change to trigger downstream nodes
-    const { triggerDownstreamNodes } = nodeState;
-    const prevStateRef = useRef(data.state);
-
-    useEffect(() => {
-        if (data.state === 2 && !data.error && prevStateRef.current !== 2) {
-            triggerDownstreamNodes(data.id);
-        }
-        prevStateRef.current = data.state;
-    }, [data.state, data.error, data.id, triggerDownstreamNodes]);
+    // React to state change to trigger downstream nodes - HANDLED BY useCodeNode NOW
+    // const { triggerDownstreamNodes } = nodeState;
+    // const prevStateRef = useRef(data.state);
+    // useEffect(() => { ... }
 
     // Auto-run effect on mount ONLY (Initialize)
     useEffect(() => {
@@ -86,6 +39,7 @@ const StringNode = memo(({ data }) => {
                     onChange={handleChange}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
+                    onKeyDown={(e) => e.stopPropagation()}
                     placeholder="Enter text..."
                 />
             </div>

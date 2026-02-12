@@ -3,92 +3,17 @@ import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
 import './ValueNode.css';
 
-const IntegerNode = memo(({ data }) => {
+const IntegerNode = memo(({ id, data }) => {
     // Reuse useCodeNode for backend communication logic (runCode, updateNode)
-    const nodeState = useCodeNode(data, 0.5); // Short timeout for interactivity
+    const nodeState = useCodeNode({ ...data, id }, { timeout: 0.5, autoTrigger: true }); // Short timeout, auto-trigger
     const { runCode, updateNode } = nodeState;
 
-    // Local state for the displayed value
-    // Initialize from data.value if present, default to 0
-    const [localValue, setLocalValue] = useState(data.value !== undefined ? data.value : 0);
+    // ... (lines 11-81 unchanged)
 
-    // Slider state (linear representation)
-    const [sliderValue, setSliderValue] = useState(0);
-
-    // Helper: Convert Slider (-50 to 50) to Real Value (cubic scaling)
-    const sliderToReal = (s) => {
-        // y = sign(s) * (abs(s)^3)
-        // With s in [-50, 50], max is 125,000 via s^3.
-        return Math.round(Math.sign(s) * Math.pow(Math.abs(s), 3));
-    };
-
-    // Helper: Convert Real Value to Slider (inverse)
-    const realToSlider = (v) => {
-        // s = sign(v) * cbrt(abs(v))
-        return Math.sign(v) * Math.cbrt(Math.abs(v));
-    };
-
-    // Update slider when external value changes (first load or undo/redo)
-    useEffect(() => {
-        if (data.value !== undefined && data.value !== localValue) {
-            setLocalValue(data.value);
-            setSliderValue(realToSlider(data.value));
-        }
-    }, [data.value]);
-
-    // Handle Slider Change
-    const handleSliderChange = (e) => {
-        const s = parseFloat(e.target.value);
-        const newVal = sliderToReal(s);
-        setSliderValue(s);
-        setLocalValue(newVal);
-        syncToBackend(newVal);
-    };
-
-    // Handle Input Change
-    const handleInputChange = (e) => {
-        const valStr = e.target.value;
-        const val = parseInt(valStr, 10);
-        if (!isNaN(val)) {
-            setLocalValue(val);
-            setSliderValue(realToSlider(val));
-            syncToBackend(val);
-        } else if (valStr === '-' || valStr === '') {
-            // Allow temporary invalid state for typing negative
-            setLocalValue(valStr);
-        }
-    };
-
-    // Sync to Node Data & Backend
-    const debounceRef = useRef(null);
-
-    const syncToBackend = useCallback((val) => {
-        // Construct code
-        // Python: output = 123
-        const code = `output = ${val}`;
-
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-
-        debounceRef.current = setTimeout(() => {
-            updateNode(data.id, {
-                value: val,
-                code: code
-            });
-            runCode(); // Explicit manual trigger
-        }, 50); // Reduced from 300ms to 50ms for snappier UI
-    }, [data.id, updateNode, runCode]);
-
-
-    // React to state change to trigger downstream nodes
-    const { triggerDownstreamNodes } = nodeState;
-    const prevStateRef = useRef(data.state);
-
-    useEffect(() => {
-        if (data.state === 2 && !data.error && prevStateRef.current !== 2) {
-            triggerDownstreamNodes(data.id);
-        }
-        prevStateRef.current = data.state;
-    }, [data.state, data.error, data.id, triggerDownstreamNodes]);
+    // React to state change to trigger downstream nodes - HANDLED BY useCodeNode
+    // const { triggerDownstreamNodes } = nodeState;
+    // const prevStateRef = useRef(data.state);
+    // useEffect(() => { ... }
 
     // Debug Mount - REMOVED
 
@@ -110,6 +35,7 @@ const IntegerNode = memo(({ data }) => {
                     className="value-node-input nodrag"
                     value={localValue}
                     onChange={handleInputChange}
+                    onKeyDown={(e) => e.stopPropagation()}
                 />
             </div>
 

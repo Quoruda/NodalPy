@@ -11,7 +11,7 @@ import './nodes.css';
 import './CustomNode/CustomNode.css';
 import './BaseNode.css';
 import './node_content.css';
-import { useCodeNode } from './useCodeNode';
+import './node_content.css';
 
 const BaseNode = ({
     data,

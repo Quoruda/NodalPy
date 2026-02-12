@@ -3,8 +3,9 @@ import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
 import './ValueNode.css';
 
-const FileNode = memo(({ data }) => {
-    const nodeState = useCodeNode(data, 0.5);
+const FileNode = memo(({ id, data }) => {
+    // Use config for auto-trigger
+    const nodeState = useCodeNode({ ...data, id }, { timeout: 0.5, autoTrigger: true });
     const { runCode, updateNode, triggerDownstreamNodes } = nodeState;
 
     // Use a reference to track if the node is mounted to avoid state updates on unmounted component
@@ -47,7 +48,8 @@ const FileNode = memo(({ data }) => {
             // In dev, Vite proxies /api to port 8000. Here we might need direct port if not proxied.
             // But usually we use relative "/upload" if served together, or http://localhost:8000/upload
             // Ideally should be configurable. For now, assuming standard setup.
-            const uploadUrl = "http://127.0.0.1:8000/upload";
+            // Use relative path to handle both localhost and 127.0.0.1, and avoid CORS if same origin
+            const uploadUrl = "/upload";
 
             const response = await fetch(uploadUrl, {
                 method: "POST",
@@ -89,14 +91,9 @@ const FileNode = memo(({ data }) => {
         }
     };
 
-    // Trigger downstream
-    const prevStateRef = useRef(data.state);
-    useEffect(() => {
-        if (data.state === 2 && !data.error && prevStateRef.current !== 2) {
-            triggerDownstreamNodes(data.id);
-        }
-        prevStateRef.current = data.state;
-    }, [data.state, data.error, data.id, triggerDownstreamNodes]);
+    // Trigger downstream - HANDLED AUSTOMATICALLY BY useCodeNode
+    // const prevStateRef = useRef(data.state);
+    // useEffect(() => { ... }
 
     // Auto-run on mount if code exists
     useEffect(() => {

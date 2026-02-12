@@ -31,7 +31,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         if (node === null) {
             return null;
         }
-        return node.data;
+        return { ...node.data, id: node.id };
     }, []);
 
     const updateNode = useCallback((nodeId, updates) => {
@@ -63,9 +63,12 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     }, [setNodes]);
 
     const runCode = useCallback((node, timeout = null) => {
-
+        console.log("Executing runCode for:", node.id);
         const currentWs = wsRef.current;
         if (currentWs && currentWs.readyState === WebSocket.OPEN) {
+            // ...
+            // (Logic unchanged)
+            // ...
 
             const currentNodes = nodesRef.current;
             const currentEdges = edgesRef.current;
@@ -121,16 +124,21 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
                     n.id === node.id ? { ...n, data: { ...n.data, state: 1, output: "", error: null } } : n
                 )
             );
-
+        } else {
+            console.error("WebSocket not connected!");
         }
     }, [setNodes, wsRef]);
 
     const runCodeWithPrerequisites = useCallback((node) => {
+        console.log("Checking prerequisites for:", node.id);
         const currentEdges = edgesRef.current;
         const currentNodes = nodesRef.current;
+        // ... (lines 132-156 unchanged)
+
+        // Simplified view for replacement context, assume unchanged logic inside
+        // ...
 
         const edgeInputs = [];
-
         for (let edge of currentEdges) {
             if (edge.target === node.id) {
                 edgeInputs.push(edge.source)
@@ -141,12 +149,8 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
         for (let n of currentNodes) {
             if (edgeInputs.includes(n.id)) {
-                // Check if prerequisite is NOT finished (state != 2)
                 if (n.data.state !== 2) {
                     hasPrerequisites = true;
-
-                    // If prerequisite is not running yet (state 0) and not in queue, add it.
-                    // If it is Running (state 1), we just wait.
                     if (n.data.state === 0 && !executionQueueRef.current.includes(n.id)) {
                         executionQueueRef.current.push(n.id);
                     }
@@ -155,6 +159,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         }
 
         if (!hasPrerequisites) {
+            console.log("No prereqs, running:", node.id);
             // Remove self from queue
             const index = executionQueueRef.current.indexOf(node.id);
             if (index !== -1) executionQueueRef.current.splice(index, 1);
@@ -162,13 +167,11 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
             runCode(node);
             return;
         } else {
-            // Remove self from queue to prevent spinloop
-            // It will be re-added by the prerequisite's triggerDownstreamNodes when it finishes.
+            console.log("Has prereqs, waiting:", node.id);
             const index = executionQueueRef.current.indexOf(node.id);
             if (index !== -1) executionQueueRef.current.splice(index, 1);
         }
 
-        // Process next in queue if any
         let next = getNextNodeInQueue();
         if (next !== null) {
             runCodeWithPrerequisites(next)
@@ -176,21 +179,33 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
     }, [getNextNodeInQueue, runCode]);
 
-
     const processQueue = useCallback(() => {
-        // Loop until queue empty or blocked
-        while (executionQueueRef.current.length > 0) {
-            let node = getNextNodeInQueue();
-            if (node !== null) {
-                runCodeWithPrerequisites(node);
-            } else {
-                break;
+        console.log("Processing queue:", executionQueueRef.current);
+        try {
+            // Loop until queue empty or blocked
+            while (executionQueueRef.current.length > 0) {
+                let node = getNextNodeInQueue();
+                if (node !== null) {
+                    console.log("Running from queue:", node.id);
+                    runCodeWithPrerequisites(node);
+                } else {
+                    console.log("Queue empty or node not found.");
+                    break;
+                }
             }
+        } catch (error) {
+            console.error("Queue processing error:", error);
+            // Emergency cleanup: clear queue to prevent zombie state
+            executionQueueRef.current = [];
         }
     }, [getNextNodeInQueue, runCodeWithPrerequisites]);
 
     const addNodeToQueue = useCallback((node, timeout = null) => {
-        if (executionQueueRef.current.includes(node.id)) return;
+        console.log("Adding to queue:", node.id, "Queue:", executionQueueRef.current);
+        if (executionQueueRef.current.includes(node.id)) {
+            console.warn("Node already in queue:", node.id);
+            return;
+        }
 
         executionQueueRef.current.push(node.id);
 

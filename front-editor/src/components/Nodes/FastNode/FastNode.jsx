@@ -4,9 +4,9 @@ import BaseNode from '../BaseNode.jsx';
 import { useCodeNode } from '../useCodeNode.js';
 import { useFlowContext } from '../../FlowContext.jsx';
 
-const FastNode = memo(({ data }) => {
-    // FastNode uses 1s timeout
-    const nodeState = useCodeNode(data, 1.0);
+const FastNode = memo(({ id, data }) => {
+    // FastNode uses 1s timeout and auto-triggers downstream
+    const nodeState = useCodeNode({ ...data, id }, { timeout: 1.0, autoTrigger: true });
     const { runCode } = nodeState;
 
     // Auto-run effect with debounce
@@ -38,18 +38,10 @@ const FastNode = memo(({ data }) => {
         };
     }, []);
 
-    // Chain Reaction Logic: Watch for state change to "finished" (2)
-    const { triggerDownstreamNodes } = nodeState;
-
-    const prevStateRef = useRef(data.state);
-
-    useEffect(() => {
-        if (data.state === 2 && !data.error && prevStateRef.current !== 2) {
-            // console.log(`✅ FastNode ${data.id} finished, checking downstream`);
-            triggerDownstreamNodes(data.id);
-        }
-        prevStateRef.current = data.state;
-    }, [data.state, data.error, data.id, triggerDownstreamNodes]);
+    // Chain Reaction Logic: HANDLED BY useCodeNode NOW
+    // const { triggerDownstreamNodes } = nodeState;
+    // const prevStateRef = useRef(data.state);
+    // useEffect(() => { ... }
 
     // React to newly added/removed incoming connections
     const { edges } = useFlowContext();

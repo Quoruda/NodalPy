@@ -2,9 +2,9 @@ import React, { memo } from 'react';
 import BaseNode from '../BaseNode.jsx';
 import { useCodeNode } from '../useCodeNode.js';
 
-const CustomNode = memo(({ data }) => {
-    // CustomNode doesn't use auto-run (timeout=null), runs only on manual trigger
-    const nodeState = useCodeNode(data, null);
+const CustomNode = memo(({ id, data }) => {
+    // CustomNode runs only on manual trigger and DOES NOT trigger downstream automatically
+    const nodeState = useCodeNode({ ...data, id }, { timeout: null, autoTrigger: false });
 
     return (
         <BaseNode

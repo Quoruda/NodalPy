@@ -16,7 +16,26 @@ const generateUniqueId = () => {
     return `var_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
-export const useCodeNode = (data, timeout = null) => {
+// config can be a number (timeout) for backward compatibility, or an object
+export const useCodeNode = (data, config = null) => {
+    // Parse config
+    let timeout = null;
+    let autoTrigger = false;
+
+    if (typeof config === 'number') {
+        timeout = config;
+        autoTrigger = true; // Legacy assumption: if timeout set, it's auto-node? 
+        // Wait, CustomNode passes null. FileNode passes 0.5.
+        // Let's force explicit config.
+    } else if (typeof config === 'object' && config !== null) {
+        timeout = config.timeout;
+        autoTrigger = config.autoTrigger;
+    } else {
+        // Fallback if null passed (CustomNode)
+        timeout = null;
+        autoTrigger = false;
+    }
+
     const [isEditing, setIsEditing] = useState(false);
     const [tempTitle, setTempTitle] = useState(data.title || 'Code Node');
     const [inputs, setInputs] = useState(data.inputs || []);
@@ -137,6 +156,19 @@ export const useCodeNode = (data, timeout = null) => {
             updateNode(data.id, { inputs, outputs });
         }
     }, [inputs, outputs, updateNode, data.id, data.inputs, data.outputs]);
+
+    // Centralized Downstream Trigger Logic
+    const prevStateRef = useRef(data.state);
+    useEffect(() => {
+        if (autoTrigger) {
+            if (data.state === 2 && !data.error && prevStateRef.current !== 2) {
+                triggerDownstreamNodes(data.id);
+            }
+            prevStateRef.current = data.state;
+        }
+    }, [data.state, data.error, data.id, triggerDownstreamNodes, autoTrigger]);
+
+
 
     return {
         isEditing, setIsEditing,

@@ -30,27 +30,28 @@ const NodeHeader = memo(({
                     <button
                         onClick={() => setIsEditing(true)}
                         title="Modifier le titre"
+                        className="nodrag"
                     >
                         ✏️
                     </button>
                     {!hideState && state === 0 && (
                         <button
                             onClick={runCode}
-                            className="execute-button"
+                            className="execute-button nodrag"
                             title="Exécuter"
                         >
                             ▶
                         </button>
                     )}
                     {!hideState && state === 1 && (
-                        <div className="running-button" title="Attendre">
+                        <div className="running-button nodrag" title="Attendre">
                             ⏱
                         </div>
                     )}
                     {!hideState && state === 2 && (
                         <button
                             onClick={runCode}
-                            className="execute-button"
+                            className="execute-button nodrag"
                             title="Ré-exécuter"
                         >
                             🔄
