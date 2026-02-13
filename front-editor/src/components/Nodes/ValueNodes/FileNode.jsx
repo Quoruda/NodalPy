@@ -59,8 +59,8 @@ const FileNode = memo(({ id, data, selected }) => {
                 console.log("Upload success:", result);
 
                 // Update Node Data
-                const newPath = result.path.replace(/\\/g, '/'); // Normalize path
-                // Python string for path
+                const newPath = result.saved_name;
+                // Python string for path (relative, thanks to CWD)
                 const newCode = `output = r"${newPath}"`;
 
                 setFileName(file.name);

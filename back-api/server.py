@@ -66,7 +66,6 @@ async def upload_file(
         return {
             "filename": file.filename,
             "saved_name": filename,
-            "path": file_path,
             "status": "success"
         }
     except Exception as e:
