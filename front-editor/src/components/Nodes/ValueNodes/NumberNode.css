@@ -1,44 +1,35 @@
-/* Integer Node Style */
-.constant-node {
+/* Number Node Style (Adapted from IntegerNode) */
+.number-node {
     background: #2e2d44;
     border: 2px solid #555;
     /* Neutral default border */
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    min-width: 100px;
+    min-width: 120px;
+    /* Slightly wider for config */
     position: relative;
     transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
 }
 
-.constant-node:hover {
+.number-node:hover {
     border-color: #74b9ff;
     /* Blue on hover */
     box-shadow: 0 6px 12px rgba(116, 185, 255, 0.3);
 }
 
-.constant-node.selected {
+.number-node.selected {
     border-color: #ff0072 !important;
-    /* Pink/Red on selection (React Flow default) or custom */
+    /* Pink/Red on selection */
     box-shadow: 0 0 0 2px rgba(255, 0, 114, 0.4);
 }
 
 /* Chiffre géant qui dépasse - Smaller */
 .big-number {
     position: absolute;
-    top: -20px;
-    /* Moved UP slightly (from -25px is irrelevant if we want to move it UP visually, wait "remonte" means visually up, so negative top should be MORE negative? No, top:0 is top edge. top:-25 is above. top:-30 is more above. Wait. "Remonte" means go up. increasing negative value goes up. "Baisse encore un peu sa taille" -> smaller font. */
-    /* Wait, user said "remonte tres legerement". Previous was -25px. Let's try -30px? Or maybe closer to node?
-       If I look at CSS: top is relative to .constant-node.
-       Previous: top: -25px.
-       "Remonte" = Move higher = top: -30px.
-       "Baisse sa taille" = font-size: 30px (was 40px).
-       Let's try that.
-    */
     top: -28px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 32px;
-    /* Reduced from 40px */
     font-weight: 900;
     font-family: 'Courier New', monospace;
     color: #74b9ff;
@@ -62,18 +53,16 @@
     }
 }
 
-/* Header (Restored Gradient from Template) */
-.constant-header {
+/* Header (Gradient) */
+.number-header {
     background: linear-gradient(135deg, #5f8dd3 0%, #74b9ff 100%);
     padding: 6px 8px;
-    /* Slightly more padding for the "premium" feel */
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 6px 6px 0 0;
     border-bottom: 2px solid #4a7bb7;
     margin-bottom: 0;
-    /* Remove margin, content has padding */
 }
 
 /* Premium Title Input */
@@ -83,17 +72,13 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.15);
-    /* More visible bg */
     color: white;
-    /* White text on blue gradient */
     font-weight: 600;
     text-align: center;
     width: 80%;
-    /* Wider to look good */
     outline: none;
     transition: all 0.2s;
     font-family: 'Segoe UI', sans-serif;
-    /* Clean font for title */
 }
 
 .title-input:focus,
@@ -113,22 +98,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
+    /* Tight gap */
     margin-top: 8px;
-    /* More spacing */
     padding-top: 6px;
     border-top: 1px solid rgba(116, 185, 255, 0.15);
-    /* Solid subtle line */
 }
 
 .range-input {
     width: 35px;
     background: rgba(0, 0, 0, 0.2);
-    /* Darker bg like main input */
     border: 1px solid rgba(116, 185, 255, 0.2);
     border-radius: 3px;
     color: #636e72;
-    /* Dimmed text */
     font-size: 9px;
     text-align: center;
     font-family: monospace;
@@ -139,33 +121,36 @@
 
 .range-input:focus {
     color: #dfe6e9;
-    /* Bright on focus */
     border-color: #74b9ff;
     background: rgba(0, 0, 0, 0.4);
 }
 
 .range-separator {
     color: #74b9ff;
-    /* Blue separator */
     font-size: 10px;
     opacity: 0.5;
 }
 
-/* Compact Content with Darker BG? No, keeps node bg */
-.constant-content {
+/* Steps Input (Special spacing) */
+.range-input.step-input {
+    width: 30px;
+    color: #a29bfe;
+    /* Different color for step */
+    border-color: rgba(162, 155, 254, 0.3);
+}
+
+/* Compact Content */
+.number-content {
     padding: 10px;
-    /* More breathing room */
     color: #dfe6e9;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    /* Spaced out elements */
 }
 
 /* Simplified Input Container */
 .value-input-container {
     background: transparent;
-    /* Remove heavy container bg */
     border: none;
     padding: 0;
 }
@@ -177,9 +162,7 @@
     border-radius: 4px;
     color: #dfe6e9;
     font-size: 13px;
-    /* Smaller font */
     padding: 4px;
-    /* Smaller padding */
     outline: none;
     transition: all 0.2s;
     font-family: 'Courier New', monospace;
@@ -193,16 +176,11 @@
     background: rgba(0, 0, 0, 0.5);
 }
 
-/* Slider Styles (Restored) */
+/* Slider Styles */
 .value-slider-container {
     display: flex;
     align-items: center;
     gap: 4px;
-}
-
-.value-node-label {
-    display: none;
-    /* Hide labels to save space if requested, or keep very small */
 }
 
 .value-node-slider {
@@ -210,7 +188,6 @@
     -webkit-appearance: none;
     appearance: none;
     height: 3px;
-    /* Thinner */
     background: rgba(116, 185, 255, 0.3);
     border-radius: 2px;
     outline: none;
@@ -231,7 +208,7 @@
 }
 
 /* Handle Override */
-.constant-handle {
+.number-handle {
     width: 8px !important;
     height: 8px !important;
     background: #74b9ff !important;

@@ -77,7 +77,7 @@ export const useCodeNode = (data, config = null) => {
     const dataRef = useRef(data);
     dataRef.current = data;
 
-    const runCode = useCallback(() => {
+    const runCode = useCallback((overrideData = null) => {
         // We pass the validation/queuing logic to runCodeOp
         // Note: runCodeOp in CustomNodeOperations needs to handle timeout if we pass it
         // Since CustomNodeOperations doesn't support timeout argument yet, we will update it later.
@@ -85,7 +85,8 @@ export const useCodeNode = (data, config = null) => {
         // ACTUALLY, runCodeOp calls ws.send. We should probably update runCodeOp signature.
 
         // However, addNodeToQueue is mostly for prerequisites.
-        addNodeToQueue?.(dataRef.current, timeout);
+        const dataToRun = overrideData ? { ...dataRef.current, ...overrideData } : dataRef.current;
+        addNodeToQueue?.(dataToRun, timeout);
     }, [addNodeToQueue, timeout]);
 
     const handleSave = useCallback(() => {

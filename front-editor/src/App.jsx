@@ -121,11 +121,8 @@ function Flow() {
                     <button className="add-node-button" onClick={() => addNode('FastNode')} style={{ background: '#e056fd' }}>
                         Fast Node ⚡
                     </button>
-                    <button className="add-node-button" onClick={() => addNode('IntegerNode')} style={{ background: '#007bff' }}>
-                        Integer 1️⃣
-                    </button>
-                    <button className="add-node-button" onClick={() => addNode('FloatNode')} style={{ background: '#00cec9' }}>
-                        Float 0.0
+                    <button className="add-node-button" onClick={() => addNode('NumberNode')} style={{ background: '#007bff' }}>
+                        Number 🔢
                     </button>
                     <button className="add-node-button" onClick={() => addNode('BooleanNode')} style={{ background: '#fd79a8' }}>
                         Boolean ✅

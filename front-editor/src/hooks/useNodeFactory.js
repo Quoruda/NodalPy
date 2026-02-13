@@ -35,15 +35,10 @@ export const useNodeFactory = (nodes, setNodes, nodeCount, setNodeCount) => {
             newNode.data.code = "output = input1 * 2";
             newNode.data.inputs = [{ id: 'in1', name: 'input1' }];
             newNode.data.outputs = [{ id: 'out1', name: 'output' }];
-        } else if (type === 'IntegerNode') {
-            newNode.data.title = 'Integer ' + id;
+        } else if (type === 'NumberNode') {
+            newNode.data.title = 'Number ' + id;
             newNode.data.value = 0;
             newNode.data.code = "output = 0";
-            newNode.data.outputs = [{ id: 'out1', name: 'output' }];
-        } else if (type === 'FloatNode') {
-            newNode.data.title = 'Float ' + id;
-            newNode.data.value = 0.0;
-            newNode.data.code = "output = 0.0";
             newNode.data.outputs = [{ id: 'out1', name: 'output' }];
         } else if (type === 'BooleanNode') {
             newNode.data.title = 'Boolean ' + id;
