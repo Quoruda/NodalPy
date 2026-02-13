@@ -1,0 +1,113 @@
+/* String Node Style (Green Theme) */
+.string-node {
+    background: #2e2d44;
+    border: 2px solid #555;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    min-width: 160px;
+    /* Wider for text */
+    position: relative;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+}
+
+.string-node:hover {
+    border-color: #2ecc71;
+    /* Green on hover */
+    box-shadow: 0 6px 12px rgba(46, 204, 113, 0.3);
+}
+
+.string-node.selected {
+    border-color: #ff0072 !important;
+    box-shadow: 0 0 0 2px rgba(255, 0, 114, 0.4);
+}
+
+/* Decoration - @#?! */
+.string-decoration {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 28px;
+    font-weight: 900;
+    font-family: 'Courier New', monospace;
+    color: #2ecc71;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(46, 204, 113, 0.4);
+    animation: textFloat 3s ease-in-out infinite;
+    z-index: 10;
+    pointer-events: none;
+    white-space: nowrap;
+    letter-spacing: 2px;
+}
+
+@keyframes textFloat {
+
+    0%,
+    100% {
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateX(-50%) translateY(-3px) scale(1.05);
+    }
+}
+
+/* Header (Green Gradient) */
+.string-header {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    padding: 6px 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 2px solid #219150;
+    margin-bottom: 0;
+}
+
+/* Content */
+.string-content {
+    padding: 10px;
+    color: #dfe6e9;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Textarea Input */
+.string-input-container {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.string-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    border-radius: 4px;
+    color: #dfe6e9;
+    font-size: 12px;
+    padding: 6px;
+    outline: none;
+    transition: all 0.2s;
+    font-family: 'Courier New', monospace;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 40px;
+}
+
+.string-input:focus {
+    border-color: #2ecc71;
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 5px rgba(46, 204, 113, 0.2);
+}
+
+/* Handle Override */
+.string-handle {
+    width: 8px !important;
+    height: 8px !important;
+    background: #2ecc71 !important;
+    border: 2px solid #2e2d44 !important;
+    right: -4px !important;
+    top: 50% !important;
+}
