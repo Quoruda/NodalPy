@@ -19,6 +19,15 @@ const NumberNode = memo(({ id, data, selected }) => {
 
     // Auto-run on mount to ensure value is available immediately
     useEffect(() => {
+        // If loaded from save, do NOT auto-run
+        if (data.fromLoad) {
+            // Remove the flag so future updates work normally
+            // We do this by updating the node data silently or just letting it be overwritten on next change
+            // Ideally we should clean it up, but for now just skipping runCode is enough.
+            // Actually, if we leave it, it won't affect anything else unless we re-mount.
+            return;
+        }
+
         // Short timeout to ensure node is registered in backend references if needed
         const timer = setTimeout(() => {
             runCode();

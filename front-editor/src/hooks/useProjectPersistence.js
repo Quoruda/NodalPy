@@ -108,7 +108,12 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
             try {
                 const json = JSON.parse(e.target.result);
                 if (json.nodes && json.edges) {
-                    setNodes(json.nodes);
+                    // Inject 'fromLoad' flag to prevent auto-execution on mount
+                    const loadedNodes = json.nodes.map(node => ({
+                        ...node,
+                        data: { ...node.data, fromLoad: true }
+                    }));
+                    setNodes(loadedNodes);
                     setEdges(json.edges);
 
                     // Recalculate node count

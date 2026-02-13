@@ -82,15 +82,20 @@ const ObserverNode = memo(({ data, id }) => {
                         prevConnection.nodeId !== newConnection.nodeId ||
                         prevConnection.variableName !== newConnection.variableName) {
                         setPrevConnection(newConnection);
-                        // Trigger fetch on new connection
-                        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                            setTimeout(() => {
-                                wsRef.current.send(JSON.stringify({
-                                    action: "get_variable",
-                                    node: newConnection.nodeId,
-                                    name: newConnection.variableName
-                                }));
-                            }, 100);
+
+                        // Trigger fetch on new connection ONLY if source is not in 'load' mode
+                        // If sourceNode has fromLoad, it means we just loaded. We should trust cachedValue.
+                        // Backend might be empty.
+                        if (!sourceNode.data.fromLoad) {
+                            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                                setTimeout(() => {
+                                    wsRef.current.send(JSON.stringify({
+                                        action: "get_variable",
+                                        node: newConnection.nodeId,
+                                        name: newConnection.variableName
+                                    }));
+                                }, 100);
+                            }
                         }
                     }
                 } else {

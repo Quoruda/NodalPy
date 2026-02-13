@@ -25,6 +25,8 @@ const StringNode = memo(({ id, data, selected }) => {
 
     // Auto-run on mount
     useEffect(() => {
+        if (data.fromLoad) return;
+
         const timer = setTimeout(() => {
             runCode();
         }, 100);

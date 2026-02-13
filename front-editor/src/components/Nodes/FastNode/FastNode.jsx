@@ -20,6 +20,9 @@ const FastNode = memo(({ id, data }) => {
         if (codeRef.current !== data.code) {
             codeRef.current = data.code;
 
+            // If loading, update ref but DO NOT run
+            if (data.fromLoad) return;
+
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
@@ -29,7 +32,7 @@ const FastNode = memo(({ id, data }) => {
                 runCode();
             }, 500); // 500ms debounce
         }
-    }, [data.code, runCode]);
+    }, [data.code, runCode, data.fromLoad]);
 
     // Cleanup
     useEffect(() => {
@@ -58,15 +61,21 @@ const FastNode = memo(({ id, data }) => {
             !incomingIds.every((val, index) => val === prevIds[index]);
 
         if (isDifferent) {
-            console.log(`⚡ FastNode ${data.id} detected connection change, auto-running.`);
+            console.log(`⚡ FastNode ${data.id} detected connection change.`);
             prevInputsRef.current = incomingIds;
+
+            // If loading, update ref but DO NOT run
+            if (data.fromLoad) return;
+
+            console.log(`⚡ FastNode ${data.id} auto-running due to connection change.`);
+
             // Debounce run
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             timeoutRef.current = setTimeout(() => {
                 runCode();
             }, 300);
         }
-    }, [edges, data.id, runCode]);
+    }, [edges, data.id, runCode, data.fromLoad]);
 
     return (
         <BaseNode

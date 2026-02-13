@@ -71,7 +71,7 @@ class UserWebSocket:
                 return
             value = self.user.get_variable(data["node"], data["name"])
             convertion = convert_value(value)
-            print(convertion)
+            # print(convertion) # Removed verbose print
             await self.websocket.send_json({
                 "action": "get_variable",
                 "node": data["node"],
