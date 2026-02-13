@@ -12,7 +12,6 @@ export const NodeTypes = {
     ObserverNode: ObserverNode,
     FastNode: FastNode,
     NumberNode: NumberNode,
-    BooleanNode: BooleanNode,
     StringNode: StringNode,
     FileNode: FileNode
 };

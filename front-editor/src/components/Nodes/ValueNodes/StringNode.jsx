@@ -1,54 +1,96 @@
-import React, { memo, useState, useEffect, useCallback, useRef } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
-import './ValueNode.css';
+import './StringNode.css';
 
-const StringNode = memo(({ id, data }) => {
+const StringNode = memo(({ id, data, selected }) => {
     // Reuse useCodeNode for backend communication logic
     const nodeState = useCodeNode({ ...data, id }, { timeout: 0.5, autoTrigger: true });
     const { runCode, updateNode } = nodeState;
 
-    // ... (lines 11-53 unchanged)
+    // Local state
+    const [localValue, setLocalValue] = useState('');
+    const [localTitle, setLocalTitle] = useState(data.title || 'String');
 
-    // React to state change to trigger downstream nodes - HANDLED BY useCodeNode NOW
-    // const { triggerDownstreamNodes } = nodeState;
-    // const prevStateRef = useRef(data.state);
-    // useEffect(() => { ... }
-
-    // Auto-run effect on mount ONLY (Initialize)
+    // Parse code to get initial value (e.g. "output = 'hello'")
     useEffect(() => {
-        // Execute immediately on mount to register value if code exists
-        if (data.code && data.code.startsWith('output =')) {
-            runCode();
+        if (data.code) {
+            // Match simple string assignment: output = "..." or '...'
+            const match = data.code.match(/output\s*=\s*(["'])(.*)\1/);
+            if (match) {
+                setLocalValue(match[2]);
+            }
         }
-    }, []); // Run once on mount
+    }, [data.code]);
 
+    // Auto-run on mount
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            runCode();
+        }, 100);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Handle Title Change
+    const handleTitleChange = useCallback((e) => {
+        const newTitle = e.target.value;
+        setLocalTitle(newTitle);
+        updateNode(id, { title: newTitle });
+    }, [id, updateNode]);
+
+    // Handle Value Update
+    const updateValue = useCallback((newValue) => {
+        setLocalValue(newValue);
+        // Escape quotes? For simplicity assuming simple text.
+        // Python string: output = "value"
+        const escaped = newValue.replace(/"/g, '\\"');
+        const newCode = `output = "${escaped}"`;
+        updateNode(id, { code: newCode });
+        runCode({ code: newCode });
+    }, [id, updateNode, runCode]);
+
+    const handleInputChange = useCallback((e) => {
+        updateValue(e.target.value);
+    }, [updateValue]);
+
+    // Stop propagation
+    const stopPropagation = useCallback((e) => e.stopPropagation(), []);
 
     return (
-        <div className="value-node-container" style={{ minWidth: '160px' }}>
-            <div className="value-node-header">
-                <span className="value-node-title">{data.title || 'String'}</span>
-            </div>
+        <div className={`string-node ${selected ? 'selected' : ''}`}>
+            {/* Decoration - Green Theme Symbol */}
+            <div className="string-decoration">@#?!</div>
 
-            <div style={{ padding: '8px' }}>
+            {/* Header with Title */}
+            <div className="string-header">
                 <input
                     type="text"
-                    className="value-node-input nodrag"
-                    style={{ width: '100%', textAlign: 'left' }}
-                    value={localValue}
-                    onChange={handleChange}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    placeholder="Enter text..."
+                    className="title-input nodrag"
+                    placeholder="Title"
+                    value={localTitle}
+                    onChange={handleTitleChange}
+                    onKeyDown={stopPropagation}
                 />
+            </div>
+
+            <div className="string-content">
+                <div className="string-input-container nodrag">
+                    <textarea
+                        className="string-input"
+                        value={localValue}
+                        onChange={handleInputChange}
+                        onKeyDown={stopPropagation}
+                        placeholder="Type text here..."
+                        rows={3}
+                    />
+                </div>
             </div>
 
             <Handle
                 type="source"
                 position={Position.Right}
                 id="output"
-                className="value-node-handle"
+                className="string-handle"
             />
         </div>
     );
