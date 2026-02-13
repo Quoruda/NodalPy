@@ -1,0 +1,141 @@
+/* Boolean Node Style (Fuchsia/Rose Theme) */
+.boolean-node {
+    background: #2e2d44;
+    border: 2px solid #555;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    min-width: 140px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.boolean-node:hover {
+    border-color: #fd79a8;
+    box-shadow: 0 6px 12px rgba(253, 121, 168, 0.3);
+}
+
+.boolean-node.selected {
+    border-color: #ff0072 !important;
+    box-shadow: 0 0 0 2px rgba(255, 0, 114, 0.4);
+}
+
+/* Dynamic Border Color based on state? Optional. */
+.boolean-node.is-true {
+    border-color: #e84393;
+}
+
+.boolean-decoration {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: 900;
+    font-family: 'Courier New', monospace;
+    opacity: 0.8;
+    z-index: 10;
+    pointer-events: none;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    color: #fd79a8;
+    /* Static Fuchsia */
+}
+
+/* Header (Rose Gradient) */
+.boolean-header {
+    background: linear-gradient(135deg, #e84393 0%, #fd79a8 100%);
+    padding: 6px 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 0;
+    border-bottom: 2px solid #d63031;
+}
+
+/* Content */
+.boolean-content {
+    padding: 15px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Custom Switch */
+.switch-container {
+    cursor: pointer;
+    width: 60px;
+    height: 30px;
+    position: relative;
+}
+
+.switch-track {
+    width: 100%;
+    height: 100%;
+    background-color: #2d3436;
+    border-radius: 30px;
+    border: 2px solid #636e72;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.switch-track.checked {
+    background-color: #fd79a8;
+    border-color: #e84393;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 10px rgba(253, 121, 168, 0.4);
+}
+
+.switch-thumb {
+    width: 22px;
+    height: 22px;
+    background-color: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    /* Bouncy */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.switch-track.checked .switch-thumb {
+    left: calc(100% - 24px);
+    /* 60 - 22 - 2? No 2px padding. 100% - 22px - 2px = right side */
+    /* width 60 (track) - 4 (borders) = 56 inner? No CSS width includes border usually? 
+       Let's assume box-sizing border-box. 
+       Track width 60. Thumb width 22.
+       Left: 2px.
+       Right: 60 - 22 - 2 = 36px.
+    */
+    transform: translateX(0);
+}
+
+/* Optional Icons inside track? */
+.switch-icons {
+    /* Hidden for clean look, or visible? */
+    display: none;
+}
+
+.state-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #b2bec3;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.boolean-node.is-true .state-label {
+    color: #fd79a8;
+}
+
+/* Handle Override */
+.boolean-handle {
+    width: 8px !important;
+    height: 8px !important;
+    background: #fd79a8 !important;
+    border: 2px solid #2e2d44 !important;
+    right: -4px !important;
+    top: 50% !important;
+}

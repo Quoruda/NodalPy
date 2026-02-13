@@ -1,60 +1,104 @@
-import React, { memo, useState, useEffect, useCallback, useRef } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
-import './ValueNode.css';
+import './BooleanNode.css';
 
-const BooleanNode = memo(({ id, data }) => {
+const BooleanNode = memo(({ id, data, selected }) => {
     // Reuse useCodeNode for backend communication logic
     const nodeState = useCodeNode({ ...data, id }, { timeout: 0.5, autoTrigger: true });
     const { runCode, updateNode } = nodeState;
 
-    // ... (lines 11-47 unchanged)
+    // Local state
+    const [localValue, setLocalValue] = useState(false);
+    const [localTitle, setLocalTitle] = useState(data.title || 'Boolean');
+    const [isHovered, setIsHovered] = useState(false);
 
-    // React to state change to trigger downstream nodes - HANDLED BY useCodeNode NOW
-    // const { triggerDownstreamNodes } = nodeState;
-    // const prevStateRef = useRef(data.state);
-    // useEffect(() => { ... }
-
-    // Auto-run effect on mount ONLY (Initialize)
+    // Initial value from code
     useEffect(() => {
-        // Execute immediately on mount to register value if code exists
-        if (data.code && data.code.startsWith('output =')) {
-            runCode();
+        if (data.code) {
+            // output = True or output = False
+            const match = data.code.match(/output\s*=\s*(True|False)/);
+            if (match) {
+                setLocalValue(match[1] === 'True');
+            }
         }
-    }, []); // Run once on mount
+    }, [data.code]);
 
+    // Auto-run on mount
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            runCode();
+        }, 100);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Handle Title Change
+    const handleTitleChange = useCallback((e) => {
+        const newTitle = e.target.value;
+        setLocalTitle(newTitle);
+        updateNode(id, { title: newTitle });
+    }, [id, updateNode]);
+
+    // Toggle Handler
+    const toggleValue = useCallback((e) => {
+        e.stopPropagation(); // Prevent drag
+        const newValue = !localValue;
+        setLocalValue(newValue);
+
+        // Python boolean
+        const pyValue = newValue ? 'True' : 'False';
+        const newCode = `output = ${pyValue}`;
+
+        updateNode(id, { code: newCode });
+        runCode({ code: newCode });
+    }, [localValue, id, updateNode, runCode]);
+
+    // Stop propagation
+    const stopPropagation = useCallback((e) => e.stopPropagation(), []);
 
     return (
-        <div className="value-node-container" style={{ minWidth: '100px' }}>
-            <div className="value-node-header">
-                <span className="value-node-title">{data.title || 'Boolean'}</span>
+        <div
+            className={`boolean-node ${selected ? 'selected' : ''} ${localValue ? 'is-true' : 'is-false'}`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {/* Decoration - Static BOOL */}
+            <div className={`boolean-decoration`}>
+                BOOL
             </div>
 
-            <div className="value-node-slider-container" style={{ justifyContent: 'center', padding: '10px' }}>
-                <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    color: '#fff',
-                    fontSize: '12px',
-                    cursor: 'pointer'
-                }}>
-                    <input
-                        type="checkbox"
-                        checked={localValue}
-                        onChange={handleChange}
-                        className="nodrag"
-                        style={{ transform: 'scale(1.2)', cursor: 'pointer' }}
-                    />
+            {/* Header with Title */}
+            <div className="boolean-header">
+                <input
+                    type="text"
+                    className="title-input nodrag"
+                    placeholder="Title"
+                    value={localTitle}
+                    onChange={handleTitleChange}
+                    onKeyDown={stopPropagation}
+                />
+            </div>
+
+            <div className="boolean-content">
+                <div className="switch-container nodrag" onClick={toggleValue}>
+                    <div className={`switch-track ${localValue ? 'checked' : ''}`}>
+                        <div className="switch-thumb"></div>
+                        <div className="switch-icons">
+                            <span className="icon-on">Day</span>
+                            <span className="icon-off">Night</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="state-label">
                     {localValue ? 'True' : 'False'}
-                </label>
+                </div>
             </div>
 
             <Handle
                 type="source"
                 position={Position.Right}
                 id="output"
-                className="value-node-handle"
+                className="boolean-handle"
             />
         </div>
     );
