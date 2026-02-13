@@ -5,6 +5,9 @@ import { useFlowContext } from '../../FlowContext.jsx';
 import InputHandle from '../CustomNode/InputHandle.jsx';
 import OutputHandle from '../CustomNode/OutputHandle.jsx';
 import './FastNode.css';
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 
 const FastNode = memo(({ id, data, selected }) => {
     // FastNode uses 1s timeout and auto-triggers downstream
@@ -78,8 +81,8 @@ const FastNode = memo(({ id, data, selected }) => {
 
 
     // 1. Handle Code Change with Debounce
-    const handleCodeChange = useCallback((e) => {
-        const newCode = e.target.value;
+    const handleCodeChange = useCallback((value) => {
+        const newCode = value;
         setCode(newCode);
         codeRef.current = newCode;
 
@@ -190,15 +193,28 @@ const FastNode = memo(({ id, data, selected }) => {
                 </div>
 
                 {/* Code Column (Center) */}
-                <div className="fast-center">
-                    <textarea
-                        className="code-input nodrag"
-                        value={code}
-                        onChange={handleCodeChange}
-                        onKeyDown={stopPropagation}
-                        placeholder="e.g. output = input1 * 2"
-                        spellCheck={false}
-                    />
+                <div className="fast-center" onMouseDown={stopPropagation}>
+                    <div className="code-mirror-wrapper nodrag">
+                        <CodeMirror
+                            value={code}
+                            height="100%"
+                            extensions={[python()]}
+                            onChange={handleCodeChange}
+                            theme={vscodeDark}
+                            basicSetup={{
+                                lineNumbers: true,
+                                foldGutter: true,
+                                dropCursor: true,
+                                allowMultipleSelections: true,
+                                indentOnInput: true,
+                                bracketMatching: true,
+                                closeBrackets: true,
+                                autocompletion: true,
+                                highlightActiveLine: true,
+                                highlightSelectionMatches: true,
+                            }}
+                        />
+                    </div>
                 </div>
 
                 {/* Outputs Column */}

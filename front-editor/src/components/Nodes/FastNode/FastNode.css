@@ -116,26 +116,58 @@
     justify-content: center;
 }
 
+/* Code Editor Container */
 .fast-center {
-    flex: 1;
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    min-width: 100px;
-    /* Ensure code area has space */
+    justify-content: center;
+    padding: 0 5px;
+    min-width: 120px;
+    /* Small but usable */
 }
 
+.fast-node .code-mirror-wrapper {
+    width: 100%;
+    height: 100%;
+    min-height: 45px;
+    /* Minimum reasonable height */
+    min-width: 150px;
+    /* Minimum reasonable width to prevent squashing */
+    border-radius: 4px;
+    /* Enable resizing */
+    resize: both;
+    overflow: auto !important;
+    /* Forces scrollbars if needed */
+    border: 1px solid rgba(116, 185, 255, 0.1);
+}
+
+.fast-node .cm-editor {
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    font-size: 13px;
+    /* Slightly larger like manual */
+}
+
+.fast-node .cm-gutters {
+    display: block !important;
+    /* Show gutters */
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    color: #b2bec3;
+}
+
+.fast-node .cm-scroller {
+    overflow: auto;
+    font-family: 'Fira Code', 'Courier New', monospace;
+}
+
+/* Remove textarea styles as they are replaced */
 .code-input {
     background: rgba(116, 185, 255, 0.08);
     /* From code-preview */
     border-radius: 8px;
     padding: 10px;
-    border: 2px solid rgba(116, 185, 255, 0.2);
-    font-size: 12px;
-    font-family: 'Courier New', monospace;
-    color: #dfe6e9;
-    width: 100%;
-    box-sizing: border-box;
     resize: vertical;
     outline: none;
     min-height: 60px;
