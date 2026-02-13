@@ -1,0 +1,261 @@
+/* File Import Node Style (Violet Theme) */
+.file-node {
+    background: #2e2d44;
+    border: 3px solid #a29bfe;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    min-width: 160px;
+    /* Reduced from 200px */
+    position: relative;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+}
+
+.file-node:hover {
+    border-color: #b8b0ff;
+    box-shadow: 0 6px 12px rgba(162, 155, 254, 0.3);
+}
+
+.file-node.selected {
+    border-color: #ff0072 !important;
+    box-shadow: 0 0 0 2px rgba(255, 0, 114, 0.4);
+}
+
+.file-node.drag-over {
+    border-color: #00b894;
+    border-style: dashed;
+    background: rgba(0, 184, 148, 0.1);
+}
+
+/* Header */
+.file-header {
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 7px 7px 0 0;
+    border-bottom: 2px solid #5f4dcd;
+}
+
+.title-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    /* Center content in header */
+}
+
+/* Icons */
+.file-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    position: relative;
+    /* Move down slightly */
+    top: 2px;
+}
+
+.folder {
+    width: 20px;
+    /* Smaller folder */
+    height: 15px;
+    position: relative;
+}
+
+.folder-back {
+    width: 20px;
+    height: 12px;
+    background: white;
+    border-radius: 0 2px 2px 2px;
+    position: absolute;
+    bottom: 0;
+}
+
+.folder-tab {
+    width: 10px;
+    height: 5px;
+    background: white;
+    border-radius: 2px 2px 0 0;
+    position: absolute;
+    top: 0;
+    left: 2px;
+}
+
+.folder-arrow {
+    position: absolute;
+    font-size: 10px;
+    /* Smaller arrow */
+    top: 50%;
+    left: 50%;
+    /* Reduced movement range */
+    transform: translate(-50%, -30%);
+    color: #6c5ce7;
+    font-weight: bold;
+    animation: arrowBounce 2s ease-in-out infinite;
+}
+
+@keyframes arrowBounce {
+
+    0%,
+    100% {
+        transform: translate(-50%, -30%);
+    }
+
+    50% {
+        transform: translate(-50%, -50%);
+    }
+}
+
+.file-title {
+    /* Using input for title now */
+    display: none;
+}
+
+/* Content area */
+.file-content {
+    padding: 8px;
+    /* Further reduced */
+    color: #dfe6e9;
+}
+
+/* Drop zone */
+.drop-zone {
+    background: rgba(162, 155, 254, 0.1);
+    border: 2px dashed rgba(162, 155, 254, 0.4);
+    border-radius: 8px;
+    padding: 8px 6px;
+    /* Very compact */
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 0;
+}
+
+.drop-zone:hover {
+    background: rgba(162, 155, 254, 0.15);
+    border-color: #a29bfe;
+}
+
+.drop-icon {
+    font-size: 24px;
+    /* Smaller icon */
+    margin-bottom: 4px;
+    animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+.drop-text {
+    font-size: 10px;
+    /* Smaller text */
+    color: #b2bec3;
+    margin-bottom: 4px;
+}
+
+.drop-text strong {
+    color: #a29bfe;
+}
+
+.browse-button {
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    border: 2px solid #5f4dcd;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 12px;
+    transition: all 0.2s;
+    margin-top: 4px;
+}
+
+.browse-button:hover {
+    background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+    transform: scale(1.05);
+}
+
+.browse-button:active {
+    transform: scale(0.98);
+}
+
+/* File info when loaded */
+.file-info {
+    background: rgba(162, 155, 254, 0.15);
+    border-left: 3px solid #a29bfe;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 0;
+}
+
+.file-name {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #dfe6e9;
+    margin-bottom: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.file-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #636e72;
+    gap: 10px;
+}
+
+.file-type {
+    color: #a29bfe;
+    font-weight: 600;
+}
+
+.remove-file {
+    background: transparent;
+    border: none;
+    color: #d63031;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+    margin-left: 4px;
+    transition: transform 0.2s;
+    line-height: 1;
+}
+
+.remove-file:hover {
+    transform: scale(1.2);
+    color: #ff7675;
+}
+
+/* Handle Override */
+.file-handle {
+    width: 8px !important;
+    height: 8px !important;
+    background: #a29bfe !important;
+    border: 2px solid #2e2d44 !important;
+    right: -4px !important;
+    top: 50% !important;
+}
+
+/* Loader */
+.loader {
+    color: #a29bfe;
+    font-size: 12px;
+    text-align: center;
+}
