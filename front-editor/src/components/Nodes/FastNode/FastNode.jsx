@@ -20,7 +20,6 @@ const FastNode = memo(({ id, data, selected }) => {
     const {
         runCode, updateNode,
         inputs, outputs,
-        isEditing, setIsEditing,
         // Helper functions from useCodeNode
         addInput, removeInput, updateInput,
         addOutput, removeOutput, updateOutput
@@ -55,13 +54,12 @@ const FastNode = memo(({ id, data, selected }) => {
                 id={input.id}
                 input={input.name}
                 index={index}
-                isEditing={isEditing}
                 updateInput={updateInput}
                 removeInput={removeInput}
                 isConnectable={connectionStatus[index]}
             />
         )),
-        [inputs, isEditing, updateInput, removeInput, connectionStatus]
+        [inputs, updateInput, removeInput, connectionStatus]
     );
 
     const outputHandles = useMemo(() =>
@@ -71,13 +69,13 @@ const FastNode = memo(({ id, data, selected }) => {
                 id={output.id}
                 output={output.name}
                 index={index}
-                isEditing={isEditing}
                 updateOutput={updateOutput}
                 removeOutput={removeOutput}
             />
         )),
-        [outputs, isEditing, updateOutput, removeOutput]
+        [outputs, updateOutput, removeOutput]
     );
+
 
 
     // 1. Handle Code Change with Debounce
@@ -91,7 +89,6 @@ const FastNode = memo(({ id, data, selected }) => {
         // Debounce Execution
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
-            console.log("⚡ FastNode Code Change Trigger");
             runCode({ code: newCode });
         }, 500);
     }, [id, updateNode, runCode]);
@@ -115,12 +112,10 @@ const FastNode = memo(({ id, data, selected }) => {
             !incomingIds.every((val, index) => val === prevIds[index]);
 
         if (isDifferent) {
-            console.log(`⚡ FastNode ${id} detected connection change.`);
             prevInputsRef.current = incomingIds;
 
             // CRITICAL: fromLoad check
             if (data.fromLoad) {
-                console.log(`⚡ FastNode ${id} skipping auto-run (fromLoad).`);
                 // Consume the flag so future changes ARE detected
                 // We use a small timeout to ensure we don't trigger immediate re-run issues, 
                 // but mostly just to clear the state for the user's next interaction.
@@ -128,7 +123,7 @@ const FastNode = memo(({ id, data, selected }) => {
                 return;
             }
 
-            console.log(`⚡ FastNode ${id} auto-running due to connection change.`);
+            // Debounce run
 
             // Debounce run
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -157,10 +152,7 @@ const FastNode = memo(({ id, data, selected }) => {
         updateNode(id, { title: newTitle });
     }, [id, updateNode]);
 
-    const toggleEdit = useCallback((e) => {
-        e.stopPropagation();
-        setIsEditing(!isEditing);
-    }, [isEditing, setIsEditing]);
+
 
     const stopPropagation = useCallback((e) => e.stopPropagation(), []);
 

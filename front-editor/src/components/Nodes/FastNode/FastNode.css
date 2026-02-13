@@ -17,7 +17,6 @@
 }
 
 .fast-node:hover {
-    /* transform: scale(1.02); ReactFlow handles transforms, we should avoid scaling the node itself if it messes up handles, but let's try or skip scale */
     border-color: #a29bfe;
     box-shadow: 0 6px 12px rgba(116, 185, 255, 0.3);
 }
@@ -162,21 +161,8 @@
     font-family: 'Fira Code', 'Courier New', monospace;
 }
 
-/* Remove textarea styles as they are replaced */
-.code-input {
-    background: rgba(116, 185, 255, 0.08);
-    /* From code-preview */
-    border-radius: 8px;
-    padding: 10px;
-    resize: vertical;
-    outline: none;
-    min-height: 60px;
-}
-
-.code-input:focus {
-    border-color: #74b9ff;
-    background: rgba(116, 185, 255, 0.15);
-}
+/* Code Input Styles - Legacy (kept if fallback needed, or remove) */
+/* .code-input removed as replaced by CodeMirror */
 
 /* Input/Output Handle Styles for FastNode */
 .fast-node .var-input input {
