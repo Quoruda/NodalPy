@@ -1,0 +1,198 @@
+/* FastNode.css - Electric Blue Theme */
+
+.fast-node {
+    background: #2e2d44;
+    border: 3px solid #74b9ff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    min-width: 180px;
+    position: relative;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+}
+
+.fast-node.selected {
+    border-color: #a29bfe;
+    /* Brighter selection */
+    box-shadow: 0 0 0 2px #a29bfe;
+}
+
+.fast-node:hover {
+    /* transform: scale(1.02); ReactFlow handles transforms, we should avoid scaling the node itself if it messes up handles, but let's try or skip scale */
+    border-color: #a29bfe;
+    box-shadow: 0 6px 12px rgba(116, 185, 255, 0.3);
+}
+
+/* Éclair géant en diagonal sur le côté droit */
+.lightning-bolt {
+    position: absolute;
+    top: -25px;
+    right: -20px;
+    font-size: 70px;
+    color: #74b9ff;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5),
+        0 0 25px rgba(116, 185, 255, 0.6);
+    z-index: 10;
+    pointer-events: none;
+    transform: rotate(-25deg) scaleX(-1);
+    /* Combined transform */
+    animation: zap 2s ease-in-out infinite;
+}
+
+@keyframes zap {
+
+    0%,
+    100% {
+        opacity: 1;
+        filter: drop-shadow(0 0 10px rgba(116, 185, 255, 0.6));
+    }
+
+    50% {
+        opacity: 0.8;
+        filter: drop-shadow(0 0 20px rgba(116, 185, 255, 0.8));
+    }
+}
+
+/* Header */
+.fast-header {
+    background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border-radius: 7px 7px 0 0;
+    border-bottom: 2px solid #0652dd;
+}
+
+.title-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.title-input {
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.title-input:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.title-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Content area */
+/* Content area */
+.fast-content {
+    padding: 12px;
+    color: #dfe6e9;
+    display: flex;
+    flex-direction: row;
+    /* Fixed: Row for 3 columns */
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.fast-inputs,
+.fast-outputs {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 20px;
+    justify-content: center;
+}
+
+.fast-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 100px;
+    /* Ensure code area has space */
+}
+
+.code-input {
+    background: rgba(116, 185, 255, 0.08);
+    /* From code-preview */
+    border-radius: 8px;
+    padding: 10px;
+    border: 2px solid rgba(116, 185, 255, 0.2);
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    color: #dfe6e9;
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    outline: none;
+    min-height: 60px;
+}
+
+.code-input:focus {
+    border-color: #74b9ff;
+    background: rgba(116, 185, 255, 0.15);
+}
+
+/* Input/Output Handle Styles for FastNode */
+.fast-node .var-input input {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(116, 185, 255, 0.3) !important;
+    color: #dfe6e9 !important;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    border-radius: 4px;
+    padding: 2px 4px;
+    outline: none;
+    transition: all 0.2s;
+    min-width: 30px;
+}
+
+.fast-node .var-input input:focus {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-color: #74b9ff !important;
+    box-shadow: 0 0 5px rgba(116, 185, 255, 0.3);
+}
+
+/* Delete button for inputs/outputs */
+.fast-node btn {
+    cursor: pointer;
+    font-size: 10px;
+    margin: 0 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.fast-node btn:hover {
+    opacity: 1;
+}
+
+/* Handle Styles override for this node */
+.fast-node .react-flow__handle {
+    width: 10px;
+    height: 10px;
+    background: #74b9ff;
+    border: 2px solid #fff;
+    z-index: 10;
+    /* Ensure handles are above */
+}
+
+.fast-node .react-flow__handle-left {
+    left: -8px;
+}
+
+.fast-node .react-flow__handle-right {
+    right: -8px;
+}

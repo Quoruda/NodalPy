@@ -102,9 +102,17 @@ export const useCodeNode = (data, config = null) => {
 
     const updateInput = useCallback((index, newName) => {
         setInputs(prev => {
+            // Uniqueness check: if exists, append index
+            let finalName = newName;
+            if (prev.some((p, i) => i !== index && p.name === finalName)) {
+                let j = 2;
+                while (prev.some((p, i) => i !== index && p.name === `${finalName}_${j}`)) j++;
+                finalName = `${finalName}_${j}`;
+            }
+
             const updated = [...prev];
-            if (newName === '' || validVarRegex.test(newName)) {
-                updated[index] = { ...updated[index], name: newName };
+            if (finalName === '' || validVarRegex.test(finalName)) {
+                updated[index] = { ...updated[index], name: finalName };
             }
             return updated;
         });
@@ -112,20 +120,35 @@ export const useCodeNode = (data, config = null) => {
 
     const updateOutput = useCallback((index, newName) => {
         setOutputs(prev => {
+            let finalName = newName;
+            if (prev.some((p, i) => i !== index && p.name === finalName)) {
+                let j = 2;
+                while (prev.some((p, i) => i !== index && p.name === `${finalName}_${j}`)) j++;
+                finalName = `${finalName}_${j}`;
+            }
+
             const updated = [...prev];
-            if (newName === '' || validVarRegex.test(newName)) {
-                updated[index] = { ...updated[index], name: newName };
+            if (finalName === '' || validVarRegex.test(finalName)) {
+                updated[index] = { ...updated[index], name: finalName };
             }
             return updated;
         });
     }, [validVarRegex]);
 
     const addInput = useCallback(() => {
-        setInputs(prev => [...prev, { id: generateUniqueId(), name: '' }]);
+        setInputs(prev => {
+            let i = 1;
+            while (prev.some(p => p.name === `input${i}`)) i++;
+            return [...prev, { id: generateUniqueId(), name: `input${i}` }];
+        });
     }, []);
 
     const addOutput = useCallback(() => {
-        setOutputs(prev => [...prev, { id: generateUniqueId(), name: '' }]);
+        setOutputs(prev => {
+            let i = 1;
+            while (prev.some(p => p.name === `output${i}`)) i++;
+            return [...prev, { id: generateUniqueId(), name: `output${i}` }];
+        });
     }, []);
 
     const removeInput = useCallback((index) => {
