@@ -123,17 +123,10 @@ function Flow() {
     return (
         <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef}>
             <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
-                <Sidebar />
+                <Sidebar onSave={saveProjectToFile} onLoad={handleImportClick} />
                 <div style={{ flex: 1, height: '100vh', position: 'relative' }} onDrop={onDrop} onDragOver={onDragOver}>
-                    <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 4 }}>
-                        <button className="save-button" onClick={saveProjectToFile} style={{ marginRight: 10 }}>
-                            Sauvegarder JSON
-                        </button>
-                        <button className="import-button" onClick={handleImportClick}>
-                            Importer JSON
-                        </button>
-                    </div>
 
+                    {/* Hidden Input for File Loading */}
                     <input
                         type="file"
                         accept=".json"
