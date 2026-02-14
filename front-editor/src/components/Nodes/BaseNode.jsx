@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
@@ -15,8 +15,6 @@ import './node_content.css';
 
 const BaseNode = ({
     data,
-    isEditing,
-    setIsEditing,
     tempTitle,
     setTempTitle,
     handleSave,
@@ -92,7 +90,6 @@ const BaseNode = ({
             }}
         >
             <NodeHeader
-                title={data.title}
                 state={data.state}
                 runCode={runCode}
                 hideState={nodeTypeClass === 'fast-node'}

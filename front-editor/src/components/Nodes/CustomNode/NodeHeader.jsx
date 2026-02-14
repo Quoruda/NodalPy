@@ -5,7 +5,6 @@ const NodeHeader = memo(({
     tempTitle,
     setTempTitle,
     handleSave,
-    title,
     state,
     runCode,
     hideState = false
@@ -52,7 +51,6 @@ const NodeHeader = memo(({
 ), (prevProps, nextProps) => {
     // ✅ Comparaison fine pour éviter les re-renders inutiles
     return prevProps.tempTitle === nextProps.tempTitle &&
-        prevProps.title === nextProps.title &&
         prevProps.state === nextProps.state &&
         prevProps.handleSave === nextProps.handleSave &&
         prevProps.setTempTitle === nextProps.setTempTitle &&
