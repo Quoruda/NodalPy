@@ -1,4 +1,4 @@
-from server import *
+from app.main import app
 import uvicorn
 import threading
 import webview

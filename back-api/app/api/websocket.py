@@ -1,8 +1,8 @@
 import asyncio
-from variable_converter import convert_value
+from ..utils.converter import convert_value
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
-from user_manager import UserManager
+from ..services.user_manager import UserManager
 
 
 def verif_args(data: dict, required_args: list[str]) -> bool:

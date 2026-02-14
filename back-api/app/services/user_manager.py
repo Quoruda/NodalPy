@@ -1,4 +1,4 @@
-from userData import UserData
+from .user_data import UserData
 
 
 class UserManager:

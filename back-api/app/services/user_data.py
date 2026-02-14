@@ -1,5 +1,6 @@
 import copy
-from runFunctions import *
+from .execution import *
+from ..core.config import STORAGE_DIR
 
 class UserData:
     def __init__(self, identifier: str):
@@ -31,15 +32,13 @@ class UserData:
         
         # Inject STORAGE_DIR and 'os' for portability
         # Use absolute path for robustness. 
-        # Assuming storage is at project root / storage / userId
         import os
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        storage_dir = os.path.join(base_dir, "storage", self.userId)
         
         # Ensure directory exists (execution safety)
-        os.makedirs(storage_dir, exist_ok=True)
+        user_storage_dir = os.path.join(STORAGE_DIR, self.userId)
+        os.makedirs(user_storage_dir, exist_ok=True)
         
-        exec_globals['STORAGE_DIR'] = storage_dir
+        exec_globals['STORAGE_DIR'] = user_storage_dir
         exec_globals['os'] = os # Expose os module directly
         
         self.nodeContexts[node] = local_scope
@@ -52,7 +51,7 @@ class UserData:
         
         try:
             # Pass storage_dir as cwd to allow relative path access (e.g. open("file.txt"))
-            run_code_in_thread(code, exec_globals, local_scope, timeout, cwd=storage_dir)
+            run_code_in_thread(code, exec_globals, local_scope, timeout, cwd=user_storage_dir)
         except TimeoutError:
              status = "timeout"
              error_msg = f"Execution timed out ({timeout}s)"

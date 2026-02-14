@@ -5,20 +5,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from user_manager import UserManager
-from user_websocket import UserWebSocket
+from .services.user_manager import UserManager
+from .api.websocket import UserWebSocket
+from .core.config import STORAGE_DIR, FRONTEND_DIR
 
 
 user_manager = UserManager()
 
 app = FastAPI()
-frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "front"))
-app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dir, "assets")), name="assets")
+
+app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
 
 # Ajoute ce middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # adapte à ton port React
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,10 +30,7 @@ app.add_middleware(
 import shutil
 from fastapi import UploadFile, File, Form
 
-# Ensure storage directory exists
-STORAGE_DIR = os.path.abspath(os.path.join(os.getcwd(), "storage"))
-if not os.path.exists(STORAGE_DIR):
-    os.makedirs(STORAGE_DIR)
+# STORAGE_DIR is now imported from core.config
 
 @app.post("/upload")
 async def upload_file(
@@ -75,7 +73,7 @@ async def upload_file(
 
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str):
-    index_path = os.path.join(frontend_dir, "index.html")
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
     return FileResponse(index_path)
 
 
