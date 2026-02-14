@@ -1,23 +1,16 @@
 /* FastNode.css - Electric Blue Theme */
 
 .fast-node {
-    background: #1e1e2f;
-    border: 2px solid var(--node-border-default);
+    border-color: var(--node-border-default);
     border-radius: 12px;
-    box-shadow: 0 0 15px rgba(116, 185, 255, 0.15);
+    /* Keep custom radius for FastNode if desired, or remove to match NodeShell (8px). Let's keep specific 12px for potentially "faster" look? Or unify. 12px is nice. NodeShell is 8px. */
     min-width: 180px;
-    overflow: hidden;
     font-family: 'Inter', system-ui, sans-serif;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    /* Center node on anchor point */
+    /* overflow: hidden from NodeShell might conflict if we want lightning out? NodeShell has overflow: visible by default now. */
+    overflow: visible;
 }
 
-.fast-node.selected {
-    border-color: var(--node-selected-color) !important;
-    box-shadow: var(--node-selected-shadow) !important;
-}
+/* Selected state handled by NodeShell */
 
 .fast-node:hover {
     border-color: #a29bfe;
@@ -55,14 +48,12 @@
 }
 
 /* Header */
+/* Header */
+/* NodeShell header provides base. FastNode overrides gradient. */
 .fast-header {
     background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
+    /* padding handled by NodeShell, but maybe we want specific? */
     justify-content: space-between;
-    gap: 10px;
-    border-radius: 7px 7px 0 0;
     border-bottom: 2px solid #0652dd;
 }
 
@@ -74,27 +65,10 @@
     min-width: 0;
 }
 
+/* Title Input - mostly handled by NodeShell, just specific Flex behavior? */
 .title-input {
-    font-size: 13px;
-    padding: 6px 10px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    font-weight: 600;
     flex: 1;
     min-width: 0;
-    outline: none;
-    transition: all 0.2s;
-}
-
-.title-input:focus {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-.title-input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
 }
 
 /* Content area */

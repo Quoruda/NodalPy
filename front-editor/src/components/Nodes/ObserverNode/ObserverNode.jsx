@@ -4,6 +4,7 @@ import { useFlowContext } from '../../FlowContext.jsx';
 
 import '../nodes.css'
 import '../node_content.css'
+import '../NodeShell.css';
 import './ObserverNode.css'
 
 const ObserverNode = memo(({ data, id, selected }) => {
@@ -139,7 +140,7 @@ const ObserverNode = memo(({ data, id, selected }) => {
 
 
     return (
-        <div className={`node observer-node ${selected ? 'selected' : ''}`}>
+        <div className={`node-shell observer-node ${selected ? 'selected' : ''}`}>
             <Handle
                 type="target"
                 position={Position.Left}
@@ -147,7 +148,7 @@ const ObserverNode = memo(({ data, id, selected }) => {
                 isConnectable={!connectedSource} // Only allow one connection
             />
 
-            <div className="observer-header">
+            <div className="node-shell-header observer-header">
                 <div className="observer-eyes">
                     <div className="eye">
                         <div className="pupil"></div>

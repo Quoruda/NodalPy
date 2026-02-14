@@ -4,6 +4,7 @@ import { useCodeNode } from '../useCodeNode.js';
 import { useFlowContext } from '../../FlowContext.jsx';
 import InputHandle from '../CustomNode/InputHandle.jsx';
 import OutputHandle from '../CustomNode/OutputHandle.jsx';
+import '../NodeShell.css';
 import './FastNode.css';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
@@ -157,16 +158,16 @@ const FastNode = memo(({ id, data, selected }) => {
     const stopPropagation = useCallback((e) => e.stopPropagation(), []);
 
     return (
-        <div className={`fast-node ${selected ? 'selected' : ''}`}>
+        <div className={`node-shell fast-node ${selected ? 'selected' : ''}`}>
             {/* Decoration: Lightning Bolt */}
             <div className="lightning-bolt">⚡</div>
 
             {/* Header */}
-            <div className="fast-header">
+            <div className="node-shell-header fast-header">
                 <div className="title-section">
                     <input
                         type="text"
-                        className="title-input nodrag"
+                        className="node-shell-title title-input nodrag"
                         placeholder="Node Name"
                         value={localTitle}
                         onChange={handleTitleChange}

@@ -1,18 +1,8 @@
 /* Number Node Style (Adapted from IntegerNode) */
+/* Number Node Style (Adapted from IntegerNode) */
 .number-node {
-    background: #1e1e2f;
-    border: 2px solid var(--node-border-default);
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    border-color: var(--node-border-default);
     min-width: 160px;
-    /* Removed padding: 10px; */
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    position: relative;
-    /* overflow: visible needed for the big number */
-    overflow: visible;
-    transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
 }
 
 .number-node:hover {
@@ -21,11 +11,7 @@
     box-shadow: 0 6px 12px rgba(116, 185, 255, 0.3);
 }
 
-.number-node.selected {
-    border-color: #ff0072 !important;
-    /* Pink/Red on selection */
-    box-shadow: 0 0 0 2px rgba(255, 0, 114, 0.4);
-}
+/* Selected state handled by NodeShell */
 
 /* Chiffre géant qui dépasse - Smaller */
 .big-number {
@@ -70,33 +56,7 @@
     margin-bottom: 0;
 }
 
-/* Premium Title Input */
-.title-input {
-    font-size: 11px;
-    padding: 4px 8px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    font-weight: 600;
-    text-align: center;
-    width: 80%;
-    outline: none;
-    transition: all 0.2s;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-.title-input:focus,
-.title-input:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
-    opacity: 1;
-}
-
-.title-input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
+/* Headers and Title Inputs handled by NodeShell base + specifics */
 
 /* Range Config at bottom - Integrated look */
 .range-config {

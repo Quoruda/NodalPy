@@ -1,0 +1,75 @@
+/* NodeShell.css - Common Styles for All Nodes */
+
+/* Base Shell */
+.node-shell {
+    background: #1e1e2f;
+    border: 2px solid var(--node-border-default, #4b4b60);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    overflow: visible;
+    /* Default to visible for decorations */
+    transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+    min-width: 160px;
+    /* Default min-width */
+}
+
+/* Hover State */
+.node-shell:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    /* Border color is usually theme-specific, handled by specific classes or vars */
+}
+
+/* Selection State */
+.node-shell.selected {
+    border-color: var(--node-selected-color, #ff0072) !important;
+    box-shadow: var(--node-selected-shadow, 0 0 0 2px rgba(255, 0, 114, 0.4)) !important;
+}
+
+/* Header Base */
+.node-shell-header {
+    padding: 6px 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px 6px 0 0;
+    /* Matches container 8px - 2px border */
+    margin-bottom: 0;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+    /* Generic dark border */
+}
+
+/* Title Input Base */
+.node-shell-title {
+    font-size: 13px;
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    color: white;
+    font-weight: 600;
+    width: 100%;
+    outline: none;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.node-shell-title:focus {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.node-shell-title::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Handle Base Override (Generic) */
+.node-shell-handle {
+    width: 8px !important;
+    height: 8px !important;
+    border: 2px solid #2e2d44 !important;
+    top: 50% !important;
+}

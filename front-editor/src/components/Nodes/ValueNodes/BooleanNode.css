@@ -1,16 +1,8 @@
 /* Boolean Node Style (Fuchsia/Rose Theme) */
+/* Boolean Node Style (Fuchsia/Rose Theme) */
 .boolean-node {
-    background: #1e1e2f;
-    border: 2px solid var(--node-border-default);
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    border-color: var(--node-border-default);
     min-width: 140px;
-    /* Removed padding: 10px; */
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    position: relative;
-    overflow: visible;
 }
 
 .boolean-node:hover {
@@ -18,10 +10,7 @@
     box-shadow: 0 6px 12px rgba(253, 121, 168, 0.3);
 }
 
-.boolean-node.selected {
-    border-color: var(--node-selected-color) !important;
-    box-shadow: var(--node-selected-shadow) !important;
-}
+/* Selected state handled by NodeShell */
 
 /* Dynamic Border Color based on state? Optional. */
 .boolean-node.is-true {

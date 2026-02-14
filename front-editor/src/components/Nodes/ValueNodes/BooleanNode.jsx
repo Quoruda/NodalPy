@@ -1,6 +1,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
+import '../NodeShell.css';
 import './BooleanNode.css';
 
 const BooleanNode = memo(({ id, data, selected }) => {
@@ -60,7 +61,7 @@ const BooleanNode = memo(({ id, data, selected }) => {
 
     return (
         <div
-            className={`boolean-node ${selected ? 'selected' : ''} ${localValue ? 'is-true' : 'is-false'}`}
+            className={`node-shell boolean-node ${selected ? 'selected' : ''} ${localValue ? 'is-true' : 'is-false'}`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
@@ -70,10 +71,10 @@ const BooleanNode = memo(({ id, data, selected }) => {
             </div>
 
             {/* Header with Title */}
-            <div className="boolean-header">
+            <div className="node-shell-header boolean-header">
                 <input
                     type="text"
-                    className="title-input nodrag"
+                    className="node-shell-title title-input nodrag"
                     placeholder="Title"
                     value={localTitle}
                     onChange={handleTitleChange}

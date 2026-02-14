@@ -1,17 +1,8 @@
 /* File Import Node Style (Violet Theme) */
+/* File Import Node Style (Violet Theme) */
 .file-node {
-    background: #1e1e2f;
-    border: 2px solid var(--node-border-default);
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    border-color: var(--node-border-default);
     min-width: 220px;
-    /* Removed padding: 10px; */
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    position: relative;
-    overflow: visible;
-    transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
 }
 
 .file-node:hover {
@@ -19,10 +10,7 @@
     box-shadow: 0 6px 12px rgba(162, 155, 254, 0.3);
 }
 
-.file-node.selected {
-    border-color: var(--node-selected-color) !important;
-    box-shadow: var(--node-selected-shadow) !important;
-}
+/* Selected state handled by NodeShell */
 
 .file-node.drag-over {
     border-color: #00b894;

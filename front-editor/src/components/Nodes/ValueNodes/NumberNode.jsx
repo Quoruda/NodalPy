@@ -1,6 +1,7 @@
 import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
+import '../NodeShell.css';
 import './NumberNode.css'; // Make sure this CSS imports the styles from IntegerNode adaptation
 
 const NumberNode = memo(({ id, data, selected }) => {
@@ -88,15 +89,15 @@ const NumberNode = memo(({ id, data, selected }) => {
     const stopPropagation = useCallback((e) => e.stopPropagation(), []);
 
     return (
-        <div className={`number-node ${selected ? 'selected' : ''}`}>
+        <div className={`node-shell number-node ${selected ? 'selected' : ''}`}>
             {/* Decoration - Static 123 as requested */}
             <div className="big-number">123</div>
 
             {/* Header with Title */}
-            <div className="number-header">
+            <div className="node-shell-header number-header">
                 <input
                     type="text"
-                    className="title-input nodrag"
+                    className="node-shell-title title-input nodrag"
                     placeholder="Title"
                     value={localTitle}
                     onChange={handleTitleChange}

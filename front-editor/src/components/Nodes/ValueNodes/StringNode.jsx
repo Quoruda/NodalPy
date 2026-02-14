@@ -1,6 +1,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
+import '../NodeShell.css'; // Shared styles
 import './StringNode.css';
 
 const StringNode = memo(({ id, data, selected }) => {
@@ -46,15 +47,15 @@ const StringNode = memo(({ id, data, selected }) => {
     const stopPropagation = useCallback((e) => e.stopPropagation(), []);
 
     return (
-        <div className={`string-node ${selected ? 'selected' : ''}`}>
+        <div className={`node-shell string-node ${selected ? 'selected' : ''}`}>
             {/* Decoration - Green Theme Symbol */}
             <div className="string-decoration">@#?!</div>
 
             {/* Header with Title */}
-            <div className="string-header">
+            <div className="node-shell-header string-header">
                 <input
                     type="text"
-                    className="title-input nodrag"
+                    className="node-shell-title title-input nodrag"
                     placeholder="Title"
                     value={localTitle}
                     onChange={handleTitleChange}

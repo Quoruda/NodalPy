@@ -1,0 +1,23 @@
+:root {
+    /* Node Colors */
+    --color-custom: #6c5ce7;
+    /* Purple */
+    --color-fast: #74b9ff;
+    /* Electric Blue */
+    --color-number: #007bff;
+    /* Blue */
+    --color-boolean: #fd79a8;
+    /* Pink */
+    --color-string: #FFC312;
+    /* Yellow/Orange */
+    --color-file: #5f27cd;
+    /* Deep Purple */
+    --color-observer: #2bad60;
+    /* Green */
+
+    /* UI Colors */
+    --sidebar-bg: #1e1e2f;
+    --sidebar-border: #2e2d44;
+    --text-primary: #dfe6e9;
+    --text-secondary: #b2bec3;
+}

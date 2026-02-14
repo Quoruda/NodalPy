@@ -1,6 +1,7 @@
 import React, { memo, useState, useEffect, useCallback, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
+import '../NodeShell.css';
 import './FileNode.css';
 
 const FileNode = memo(({ id, data, selected }) => {
@@ -128,7 +129,7 @@ const FileNode = memo(({ id, data, selected }) => {
 
     if (isUploading) {
         return (
-            <div className={`file-node ${selected ? 'selected' : ''}`}>
+            <div className={`node-shell file-node ${selected ? 'selected' : ''}`}>
                 <div className="file-header">
                     <span className="file-title">Uploading...</span>
                 </div>
@@ -141,13 +142,13 @@ const FileNode = memo(({ id, data, selected }) => {
 
     return (
         <div
-            className={`file-node ${selected ? 'selected' : ''} ${isDragOver ? 'drag-over' : ''}`}
+            className={`node-shell file-node ${selected ? 'selected' : ''} ${isDragOver ? 'drag-over' : ''}`}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
         >
             {/* Header with Icon and Title */}
-            <div className="file-header">
+            <div className="node-shell-header file-header">
                 <div className="title-section">
                     <div className="file-icon">
                         <div className="folder">
@@ -158,7 +159,7 @@ const FileNode = memo(({ id, data, selected }) => {
                     </div>
                     <input
                         type="text"
-                        className="title-input nodrag"
+                        className="node-shell-title title-input nodrag"
                         placeholder="Title"
                         value={localTitle}
                         onChange={handleTitleChange}
