@@ -223,7 +223,8 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
 
             if (targetNode && targetNode.type === 'FastNode') {
                 // Fix: Use addNodeToQueue to ensure prerequisites are checked!
-                addNodeToQueue(targetNode.data);
+                // Must pass ID explicitly as it might not be in data
+                addNodeToQueue({ ...targetNode.data, id: targetNode.id });
             }
         });
 
