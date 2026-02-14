@@ -1,71 +1,26 @@
 import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { useCodeNode } from '../useCodeNode.js';
+import { useValueNode } from '../useValueNode.js';
 import '../NodeShell.css';
 import './NumberNode.css'; // Make sure this CSS imports the styles from IntegerNode adaptation
 
 const NumberNode = memo(({ id, data, selected }) => {
-    // Reuse useCodeNode for backend communication logic
-    const nodeState = useCodeNode({ ...data, id }, { timeout: 0.5, autoTrigger: true });
-    const { runCode, updateNode } = nodeState;
+    const {
+        localValue,
+        updateValue,
+        localTitle,
+        handleTitleChange
+    } = useValueNode(id, data, {
+        regex: /output\s*=\s*(-?[\d.]+)/,
+        defaultValue: 0,
+        defaultTitle: 'Number',
+        parseValue: parseFloat
+    });
 
-    // Local state
-    const [localValue, setLocalValue] = useState(0);
-    const [localTitle, setLocalTitle] = useState(data.title || 'Number');
-
-    // Configurable Range State
+    // Configurable Range State (Local only)
     const [minRange, setMinRange] = useState(-50);
     const [maxRange, setMaxRange] = useState(50);
     const [step, setStep] = useState(1);
-
-    // Auto-run on mount to ensure value is available immediately
-    useEffect(() => {
-        // If loaded from save, do NOT auto-run
-        if (data.fromLoad) {
-            // Remove the flag so future updates work normally
-            // We do this by updating the node data silently or just letting it be overwritten on next change
-            // Ideally we should clean it up, but for now just skipping runCode is enough.
-            // Actually, if we leave it, it won't affect anything else unless we re-mount.
-            return;
-        }
-
-        // Short timeout to ensure node is registered in backend references if needed
-        const timer = setTimeout(() => {
-            runCode();
-        }, 100);
-        return () => clearTimeout(timer);
-    }, []); // Run once on mount
-
-    // Parse code to get initial value (e.g. "output = 10" or "output = 10.5")
-    useEffect(() => {
-        if (data.code) {
-            const match = data.code.match(/output\s*=\s*(-?[\d.]+)/);
-            if (match) {
-                const parsed = parseFloat(match[1]);
-                if (!isNaN(parsed)) {
-                    setLocalValue(parsed);
-                }
-            }
-        }
-    }, [data.code]);
-
-    // Handle Title Change
-    const handleTitleChange = useCallback((e) => {
-        const newTitle = e.target.value;
-        setLocalTitle(newTitle);
-        updateNode(id, { title: newTitle });
-    }, [id, updateNode]);
-
-    // Handle Value Update
-    const updateValue = useCallback((newValue) => {
-        setLocalValue(newValue);
-        const newCode = `output = ${newValue}`;
-        // Javascript handles 1.0 as 1 automatically in template strings unless forced
-        updateNode(id, { code: newCode });
-        // Force execution immediately with updated data
-        runCode({ code: newCode });
-    }, [id, updateNode, runCode]);
-
 
     const handleInputChange = useCallback((e) => {
         const val = parseFloat(e.target.value);
