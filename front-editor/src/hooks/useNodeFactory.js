@@ -32,7 +32,7 @@ export const useNodeFactory = (nodes, setNodes, nodeCount, setNodeCount) => {
             newNode.data.outputs = [{ id: 'out1', name: 'output' }];
         } else if (type === 'FastNode') {
             newNode.data.title = 'Fast Node ' + id;
-            newNode.data.code = "output = input1 * 2";
+            newNode.data.code = "# Safe default: check if input exists\noutput = (input1 * 2) if 'input1' in locals() else 0";
             newNode.data.inputs = [{ id: 'in1', name: 'input1' }];
             newNode.data.outputs = [{ id: 'out1', name: 'output' }];
         } else if (type === 'NumberNode') {

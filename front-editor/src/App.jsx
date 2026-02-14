@@ -150,13 +150,18 @@ function Flow() {
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
                         onConnect={onConnectEdge}
-                        onConnect={onConnectEdge}
                         nodeTypes={NodeTypes}
                         nodeOrigin={[0.5, 0.5]}
                         fitView
                     >
                         <Background variant="dots" gap={16} size={1} />
-                        <MiniMap nodeColor={(n) => (n.type === 'CustomNode' ? '#ffcc00' : '#aaa')} position="bottom-left" />
+                        <MiniMap
+                            nodeColor={(n) => {
+                                const config = availableNodes.find(node => node.type === n.type);
+                                return config ? config.color : '#aaa';
+                            }}
+                            position="bottom-left"
+                        />
                         <Controls position="bottom-left" />
                     </ReactFlow>
                 </div>
