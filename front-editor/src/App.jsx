@@ -152,7 +152,9 @@ function Flow() {
                         onConnect={onConnectEdge}
                         nodeTypes={NodeTypes}
                         nodeOrigin={[0.5, 0.5]}
+                        minZoom={0.1}
                         fitView
+                        fitViewOptions={{ padding: 0.3, maxZoom: 0.8 }}
                     >
                         <Background variant="dots" gap={16} size={1} />
                         <MiniMap
