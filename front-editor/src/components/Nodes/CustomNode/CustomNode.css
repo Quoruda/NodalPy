@@ -1,61 +1,62 @@
 /* ==== Nodes ==== */
+/* ==== Nodes ==== */
 .custom-node {
     background: #2e2d44;
-    border-color:  #6c5ce7;
+    border: 3px solid #6c5ce7;
+    /* Purple border to distinguish from FastNode */
+    border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    min-width: 250px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
 }
 
-.custom-node-header {
-    border-radius: 8px 8px 0 0;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    text-align: center;
-    color: #dfe6e9;
-    width: 100%;
-    overflow: hidden;
+.custom-node:hover {
+    border-color: #a29bfe;
+    box-shadow: 0 6px 12px rgba(108, 92, 231, 0.3);
 }
 
 .react-flow__node.selected .custom-node {
-    border: 2px solid #ff0072 !important;
+    border-color: #d1d8e0 !important;
+    box-shadow: 0 0 0 2px #d1d8e0;
 }
 
 .custom-node-header {
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    padding: 10px 12px;
     display: flex;
     align-items: center;
-    justify-content: space-around;
-    flex-direction: row;
-    background: #2c2c2c;
-    color: white;
-    padding: 0.25rem 0;
-    font-size: 0.9rem;
-    border-bottom: 1px solid #444;
+    justify-content: space-between;
+    gap: 10px;
+    border-radius: 7px 7px 0 0;
+    border-bottom: 2px solid #5f27cd;
 }
 
 .execute-button {
-    background: transparent;
-    border: none;
-    color: #00ff99;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #55efc4;
     cursor: pointer;
     font-size: 1rem;
+    padding: 2px 6px;
     margin-left: 0.5rem;
-    transition: color 0.2s, transform 0.1s;
+    transition: all 0.2s;
 }
-
 
 .running-button {
     background: transparent;
     border: none;
-    color: #FFA500;
+    color: #ffeaa7;
     cursor: pointer;
     font-size: 1rem;
     margin-left: 0.5rem;
-    transition: color 0.2s, transform 0.1s;
+    animation: spin 2s linear infinite;
 }
 
 .execute-button:hover {
-    color: #00ffaa;
-    transform: scale(1.1);
+    background: rgba(0, 0, 0, 0.4);
+    color: #00b894;
+    transform: scale(1.05);
 }
 
 /* ==== Tooltips & Labels ==== */
@@ -66,11 +67,25 @@
     color: #b2bec3;
 }
 
+/* Standard Input Matching FastNode */
 .custom-node .title-input {
-    font-size: 14px;
-    padding: 2px 6px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: 600;
+    width: 100%;
+    min-width: 0;
+    outline: none;
+    transition: all 0.2s;
+    font-family: inherit;
     flex: 1;
 }
 
+.custom-node .title-input:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}

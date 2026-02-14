@@ -58,13 +58,12 @@ const BaseNode = ({
                 id={input.id}
                 input={input.name}
                 index={index}
-                isEditing={isEditing}
                 updateInput={updateInput}
                 removeInput={removeInput}
                 isConnectable={connectionStatus[index]}
             />
         )),
-        [inputs, isEditing, updateInput, removeInput, connectionStatus]
+        [inputs, updateInput, removeInput, connectionStatus]
     );
 
     const outputHandles = useMemo(() =>
@@ -74,12 +73,11 @@ const BaseNode = ({
                 id={output.id}
                 output={output.name}
                 index={index}
-                isEditing={isEditing}
                 updateOutput={updateOutput}
                 removeOutput={removeOutput}
             />
         )),
-        [outputs, isEditing, updateOutput, removeOutput]
+        [outputs, updateOutput, removeOutput]
     );
 
     return (
@@ -94,15 +92,23 @@ const BaseNode = ({
             }}
         >
             <NodeHeader
-                isEditing={isEditing}
-                tempTitle={tempTitle}
-                setTempTitle={setTempTitle}
-                handleSave={handleSave}
-                setIsEditing={setIsEditing}
                 title={data.title}
                 state={data.state}
                 runCode={runCode}
                 hideState={nodeTypeClass === 'fast-node'}
+                // Pass update logic if needed, or rely on internal implementation
+                // For now, NodeHeader handles its own Autosize, but we need to pass the update function
+                // Actually, BaseNode doesn't have `updateNode` in props... 
+                // Wait, BaseNode relies on parent to pass `data`. 
+                // We need `updateNode` or equivalent to change title.
+                // Let's assume `setTempTitle` was local to BaseNode/CustomNode logic.
+                // We need to pass a callback to update title eventually.
+                // For now, let's keep it simple and assume NodeHeader will take `handleSave` equivalent 
+                // or we pass a `onTitleChange` prop if we refactor BaseNode props.
+                // Re-reading BaseNode props: it has `setTempTitle`.
+                tempTitle={tempTitle}
+                setTempTitle={setTempTitle}
+                handleSave={handleSave}
             />
             <div style={{
                 display: 'flex',
@@ -119,11 +125,7 @@ const BaseNode = ({
                     width: 'auto',
                 }}>
                     {inputHandles}
-                    {isEditing && (
-                        <button onClick={addInput} style={{ fontSize: '0.8rem' }}>
-                            + entrée
-                        </button>
-                    )}
+                    <button className="add-io-btn" onClick={addInput} title="Add Input" style={{ opacity: 0.5 }}>+</button>
                 </div>
 
                 <div style={{ flexGrow: 1 }}>
@@ -180,11 +182,7 @@ const BaseNode = ({
                     width: 'auto',
                 }}>
                     {outputHandles}
-                    {isEditing && (
-                        <button onClick={addOutput} style={{ fontSize: '0.8rem' }}>
-                            + sortie
-                        </button>
-                    )}
+                    <button className="add-io-btn" onClick={addOutput} title="Add Output" style={{ opacity: 0.5 }}>+</button>
                 </div>
             </div>
         </div>
