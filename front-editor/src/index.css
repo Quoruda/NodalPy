@@ -1,5 +1,7 @@
 /* ==== Global & Body ==== */
-body, #root, .react-flow {
+body,
+#root,
+.react-flow {
   margin: 0;
   padding: 0;
   width: 100vw;
@@ -9,7 +11,26 @@ body, #root, .react-flow {
   color: #e0e0e0;
   overflow: hidden;
   box-sizing: border-box;
+
+  /* Global Variables */
+  --node-selected-color: #ff0072;
+  --node-selected-shadow: 0 0 0 2px rgba(255, 0, 114, 0.4);
+  --node-border-default: #4b4b60;
+  /* Subtle dark border close to #1e1e2f */
+
+  /* Node Theme Colors (for Sidebar & Consistency) */
+  --color-custom: #6c5ce7;
+  /* Violet */
+  --color-fast: #74b9ff;
+  /* Electric Blue */
+  --color-number: #0984e3;
+  /* Darker Blue (to distinguish from Fast) */
+  --color-boolean: #fd79a8;
+  /* Pink */
+  --color-string: #2ecc71;
+  /* Green */
+  --color-file: #a29bfe;
+  /* Light Violet */
+  --color-observer: #00d2d3;
+  /* Cyan/Teal */
 }
-
-
-

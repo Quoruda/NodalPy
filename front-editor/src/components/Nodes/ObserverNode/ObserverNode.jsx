@@ -6,7 +6,7 @@ import '../nodes.css'
 import '../node_content.css'
 import './ObserverNode.css'
 
-const ObserverNode = memo(({ data, id }) => {
+const ObserverNode = memo(({ data, id, selected }) => {
     const { edges, nodes, wsRef, setNodes } = useFlowContext();
     const [variableValue, setVariableValue] = useState(data.cachedValue || null);
     const [variableType, setVariableType] = useState(data.cachedType || null);
@@ -139,7 +139,7 @@ const ObserverNode = memo(({ data, id }) => {
 
 
     return (
-        <div className="node observer-node">
+        <div className={`node observer-node ${selected ? 'selected' : ''}`}>
             <Handle
                 type="target"
                 position={Position.Left}

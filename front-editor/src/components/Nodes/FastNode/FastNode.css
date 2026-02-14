@@ -2,7 +2,7 @@
 
 .fast-node {
     background: #1e1e2f;
-    border: 2px solid var(--color-fast);
+    border: 2px solid var(--node-border-default);
     border-radius: 12px;
     box-shadow: 0 0 15px rgba(116, 185, 255, 0.15);
     min-width: 180px;
@@ -15,9 +15,8 @@
 }
 
 .fast-node.selected {
-    border-color: #a29bfe;
-    /* Brighter selection */
-    box-shadow: 0 0 0 2px #a29bfe;
+    border-color: var(--node-selected-color) !important;
+    box-shadow: var(--node-selected-shadow) !important;
 }
 
 .fast-node:hover {

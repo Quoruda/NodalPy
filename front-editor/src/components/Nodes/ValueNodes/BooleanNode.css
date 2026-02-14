@@ -1,7 +1,7 @@
 /* Boolean Node Style (Fuchsia/Rose Theme) */
 .boolean-node {
     background: #1e1e2f;
-    border: 2px solid var(--color-boolean);
+    border: 2px solid var(--node-border-default);
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     min-width: 140px;
@@ -19,8 +19,8 @@
 }
 
 .boolean-node.selected {
-    border-color: #ff0072 !important;
-    box-shadow: 0 0 0 2px rgba(255, 0, 114, 0.4);
+    border-color: var(--node-selected-color) !important;
+    box-shadow: var(--node-selected-shadow) !important;
 }
 
 /* Dynamic Border Color based on state? Optional. */
@@ -36,13 +36,31 @@
     font-size: 24px;
     font-weight: 900;
     font-family: 'Courier New', monospace;
-    opacity: 0.8;
     z-index: 10;
     pointer-events: none;
-    letter-spacing: 1px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    animation: boolPulse 3s infinite ease-in-out;
+    /* Static Pink Pulse */
     color: #fd79a8;
-    /* Static Fuchsia */
+    text-shadow: 0 0 10px rgba(253, 121, 168, 0.6),
+        0 0 20px rgba(232, 67, 147, 0.4);
+    opacity: 1;
+}
+
+/* State-based styling removed */
+
+@keyframes boolPulse {
+
+    0%,
+    100% {
+        transform: translateX(-50%) scale(1);
+    }
+
+    50% {
+        transform: translateX(-50%) scale(1.1);
+        filter: brightness(1.2);
+    }
 }
 
 /* Header (Rose Gradient) */

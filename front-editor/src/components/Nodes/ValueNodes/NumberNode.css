@@ -1,7 +1,7 @@
 /* Number Node Style (Adapted from IntegerNode) */
 .number-node {
     background: #1e1e2f;
-    border: 2px solid var(--color-number);
+    border: 2px solid var(--node-border-default);
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     min-width: 160px;

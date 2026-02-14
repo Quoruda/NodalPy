@@ -2,7 +2,7 @@
 /* ==== Nodes ==== */
 .custom-node {
     background: #1e1e2f;
-    border: 2px solid var(--color-custom);
+    border: 2px solid var(--node-border-default);
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     min-width: 250px;
@@ -19,8 +19,8 @@
 }
 
 .react-flow__node.selected .custom-node {
-    border-color: #d1d8e0 !important;
-    box-shadow: 0 0 0 2px #d1d8e0;
+    border-color: var(--node-selected-color) !important;
+    box-shadow: var(--node-selected-shadow) !important;
 }
 
 .custom-node-header {
