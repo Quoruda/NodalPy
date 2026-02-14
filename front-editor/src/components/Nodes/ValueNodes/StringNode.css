@@ -5,14 +5,19 @@
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     min-width: 180px;
-    padding: 10px;
+    /* Removed padding: 10px; to fix header gap */
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0;
     position: relative;
-    transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+    /* transition: transform 0.1s ease; */
+    /* Removed transition for smoother resize */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    overflow: visible !important;
+    /* Force visible */
 }
 
+/* ... (Hover/Selected styles remain same, likely no change needed there) ... */
 .string-node:hover {
     border-color: #2ecc71;
     /* Green on hover */
@@ -63,6 +68,7 @@
     justify-content: center;
     align-items: center;
     border-radius: 6px 6px 0 0;
+    /* Matches container 8px - 2px border */
     border-bottom: 2px solid #219150;
     margin-bottom: 0;
 }
@@ -74,6 +80,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex: 1;
+    /* Allow content to grow */
 }
 
 /* Textarea Input */
@@ -81,10 +89,12 @@
     background: transparent;
     border: none;
     padding: 0;
+    height: 100%;
 }
 
 .string-input {
     width: 100%;
+    height: 100%;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(46, 204, 113, 0.3);
     border-radius: 4px;
@@ -92,17 +102,45 @@
     font-size: 12px;
     padding: 6px;
     outline: none;
-    transition: all 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    /* OFF dimensions */
     font-family: 'Courier New', monospace;
     box-sizing: border-box;
-    resize: vertical;
+    resize: both;
+    /* Restore native resize */
     min-height: 40px;
+    min-width: 220px;
+    /* Keep minimum width */
 }
 
 .string-input:focus {
     border-color: #2ecc71;
     background: rgba(0, 0, 0, 0.5);
     box-shadow: 0 0 5px rgba(46, 204, 113, 0.2);
+}
+
+/* Title Input Styling (Copied and adapted from FastNode to ensure consistency) */
+.string-header .title-input {
+    font-size: 13px;
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    color: white;
+    font-weight: 600;
+    width: 100%;
+    outline: none;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.string-header .title-input:focus {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.string-header .title-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 /* Handle Override */

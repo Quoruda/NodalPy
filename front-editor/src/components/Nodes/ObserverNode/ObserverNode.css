@@ -1,7 +1,7 @@
 .observer-node {
     background: #1e1e2f;
     border: 2px solid var(--color-observer);
-    border-radius: 8px;
+    border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     min-width: 200px;
     min-height: 100px;
@@ -9,6 +9,12 @@
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    transition: all 0.2s ease;
+}
+
+.observer-node.selected {
+    border-color: #ff0072;
+    box-shadow: 0 0 0 2px rgba(255, 0, 114, 0.4), 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .observer-header {
@@ -18,7 +24,7 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    border-radius: 12px 12px 0 0;
+    /* Radius matches container now */
     border-bottom: 3px solid #017374;
     position: relative;
     z-index: 1;

@@ -12,50 +12,37 @@ const StringNode = memo(({ id, data, selected }) => {
     const [localValue, setLocalValue] = useState('');
     const [localTitle, setLocalTitle] = useState(data.title || 'String');
 
-    // Parse code to get initial value (e.g. "output = 'hello'")
+    // Parse code
     useEffect(() => {
         if (data.code) {
-            // Match simple string assignment: output = "..." or '...'
             const match = data.code.match(/output\s*=\s*(["'])(.*)\1/);
-            if (match) {
-                setLocalValue(match[2]);
-            }
+            if (match) setLocalValue(match[2]);
         }
     }, [data.code]);
 
-    // Auto-run on mount
+    // Auto-run
     useEffect(() => {
         if (data.fromLoad) return;
-
-        const timer = setTimeout(() => {
-            runCode();
-        }, 100);
+        const timer = setTimeout(() => runCode(), 100);
         return () => clearTimeout(timer);
     }, []);
 
-    // Handle Title Change
+    // Handlers
     const handleTitleChange = useCallback((e) => {
         const newTitle = e.target.value;
         setLocalTitle(newTitle);
         updateNode(id, { title: newTitle });
     }, [id, updateNode]);
 
-    // Handle Value Update
     const updateValue = useCallback((newValue) => {
         setLocalValue(newValue);
-        // Escape quotes? For simplicity assuming simple text.
-        // Python string: output = "value"
         const escaped = newValue.replace(/"/g, '\\"');
         const newCode = `output = "${escaped}"`;
         updateNode(id, { code: newCode });
         runCode({ code: newCode });
     }, [id, updateNode, runCode]);
 
-    const handleInputChange = useCallback((e) => {
-        updateValue(e.target.value);
-    }, [updateValue]);
-
-    // Stop propagation
+    const handleInputChange = useCallback((e) => updateValue(e.target.value), [updateValue]);
     const stopPropagation = useCallback((e) => e.stopPropagation(), []);
 
     return (
@@ -83,7 +70,6 @@ const StringNode = memo(({ id, data, selected }) => {
                         onChange={handleInputChange}
                         onKeyDown={stopPropagation}
                         placeholder="Type text here..."
-                        rows={3}
                     />
                 </div>
             </div>
