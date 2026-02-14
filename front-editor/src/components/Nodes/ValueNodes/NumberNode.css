@@ -1,13 +1,16 @@
 /* Number Node Style (Adapted from IntegerNode) */
 .number-node {
-    background: #2e2d44;
-    border: 2px solid #555;
-    /* Neutral default border */
+    background: #1e1e2f;
+    border: 2px solid var(--color-number);
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    min-width: 120px;
-    /* Slightly wider for config */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    min-width: 160px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     position: relative;
+    /* Center node */
     transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
 }
 

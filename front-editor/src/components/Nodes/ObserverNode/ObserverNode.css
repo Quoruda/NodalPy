@@ -1,11 +1,14 @@
 .observer-node {
-    background: #1e3a5f;
-    border: 3px solid #00d2d3;
-    border-radius: 16px;
-    box-shadow: 0 6px 12px rgba(0, 210, 211, 0.3);
+    background: #1e1e2f;
+    border: 2px solid var(--color-observer);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     min-width: 200px;
-    position: relative;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
+    position: relative;
 }
 
 .observer-header {

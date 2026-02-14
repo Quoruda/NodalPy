@@ -13,6 +13,8 @@ import '@xyflow/react/dist/style.css';
 import './App.css';
 
 import { NodeTypes } from './components/Nodes/NodeTypes.jsx';
+import Sidebar from './components/Sidebar/Sidebar.jsx';
+import { availableNodes } from './components/Nodes/nodeConfig';
 import { FlowProvider } from './components/FlowContext.jsx';
 import { useWebSocket } from './hooks/useWebSocket.js';
 import { useProjectPersistence } from './hooks/useProjectPersistence.js';
@@ -100,11 +102,18 @@ function Flow() {
                 return;
             }
 
-            // For now, we use default positioning from factory
-            // We can improve this later to use project() with reactFlowInstance
-            addNode(type);
+            // check if the dropped element is valid
+            if (reactFlowInstance) {
+                // screenToFlowPosition handles zoom and pan automatically
+                const position = reactFlowInstance.screenToFlowPosition({
+                    x: event.clientX,
+                    y: event.clientY,
+                });
+
+                addNode(type, position);
+            }
         },
-        [addNode],
+        [addNode, reactFlowInstance],
     );
 
     if (!isLoaded) {
@@ -113,63 +122,44 @@ function Flow() {
 
     return (
         <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef}>
-            <div style={{ width: '100vw', height: '100vh', position: 'relative' }} onDrop={onDrop} onDragOver={onDragOver}>
-                <div className="toolbar-container">
-                    <button className="add-node-button" onClick={() => addNode('CustomNode')}>
-                        Ajouter Node (Manuel)
-                    </button>
-                    <button className="add-node-button" onClick={() => addNode('FastNode')} style={{ background: '#e056fd' }}>
-                        Fast Node ⚡
-                    </button>
-                    <button className="add-node-button" onClick={() => addNode('NumberNode')} style={{ background: '#007bff' }}>
-                        Number 🔢
-                    </button>
-                    <button className="add-node-button" onClick={() => addNode('BooleanNode')} style={{ background: '#fd79a8' }}>
-                        Boolean ✅
-                    </button>
-                    <button className="add-node-button" onClick={() => addNode('StringNode')} style={{ background: '#FFC312' }}>
-                        String 📝
-                    </button>
-                    <button className="add-node-button" onClick={() => addNode('FileNode')} style={{ background: '#5f27cd' }}>
-                        File 📂
-                    </button>
-                    <button className="add-node-button" onClick={() => addNode('ObserverNode')} style={{ background: '#2bad60' }}>
-                        Observer 👀
-                    </button>
+            <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
+                <Sidebar />
+                <div style={{ flex: 1, height: '100vh', position: 'relative' }} onDrop={onDrop} onDragOver={onDragOver}>
+                    <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 4 }}>
+                        <button className="save-button" onClick={saveProjectToFile} style={{ marginRight: 10 }}>
+                            Sauvegarder JSON
+                        </button>
+                        <button className="import-button" onClick={handleImportClick}>
+                            Importer JSON
+                        </button>
+                    </div>
+
+                    <input
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileLoad}
+                        style={{ display: 'none' }}
+                        id="loading-file-input"
+                    />
+
+                    <ReactFlow
+                        onInit={setReactFlowInstance}
+                        nodes={nodes}
+                        edges={styledEdges}
+                        onSelectionChange={onSelectionChange}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnectEdge}
+                        onConnect={onConnectEdge}
+                        nodeTypes={NodeTypes}
+                        nodeOrigin={[0.5, 0.5]}
+                        fitView
+                    >
+                        <Background variant="dots" gap={16} size={1} />
+                        <MiniMap nodeColor={(n) => (n.type === 'CustomNode' ? '#ffcc00' : '#aaa')} position="bottom-left" />
+                        <Controls position="bottom-left" />
+                    </ReactFlow>
                 </div>
-
-                <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 4 }}>
-                    <button className="save-button" onClick={saveProjectToFile} style={{ marginRight: 10 }}>
-                        Sauvegarder JSON
-                    </button>
-                    <button className="import-button" onClick={handleImportClick}>
-                        Importer JSON
-                    </button>
-                </div>
-
-                <input
-                    type="file"
-                    accept=".json"
-                    onChange={handleFileLoad}
-                    style={{ display: 'none' }}
-                    id="loading-file-input"
-                />
-
-                <ReactFlow
-                    onInit={setReactFlowInstance}
-                    nodes={nodes}
-                    edges={styledEdges}
-                    onSelectionChange={onSelectionChange}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                    onConnect={onConnectEdge}
-                    nodeTypes={NodeTypes}
-                    fitView
-                >
-                    <Background variant="dots" gap={16} size={1} />
-                    <MiniMap nodeColor={(n) => (n.type === 'CustomNode' ? '#ffcc00' : '#aaa')} position="bottom-left" />
-                    <Controls position="bottom-left" />
-                </ReactFlow>
             </div>
         </FlowProvider>
     );
