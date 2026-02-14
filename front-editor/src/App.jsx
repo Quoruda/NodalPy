@@ -20,6 +20,11 @@ import { useWebSocket } from './hooks/useWebSocket.js';
 import { useProjectPersistence } from './hooks/useProjectPersistence.js';
 import { useNodeFactory } from './hooks/useNodeFactory.js';
 import { get, set } from 'idb-keyval';
+import SelfLoopEdge from './components/Edges/SelfLoopEdge.jsx';
+
+const edgeTypes = {
+    default: SelfLoopEdge,
+};
 
 // Default empty state
 const defaultNodes = [];
@@ -144,6 +149,8 @@ function Flow() {
                         onEdgesChange={onEdgesChange}
                         onConnect={onConnectEdge}
                         nodeTypes={NodeTypes}
+                        edgeTypes={edgeTypes}
+                        defaultEdgeOptions={{ type: 'default' }}
                         nodeOrigin={[0.5, 0.5]}
                         minZoom={0.1}
                         fitView
