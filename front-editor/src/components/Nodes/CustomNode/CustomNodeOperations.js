@@ -112,6 +112,7 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
                 action: "run_node",
                 code: node.code,
                 variables: variables,
+                inputs: node.inputs.map(i => i.name),
                 node: node.id,
                 timeout: timeout
             };

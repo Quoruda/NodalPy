@@ -15,7 +15,7 @@ class UserData:
         node_context = self.nodeContexts.get(node, {})
         return node_context.get(name, None)
 
-    def run_node(self, node: str, code: str, variables: list[dict], timeout: float = None) -> tuple[str, str]:
+    def run_node(self, node: str, code: str, variables: list[dict], timeout: float = None, inputs: list[str] = None) -> tuple[str, str]:
         if not self.can_run_code():
             raise RuntimeError("Code is already running")
 
@@ -26,6 +26,11 @@ class UserData:
             value = var_context.get(var["name"], None)
             value = copy.deepcopy(value)
             new_context[var["target"]] = value
+
+        if inputs:
+            for input_name in inputs:
+                if input_name not in new_context:
+                    new_context[input_name] = None
 
 
         exec_globals, local_scope = prepare_contexts(new_context)

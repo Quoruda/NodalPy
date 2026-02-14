@@ -1,4 +1,4 @@
-globals = {}
+lobals = {}
 locals = {}
 
 code = """result = 3 + 5

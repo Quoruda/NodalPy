@@ -38,6 +38,7 @@ class UserWebSocket:
             return
 
         timeout = data.get("timeout", None)
+        inputs = data.get("inputs", [])
 
         await self.websocket.send_json({"action": "run_code", "status": "running", "node": data["node"]})
         
@@ -47,7 +48,8 @@ class UserWebSocket:
                 data["node"],
                 data["code"],
                 data["variables"],
-                timeout
+                timeout,
+                inputs
             )
             await self.websocket.send_json({
                 "action": "run_code", 
