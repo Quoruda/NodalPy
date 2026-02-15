@@ -156,3 +156,30 @@
     background: rgba(0, 0, 0, 0.2);
     font-size: 0.8rem;
 }
+
+/* Connection Status Badge */
+.connection-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ccc;
+    transition: background-color 0.3s ease;
+}
+
+.status-dot.online {
+    background-color: #4caf50;
+    box-shadow: 0 0 5px #4caf50;
+}
+
+.status-dot.offline {
+    background-color: #f44336;
+    box-shadow: 0 0 5px #f44336;
+}

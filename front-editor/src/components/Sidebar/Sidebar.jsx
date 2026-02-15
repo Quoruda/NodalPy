@@ -2,7 +2,7 @@ import React from 'react';
 import { availableNodes } from '../Nodes/nodeConfig';
 import './Sidebar.css';
 
-const Sidebar = ({ onSave, onLoad }) => {
+const Sidebar = ({ onSave, onLoad, isConnected }) => {
     const [isFileOpen, setIsFileOpen] = React.useState(false);
 
     const onDragStart = (event, nodeType) => {
@@ -64,6 +64,10 @@ const Sidebar = ({ onSave, onLoad }) => {
             </div>
 
             <div className="sidebar-footer">
+                <div className="connection-status">
+                    <span className={`status-dot ${isConnected ? 'online' : 'offline'}`}></span>
+                    <small>{isConnected ? 'Online' : 'Offline'}</small>
+                </div>
                 <small>Drag & Drop UI</small>
             </div>
         </aside>

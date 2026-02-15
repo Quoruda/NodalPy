@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from "react-toastify";
 
 // ✅ Hook WebSocket dédié et réutilisable avec reconnexion automatique
@@ -9,6 +9,8 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
     const isManualCloseRef = useRef(false);
     const setNodesRef = useRef(setNodes);
     const setServerConfigRef = useRef(setServerConfig);
+    const connectRef = useRef(null);
+    const scheduleReconnectRef = useRef(null);
 
     const WEBSOCKET_ERROR_TOAST_ID = "websocket-error";
     const WEBSOCKET_RECONNECTING_TOAST_ID = "websocket-reconnecting";
@@ -17,68 +19,13 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
     // Throttle map for notifications
     const notificationThrottleMap = useRef(new Map());
 
+    // State for connection status
+    const [isConnected, setIsConnected] = useState(false);
+
     useEffect(() => {
         setNodesRef.current = setNodes;
         setServerConfigRef.current = setServerConfig;
     }, [setNodes, setServerConfig]);
-
-    const clearNotifs = useCallback(() => {
-        toast.dismiss(WEBSOCKET_ERROR_TOAST_ID);
-        toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
-        toast.dismiss(WEBSOCKET_CONNECTED_TOAST_ID);
-    }, []);
-
-    const notifySuccess = useCallback(() => {
-        clearNotifs();
-        toast.success("Websocket ouvert ✅", {
-            position: "bottom-right",
-            toastId: WEBSOCKET_CONNECTED_TOAST_ID,
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-        });
-    }, [clearNotifs]);
-
-    const notifyError = useCallback(() => {
-        toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
-        toast.error("WebSocket fermé ❌", {
-            toastId: WEBSOCKET_ERROR_TOAST_ID,
-            position: "bottom-right",
-            autoClose: false,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-        });
-    }, []);
-
-    const notifyReconnecting = useCallback((attemptNumber) => {
-        console.log(`🔄 Programmation reconnexion ${reconnectAttemptsRef.current}`);
-
-        toast.info(`Tentative de reconnexion ${attemptNumber}...`, {
-            toastId: WEBSOCKET_RECONNECTING_TOAST_ID,
-            position: "bottom-right",
-            autoClose: 1500,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-        });
-    }, []);
-
-    const notifyExecution = useCallback((name, id) => {
-        toast.info(`L'exécution du noeud '${name}' est terminée`, {
-            toastId: id,
-            position: "bottom-right",
-            autoClose: 2000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-        });
-    }, []);
 
     const getReconnectDelay = useCallback((attemptNumber) => {
         if (attemptNumber <= 10) {
@@ -98,11 +45,43 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
         return false;
     }, []);
 
+    const clearNotifs = useCallback(() => {
+        // toast.dismiss(WEBSOCKET_ERROR_TOAST_ID);
+        // toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
+        // toast.dismiss(WEBSOCKET_CONNECTED_TOAST_ID);
+    }, []);
 
+    const notifySuccess = useCallback(() => {
+        // clearNotifs();
+        // toast.success("Websocket ouvert ✅", ...);
+    }, [clearNotifs]);
 
+    const notifyError = useCallback(() => {
+        // toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
+        // toast.error("WebSocket fermé ❌", ...);
+    }, []);
 
-    // 🔥 SOLUTION : Créer connect et scheduleReconnect avec des refs pour briser la dépendance circulaire
-    const connectRef = useRef(null);
+    const notifyReconnecting = useCallback((attemptNumber) => {
+        console.log(`🔄 Programmation reconnexion ${reconnectAttemptsRef.current}`);
+        // toast.info(`Tentative de reconnexion ${attemptNumber}...`, ...);
+    }, []);
+
+    // ... (notifyExecution remains)
+
+    const notifyExecution = useCallback((name, id) => {
+        toast.info(`L'exécution du noeud '${name}' est terminée`, {
+            toastId: id,
+            position: "bottom-right",
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+        });
+    }, []);
+
+    // ...
+
 
     const scheduleReconnect = useCallback(() => {
         if (reconnectTimeoutRef.current) {
@@ -117,21 +96,19 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
 
         reconnectTimeoutRef.current = setTimeout(() => {
             reconnectTimeoutRef.current = null;
-            // 🔥 Utiliser connectRef au lieu de connect directement
             if (connectRef.current) {
                 connectRef.current();
             }
         }, delay);
     }, [getReconnectDelay, notifyReconnecting]);
 
-    // 🔥 Créer une ref pour scheduleReconnect
-    const scheduleReconnectRef = useRef(scheduleReconnect);
-
+    // Keep scheduleReconnectRef updated
     useEffect(() => {
         scheduleReconnectRef.current = scheduleReconnect;
     }, [scheduleReconnect]);
 
     const connect = useCallback(() => {
+        // ... (close existing)
         if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
             isManualCloseRef.current = true;
             wsRef.current.close();
@@ -142,16 +119,16 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
         isManualCloseRef.current = false;
 
         socket.onopen = () => {
-            // console.log("🔗 WebSocket connecté");
-
             if (reconnectTimeoutRef.current) {
                 clearTimeout(reconnectTimeoutRef.current);
                 reconnectTimeoutRef.current = null;
             }
 
             reconnectAttemptsRef.current = 0;
-            notifySuccess();
+            setIsConnected(true);
+            // notifySuccess(); // Removed
 
+            // ... (login logic)
             // 🔥 Send login with persistent User ID
             let userId = localStorage.getItem("nodal_user_id");
             if (!userId) {
@@ -170,33 +147,24 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
             }));
         };
 
-        // Listen for login success to get config
-        const handleLoginResponse = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.action === "login" && msg.status === "success" && msg.config) {
-                    if (setServerConfigRef.current) {
-                        setServerConfigRef.current(msg.config);
-                        console.log("Scaled to server config:", msg.config);
-                    }
-                }
-            } catch (e) { }
-        };
-        socket.addEventListener('message', handleLoginResponse);
+        // ...
 
         socket.onclose = (event) => {
             console.log("❌ WebSocket fermé", event.code, event.reason);
+            setIsConnected(false);
 
             if (!isManualCloseRef.current) {
-                notifyError();
-                // 🔥 Utiliser scheduleReconnectRef au lieu de scheduleReconnect
+                // notifyError(); // Removed
                 scheduleReconnectRef.current();
             }
         };
 
         socket.onerror = (err) => {
             console.error("⚠️ WS error", err);
+            setIsConnected(false);
         };
+
+        // ...
 
         let messageQueue = [];
         let timeoutId = null;
@@ -297,7 +265,9 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
 
     }, [url, sendMessage, notifySuccess, notifyError]);
 
-    // 🔥 Mettre à jour connectRef à chaque fois que connect change
+
+
+    // 🔥 SOLUTION : Créer connect et scheduleReconnect avec des refs pour briser la dépendance circulaire
     useEffect(() => {
         connectRef.current = connect;
     }, [connect]);
@@ -321,9 +291,7 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
         };
     }, [connect]);
 
-    const isConnected = useCallback(() => {
-        return wsRef.current && wsRef.current.readyState === WebSocket.OPEN;
-    }, []);
+
 
     const disconnect = useCallback(() => {
         isManualCloseRef.current = true;
@@ -346,7 +314,7 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
     return {
         wsRef,
         sendMessage,
-        isConnected,
+        isConnected, // This is now a boolean state
         disconnect,
         reconnect
     };
