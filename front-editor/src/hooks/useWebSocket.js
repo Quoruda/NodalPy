@@ -2,20 +2,25 @@ import { useCallback, useEffect, useRef } from 'react';
 import { toast } from "react-toastify";
 
 // ✅ Hook WebSocket dédié et réutilisable avec reconnexion automatique
-export const useWebSocket = (url, setNodes) => {
+export const useWebSocket = (url, setNodes, setServerConfig) => {
     const wsRef = useRef(null);
     const reconnectAttemptsRef = useRef(0);
     const reconnectTimeoutRef = useRef(null);
     const isManualCloseRef = useRef(false);
     const setNodesRef = useRef(setNodes);
+    const setServerConfigRef = useRef(setServerConfig);
 
     const WEBSOCKET_ERROR_TOAST_ID = "websocket-error";
     const WEBSOCKET_RECONNECTING_TOAST_ID = "websocket-reconnecting";
     const WEBSOCKET_CONNECTED_TOAST_ID = "websocket-connected";
 
+    // Throttle map for notifications
+    const notificationThrottleMap = useRef(new Map());
+
     useEffect(() => {
         setNodesRef.current = setNodes;
-    }, [setNodes]);
+        setServerConfigRef.current = setServerConfig;
+    }, [setNodes, setServerConfig]);
 
     const clearNotifs = useCallback(() => {
         toast.dismiss(WEBSOCKET_ERROR_TOAST_ID);
@@ -93,77 +98,7 @@ export const useWebSocket = (url, setNodes) => {
         return false;
     }, []);
 
-    const readRunMessage = useCallback((msg) => {
-        setNodesRef.current((nds) => {
-            let updatedNodes = [...nds];
 
-            const nodeIndex = updatedNodes.findIndex(n => n.id === msg.node);
-            if (nodeIndex !== -1) {
-                const node = updatedNodes[nodeIndex];
-                let newData = { ...node.data };
-
-                if (msg.status === "running") {
-                    newData.state = 1;
-                }
-                if (msg.status === "finished") {
-                    newData.state = 2;
-                    newData.error = null; // Clear previous errors
-                    // Only notify for CustomNode (type 'custom')
-                    if (node.type === 'custom') {
-                        notifyExecution(node.data.title, node.id);
-                    }
-                }
-                if (msg.status === "error") {
-                    newData.state = 3; // Error state
-                    newData.error = msg.error;
-                    console.error("Execution error:", msg.error);
-                }
-
-                updatedNodes[nodeIndex] = {
-                    ...node,
-                    data: newData
-                };
-            }
-            return updatedNodes;
-        });
-    }, [notifyExecution]);
-
-    const readVariableMessage = useCallback((msg) => {
-        setNodesRef.current((nds) => {
-            return nds.map((node) => {
-                if (node.id === msg.node) {
-                    const newOutputs = node.data.outputs.map((output) => {
-                        if (output.name === msg.name) {
-                            return {
-                                ...output,
-                                value: msg.value,
-                                type: msg.type
-                            };
-                        }
-                        return output;
-                    });
-
-                    return {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            outputs: newOutputs
-                        }
-                    };
-                }
-                return node;
-            });
-        });
-    }, []);
-
-    // 🔥 Créer une ref pour readVariableMessage
-    const readVariableMessageRef = useRef(readVariableMessage);
-    const readRunMessageRef = useRef(readRunMessage);
-
-    useEffect(() => {
-        readVariableMessageRef.current = readVariableMessage;
-        readRunMessageRef.current = readRunMessage;
-    }, [readVariableMessage, readRunMessage]);
 
 
     // 🔥 SOLUTION : Créer connect et scheduleReconnect avec des refs pour briser la dépendance circulaire
@@ -207,7 +142,7 @@ export const useWebSocket = (url, setNodes) => {
         isManualCloseRef.current = false;
 
         socket.onopen = () => {
-            console.log("🔗 WebSocket connecté");
+            // console.log("🔗 WebSocket connecté");
 
             if (reconnectTimeoutRef.current) {
                 clearTimeout(reconnectTimeoutRef.current);
@@ -235,6 +170,20 @@ export const useWebSocket = (url, setNodes) => {
             }));
         };
 
+        // Listen for login success to get config
+        const handleLoginResponse = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.action === "login" && msg.status === "success" && msg.config) {
+                    if (setServerConfigRef.current) {
+                        setServerConfigRef.current(msg.config);
+                        console.log("Scaled to server config:", msg.config);
+                    }
+                }
+            } catch (e) { }
+        };
+        socket.addEventListener('message', handleLoginResponse);
+
         socket.onclose = (event) => {
             console.log("❌ WebSocket fermé", event.code, event.reason);
 
@@ -258,28 +207,85 @@ export const useWebSocket = (url, setNodes) => {
             const messages = [...messageQueue];
             messageQueue = [];
 
-            for (let msg of messages) {
-                if (!msg.action) console.log("Message sans action ?", msg);
-                else if (msg.action === "run_code") {
-                    readRunMessageRef.current(msg);
-                }
-                else if (msg.action === "get_variable") {
-                    readVariableMessageRef.current(msg);
-                }
-                else {
-                    console.log("Message WS inconnu :", msg);
-                }
-            }
+            // Batch update state once
+            setNodesRef.current((currentNodes) => {
+                let updatedNodes = [...currentNodes];
+                let hasChanges = false;
+
+                // Optimization: Map node ID to index for O(1) lookup ?? 
+                // Overhead of creating map might exceed benefit for small N
+                // Just iteration is fine for now < 100 nodes
+
+                messages.forEach(msg => {
+                    if (msg.action === "run_code") {
+                        const nodeIndex = updatedNodes.findIndex(n => n.id === msg.node);
+                        if (nodeIndex !== -1) {
+                            const node = updatedNodes[nodeIndex];
+                            let newData = { ...node.data };
+                            let changed = false;
+
+                            if (msg.status === "running") {
+                                if (newData.state !== 1) { newData.state = 1; changed = true; }
+                            }
+                            if (msg.status === "finished") {
+                                if (newData.state !== 2) { newData.state = 2; changed = true; }
+                                newData.error = null;
+
+                                // Side Effect: Notifications (Non-pure, but safe-ish here)
+                                if (node.type === 'custom') {
+                                    // Throttle notifications to avoid UI lag
+                                    const now = Date.now();
+                                    const lastTime = notificationThrottleMap.current.get(node.id) || 0;
+                                    if (now - lastTime > 1000) { // Max 1 notification per second per node
+                                        notifyExecution(node.data.title, node.id);
+                                        notificationThrottleMap.current.set(node.id, now);
+                                    }
+                                }
+                            }
+                            if (msg.status === "error") {
+                                if (newData.state !== 3) { newData.state = 3; changed = true; }
+                                newData.error = msg.error;
+                            }
+
+                            if (changed || msg.status === "finished" || msg.status === "error") {
+                                updatedNodes[nodeIndex] = { ...node, data: newData };
+                                hasChanges = true;
+                            }
+                        }
+                    }
+                    else if (msg.action === "get_variable") {
+                        const nodeIndex = updatedNodes.findIndex(n => n.id === msg.node);
+                        if (nodeIndex !== -1) {
+                            const node = updatedNodes[nodeIndex];
+                            const newOutputs = node.data.outputs.map((output) => {
+                                if (output.name === msg.name) {
+                                    return { ...output, value: msg.value, type: msg.type };
+                                }
+                                return output;
+                            });
+
+                            // Check deep equality ?? No, just assume change for variable update
+                            updatedNodes[nodeIndex] = { ...node, data: { ...node.data, outputs: newOutputs } };
+                            hasChanges = true;
+                        }
+                    }
+                    else if (!msg.action) {
+                        // console.log("Message sans action ?", msg);
+                    }
+                });
+
+                return hasChanges ? updatedNodes : currentNodes;
+            });
         };
 
         socket.onmessage = (event) => {
             const msg = JSON.parse(event.data);
-            console.log("WS reçu:", msg);
+            // console.log("WS reçu:", msg); // Removed for performance in loops
 
             messageQueue.push(msg);
 
             if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(processMessageQueue, 16);
+            timeoutId = setTimeout(processMessageQueue, 0);
         };
 
         socket.addEventListener('close', () => {

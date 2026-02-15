@@ -4,10 +4,12 @@ import React, { createContext, useContext } from 'react';
 const FlowContext = createContext({
     edges: [],
     nodes: [],
-    setNodes: () => {},
-    setEdges: () => {},
+    setNodes: () => { },
+    setEdges: () => { },
     //
     wsRef: { current: null },
+    serverConfig: { debounce: 50, batch_interval: 0 }, // Defaults
+    setServerConfig: () => { }
     // Vous pouvez ajouter d'autres données partagées ici
 });
 
@@ -22,9 +24,9 @@ export const useFlowContext = () => {
 };
 
 // ✅ Provider pour envelopper ReactFlow
-export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef }) => {
+export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef, serverConfig, setServerConfig }) => {
     return (
-        <FlowContext.Provider value={{ nodes, edges, setNodes, setEdges, wsRef }}>
+        <FlowContext.Provider value={{ nodes, edges, setNodes, setEdges, wsRef, serverConfig, setServerConfig }}>
             {children}
         </FlowContext.Provider>
     );

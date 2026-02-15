@@ -35,7 +35,7 @@ const FastNode = memo(({ id, data, selected }) => {
     const codeRef = useRef(data.code);
 
     // Context for edge detection
-    const { edges } = useFlowContext();
+    const { edges, serverConfig } = useFlowContext();
     const prevInputsRef = useRef([]);
 
     // --- CONNECTION STATUS LOGIC (From BaseNode) ---
@@ -88,11 +88,14 @@ const FastNode = memo(({ id, data, selected }) => {
         updateNode(id, { code: newCode });
 
         // Debounce Execution
+        // Use server provided debounce or fallback to 50ms
+        const debounceTime = serverConfig?.debounce ?? 50;
+
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
             runCode({ code: newCode });
-        }, 500);
-    }, [id, updateNode, runCode]);
+        }, debounceTime);
+    }, [id, updateNode, runCode, serverConfig]);
 
     // 2. Cleanup on unmount
     useEffect(() => {
@@ -141,7 +144,7 @@ const FastNode = memo(({ id, data, selected }) => {
             codeRef.current = data.code;
             if (!data.fromLoad) {
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                timeoutRef.current = setTimeout(() => runCode(), 500);
+                timeoutRef.current = setTimeout(() => runCode(), 100);
             }
         }
     }, [data.code]);

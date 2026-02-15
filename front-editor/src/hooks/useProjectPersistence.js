@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { get, set } from 'idb-keyval';
 import { toast } from 'react-toastify';
+import { containsCycle } from '../utils/cycleDetection';
 
 export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeCount) => {
     const [isLoaded, setIsLoaded] = useState(false);
@@ -52,16 +53,26 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
 
     }, [nodes, edges, isLoaded]);
 
-    // Auto-save debounce
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (isLoaded) {
-                saveProjectToIDB();
-            }
-        }, 1000); // 1 second debounce
+    const hasUnsavedChanges = useRef(false);
 
-        return () => clearTimeout(timeoutId);
-    }, [nodes, edges, saveProjectToIDB, isLoaded]);
+    // Track changes
+    useEffect(() => {
+        if (isLoaded) {
+            hasUnsavedChanges.current = true;
+        }
+    }, [nodes, edges, isLoaded]);
+
+    // Interval Auto-Save
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            if (isLoaded && hasUnsavedChanges.current) {
+                saveProjectToIDB();
+                hasUnsavedChanges.current = false;
+            }
+        }, 5000); // Check every 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, [saveProjectToIDB, isLoaded]);
 
     // Manual Save to File
     // Manual Save to File
@@ -101,13 +112,20 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
         document.body.removeChild(link);
     }, [nodes, edges]);
 
-    // Manual Load from File
     const loadProjectFromFile = useCallback((file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const json = JSON.parse(e.target.result);
                 if (json.nodes && json.edges) {
+
+                    // Cycle Check Middleware
+                    if (containsCycle(json.nodes, json.edges)) {
+                        toast.error("Import Failed: Project contains forbidden loops! 🔄❌");
+                        console.error("Cycle detected in imported project.");
+                        return;
+                    }
+
                     // Inject 'fromLoad' flag to prevent auto-execution on mount
                     const loadedNodes = json.nodes.map(node => ({
                         ...node,

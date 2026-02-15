@@ -20,10 +20,11 @@ import { useWebSocket } from './hooks/useWebSocket.js';
 import { useProjectPersistence } from './hooks/useProjectPersistence.js';
 import { useNodeFactory } from './hooks/useNodeFactory.js';
 import { get, set } from 'idb-keyval';
-import SelfLoopEdge from './components/Edges/SelfLoopEdge.jsx';
+import { toast } from 'react-toastify';
+import { wouldCreateCycle } from './utils/cycleDetection.js';
 
 const edgeTypes = {
-    default: SelfLoopEdge,
+    // default: SelfLoopEdge, // Removed: Loops forbidden
 };
 
 // Default empty state
@@ -37,16 +38,23 @@ function Flow() {
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
+    const [serverConfig, setServerConfig] = useState({ debounce: 50, batch_interval: 0 });
 
     // === Custom Hooks ===
     const { isLoaded, saveProjectToIDB, saveProjectToFile, loadProjectFromFile } = useProjectPersistence(nodes, edges, setNodes, setEdges, setNodeCount);
     const { addNode } = useNodeFactory(nodes, setNodes, nodeCount, setNodeCount);
-    const { wsRef } = useWebSocket("ws://127.0.0.1:8000/ws", setNodes);
+    const { wsRef } = useWebSocket("ws://127.0.0.1:8000/ws", setNodes, setServerConfig);
 
     // === Event Handlers ===
     const onConnectEdge = useCallback(
-        (params) => setEdges((eds) => addEdge(params, eds)),
-        [setEdges]
+        (params) => {
+            if (wouldCreateCycle(nodes, edges, params)) {
+                toast.error("Cycles forbidden! 🚫 Loop detected.");
+                return;
+            }
+            setEdges((eds) => addEdge(params, eds));
+        },
+        [setEdges, nodes, edges]
     );
 
     const onSelectionChange = useCallback(({ nodes, edges }) => {
@@ -126,7 +134,7 @@ function Flow() {
     }
 
     return (
-        <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef}>
+        <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef} serverConfig={serverConfig} setServerConfig={setServerConfig}>
             <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
                 <Sidebar onSave={saveProjectToFile} onLoad={handleImportClick} />
                 <div style={{ flex: 1, height: '100vh', position: 'relative' }} onDrop={onDrop} onDragOver={onDragOver}>
