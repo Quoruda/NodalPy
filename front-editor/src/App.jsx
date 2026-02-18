@@ -7,6 +7,7 @@ import {
     Controls,
     MiniMap,
     Background,
+    ReactFlowProvider,
     useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -37,8 +38,10 @@ function Flow() {
     const [nodeCount, setNodeCount] = useState(3);
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
-    const [reactFlowInstance, setReactFlowInstance] = useState(null);
     const [serverConfig, setServerConfig] = useState({ debounce: 50, batch_interval: 0 });
+
+    // ✅ Use the hook to get instance methods (robust coordinate conversion)
+    const { screenToFlowPosition } = useReactFlow();
 
     // === Custom Hooks ===
     const { isLoaded, saveProjectToIDB, saveProjectToFile, loadProjectFromFile } = useProjectPersistence(nodes, edges, setNodes, setEdges, setNodeCount);
@@ -116,17 +119,16 @@ function Flow() {
             }
 
             // check if the dropped element is valid
-            if (reactFlowInstance) {
-                // screenToFlowPosition handles zoom and pan automatically
-                const position = reactFlowInstance.screenToFlowPosition({
-                    x: event.clientX,
-                    y: event.clientY,
-                });
+            // screenToFlowPosition handles zoom and pan automatically
+            // Using logic from useReactFlow hook which is context-aware
+            const position = screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+            });
 
-                addNode(type, position);
-            }
+            addNode(type, position);
         },
-        [addNode, reactFlowInstance],
+        [addNode, screenToFlowPosition],
     );
 
     if (!isLoaded) {
@@ -149,7 +151,6 @@ function Flow() {
                     />
 
                     <ReactFlow
-                        onInit={setReactFlowInstance}
                         nodes={nodes}
                         edges={styledEdges}
                         onSelectionChange={onSelectionChange}
@@ -160,9 +161,7 @@ function Flow() {
                         edgeTypes={edgeTypes}
                         defaultEdgeOptions={{ type: 'default' }}
                         nodeOrigin={[0.5, 0.5]}
-                        minZoom={0.1}
-                        fitView
-                        fitViewOptions={{ padding: 0.3, maxZoom: 0.8 }}
+                        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
                     >
                         <Background variant="dots" gap={16} size={1} />
                         <MiniMap
@@ -182,6 +181,8 @@ function Flow() {
 
 export default function App() {
     return (
-        <Flow />
+        <ReactFlowProvider>
+            <Flow />
+        </ReactFlowProvider>
     );
 }

@@ -10,30 +10,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     nodesRef.current = nodes;
     edgesRef.current = edges;
 
-    const getNextNodeInQueue = useCallback(() => {
-        let node = null;
-        const currentNodes = nodesRef.current;
-
-        while (executionQueueRef.current.length > 0) {
-            const IdNode = executionQueueRef.current.at(executionQueueRef.current.length - 1);
-            for (let n of currentNodes) {
-                if (n.id === IdNode) {
-                    node = n;
-                }
-            }
-            if (node !== null) {
-                break;
-            } else {
-                executionQueueRef.current.pop();
-            }
-        }
-
-        if (node === null) {
-            return null;
-        }
-        return { ...node.data, id: node.id };
-    }, []);
-
     const updateNode = useCallback((nodeId, updates) => {
         // Optimistic update of the Ref for immediate consistency in specific callbacks (like runCode)
         const nodeIndex = nodesRef.current.findIndex(n => n.id === nodeId);
@@ -65,9 +41,6 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
     const runCode = useCallback((node, timeout = null) => {
         const currentWs = wsRef.current;
         if (currentWs && currentWs.readyState === WebSocket.OPEN) {
-            // ...
-            // (Logic unchanged)
-            // ...
 
             const currentNodes = nodesRef.current;
             const currentEdges = edgesRef.current;
@@ -129,70 +102,31 @@ export const CustomNodeOperations = (setNodes, wsRef, nodes, edges) => {
         }
     }, [setNodes, wsRef]);
 
-    const runCodeWithPrerequisites = useCallback((node) => {
-        const currentEdges = edgesRef.current;
-        const currentNodes = nodesRef.current;
-        // ... (lines 132-156 unchanged)
-
-        // Simplified view for replacement context, assume unchanged logic inside
-        // ...
-
-        const edgeInputs = [];
-        for (let edge of currentEdges) {
-            if (edge.target === node.id) {
-                edgeInputs.push(edge.source)
-            }
-        }
-
-        let hasPrerequisites = false
-
-        for (let n of currentNodes) {
-            if (edgeInputs.includes(n.id)) {
-                if (n.data.state !== 2) {
-                    hasPrerequisites = true;
-                    if (n.data.state === 0 && !executionQueueRef.current.includes(n.id)) {
-                        executionQueueRef.current.push(n.id);
-                    }
-                }
-            }
-        }
-
-        if (!hasPrerequisites) {
-            // Remove self from queue
-            const index = executionQueueRef.current.indexOf(node.id);
-            if (index !== -1) executionQueueRef.current.splice(index, 1);
-
-            runCode(node);
-            return;
-        } else {
-            const index = executionQueueRef.current.indexOf(node.id);
-            if (index !== -1) executionQueueRef.current.splice(index, 1);
-        }
-
-        let next = getNextNodeInQueue();
-        if (next !== null) {
-            runCodeWithPrerequisites(next)
-        }
-
-    }, [getNextNodeInQueue, runCode]);
-
     const processQueue = useCallback(() => {
         try {
-            // Loop until queue empty or blocked
-            while (executionQueueRef.current.length > 0) {
-                let node = getNextNodeInQueue();
-                if (node !== null) {
-                    runCodeWithPrerequisites(node);
-                } else {
-                    break;
+            // Simple FIFO Queue Processing
+            // We run everything in the queue immediately (async firing)
+            // No prerequisite checks (Manual runs are forced / FastNodes manage their own downstream triggers)
+
+            const queue = executionQueueRef.current;
+            const currentNodes = nodesRef.current;
+
+            while (queue.length > 0) {
+                const nodeId = queue.shift(); // FIFO
+                const node = currentNodes.find(n => n.id === nodeId);
+
+                if (node) {
+                    // Normalize data structure if needed
+                    const nodeData = { ...node.data, id: node.id };
+                    runCode(nodeData);
                 }
             }
         } catch (error) {
             console.error("Queue processing error:", error);
-            // Emergency cleanup: clear queue to prevent zombie state
+            // Emergency cleanup
             executionQueueRef.current = [];
         }
-    }, [getNextNodeInQueue, runCodeWithPrerequisites]);
+    }, [runCode]);
 
     const addNodeToQueue = useCallback((node, timeout = null) => {
         if (executionQueueRef.current.includes(node.id)) {
