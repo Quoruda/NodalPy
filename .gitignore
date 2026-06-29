@@ -1,1 +1,8 @@
 build/
+.idea
+.fleet
+
+# Python cache files
+*.pyc
+__pycache__/
+back-api/__pycache__
