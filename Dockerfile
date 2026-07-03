@@ -27,10 +27,7 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements
 COPY back-api/requirements.txt .
 
-# For a headless server, we don't need pywebview and its heavy Qt dependencies.
-# We filter it out to make the Docker image much lighter.
-RUN grep -v "pywebview" requirements.txt > req-server.txt && \
-    pip install --no-cache-dir -r req-server.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Structure the app directory to match the expected NodalPy build architecture
 COPY back-api/ /app/
@@ -46,5 +43,5 @@ EXPOSE 8000
 ENV NODAL_DEBOUNCE=300
 ENV NODAL_BATCH_INTERVAL=50
 
-# Run FastAPI directly via Uvicorn (bypassing main.py and pywebview)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the FastAPI server via main.py
+CMD ["python", "main.py"]

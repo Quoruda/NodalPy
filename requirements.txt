@@ -1,7 +1,6 @@
 pillow
 fastapi
 uvicorn[standard]
-pywebview
 websockets
 Pillow
 matplotlib

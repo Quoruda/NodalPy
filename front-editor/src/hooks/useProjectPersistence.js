@@ -99,18 +99,6 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
         const data = { nodes: sanitizedNodes, edges: edges };
         const json = JSON.stringify(data, null, 2);
 
-        // Check for PyWebView integration
-        if (window.pywebview && window.pywebview.api) {
-            window.pywebview.api.save_file(json).then(success => {
-                if (success) toast.success("Project saved successfully!");
-                else toast.warn("Save cancelled or failed.");
-            }).catch(err => {
-                console.error("PyWebView save error:", err);
-                toast.error("Failed to save via Desktop API.");
-            });
-            return;
-        }
-
         // Fallback to Browser Download
         const blob = new Blob([json], { type: "application/json" });
         const href = URL.createObjectURL(blob);
