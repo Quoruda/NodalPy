@@ -139,6 +139,15 @@ class UserWebSocket:
             if data["action"] == "login":
                 identifier = data["identifier"]
                 self.user = self.user_manager.get_user(identifier)
+                
+                is_running = self.user.process is not None or self.user.container is not None
+                if not is_running:
+                    await self.websocket.send_json({
+                        "action": "login",
+                        "status": "preparing",
+                        "message": "Initializing Python environment (starting runner)..."
+                    })
+
                 try:
                     await self.user.start()
                 except Exception as e:

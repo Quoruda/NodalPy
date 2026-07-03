@@ -185,8 +185,26 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
 
             // Process login config updates outside setNodes to avoid nested state update warnings
             messages.forEach(msg => {
-                if (msg.action === "login" && msg.status === "success" && msg.config) {
-                    setServerConfigRef.current(msg.config);
+                if (msg.action === "login") {
+                    if (msg.status === "preparing") {
+                        toast.loading(msg.message || "Initializing Python environment...", {
+                            toastId: "runner_prep"
+                        });
+                    } else if (msg.status === "success" && msg.config) {
+                        if (toast.isActive("runner_prep")) {
+                            toast.update("runner_prep", {
+                                render: "Python environment ready! 🐍✨",
+                                type: "success",
+                                isLoading: false,
+                                autoClose: 2000
+                            });
+                        } else {
+                            toast.success("Python environment connected! 🐍✨", {
+                                autoClose: 2000
+                            });
+                        }
+                        setServerConfigRef.current(msg.config);
+                    }
                 }
             });
 
