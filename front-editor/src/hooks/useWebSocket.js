@@ -2,13 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from "react-toastify";
 
 // Dedicated and reusable WebSocket hook with auto-reconnection
-export const useWebSocket = (url, setNodes, setServerConfig) => {
+export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) => {
     const wsRef = useRef(null);
     const reconnectAttemptsRef = useRef(0);
     const reconnectTimeoutRef = useRef(null);
     const isManualCloseRef = useRef(false);
     const setNodesRef = useRef(setNodes);
     const setServerConfigRef = useRef(setServerConfig);
+    const onProjectLoadedRef = useRef(onProjectLoaded);
     const connectRef = useRef(null);
     const scheduleReconnectRef = useRef(null);
 
@@ -28,7 +29,8 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
     useEffect(() => {
         setNodesRef.current = setNodes;
         setServerConfigRef.current = setServerConfig;
-    }, [setNodes, setServerConfig]);
+        onProjectLoadedRef.current = onProjectLoaded;
+    }, [setNodes, setServerConfig, onProjectLoaded]);
 
     const getReconnectDelay = useCallback((attemptNumber) => {
         if (attemptNumber <= 10) {
@@ -183,7 +185,7 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
             const messages = [...messageQueue];
             messageQueue = [];
 
-            // Process login config updates outside setNodes to avoid nested state update warnings
+            // Process login and project config updates outside setNodes to avoid nested state update warnings
             messages.forEach(msg => {
                 if (msg.action === "login") {
                     if (msg.status === "preparing") {
@@ -204,6 +206,20 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
                             });
                         }
                         setServerConfigRef.current(msg.config);
+                    }
+                } else if (msg.action === "load_project") {
+                    if (msg.status === "success" && msg.project_data) {
+                        onProjectLoadedRef.current?.(msg.project_data);
+                    } else if (msg.status === "empty") {
+                        onProjectLoadedRef.current?.({});
+                    } else if (msg.status === "error") {
+                        toast.error(`Failed to load project: ${msg.error}`);
+                    }
+                } else if (msg.action === "save_project") {
+                    if (msg.status === "success") {
+                        console.log("Project auto-saved to backend successfully.");
+                    } else if (msg.status === "error") {
+                        toast.error(`Failed to save project: ${msg.error}`);
                     }
                 }
             });

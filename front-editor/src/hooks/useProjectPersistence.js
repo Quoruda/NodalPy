@@ -1,88 +1,32 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { get, set } from 'idb-keyval';
 import { toast } from 'react-toastify';
 import { containsCycle } from '../utils/cycleDetection';
 
-export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeCount) => {
+export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeCount, isConnected, sendMessage) => {
     const [isLoaded, setIsLoaded] = useState(false);
+    const hasUnsavedChanges = useRef(false);
+    const nodesRef = useRef(nodes);
+    const edgesRef = useRef(edges);
 
-    // Load from IndexedDB on mount
     useEffect(() => {
-        const loadFromIDB = async () => {
-            try {
-                const flowData = await get('flowData');
-                if (flowData) {
-                    const parsedData = JSON.parse(flowData);
-                    console.log("Loaded flow data from IndexedDB");
-                    if (parsedData.nodes && parsedData.edges) {
-                        setNodes(parsedData.nodes);
-                        setEdges(parsedData.edges);
-                        setNodeCount(parsedData.nodes.length + 1);
-                    }
-                }
-            } catch (err) {
-                console.error("Failed to load from IndexedDB:", err);
-                toast.error("Failed to load project from storage.");
-            } finally {
-                setIsLoaded(true);
-            }
-        };
-        loadFromIDB();
-    }, [setNodes, setEdges, setNodeCount]);
+        nodesRef.current = nodes;
+        edgesRef.current = edges;
+    }, [nodes, edges]);
 
-    const saveProjectToIDB = useCallback(() => {
-        if (!isLoaded) return; // Don't save before initial load completes
+    // Send load request when connection is established
+    useEffect(() => {
+        if (isConnected) {
+            sendMessage({ action: "load_project" });
+        } else {
+            setIsLoaded(false);
+        }
+    }, [isConnected, sendMessage]);
+
+    const saveProjectToBackend = useCallback(() => {
+        if (!isLoaded || !isConnected) return;
 
         // Sanitize nodes to remove heavy execution data (output, error)
-        const sanitizedNodes = nodes.map(node => ({
-            ...node,
-            data: {
-                ...node.data,
-                output: undefined, // Clear large outputs
-                error: undefined,
-                state: 0, // Reset state on save
-                outputs: node.data.outputs ? node.data.outputs.map(out => ({
-                    ...out,
-                    value: undefined,
-                    type: undefined
-                })) : undefined
-            }
-        }));
-
-        const data = { nodes: sanitizedNodes, edges: edges };
-        const json_data = JSON.stringify(data);
-
-        set('flowData', json_data)
-            .then(() => console.log("Project saved to IndexedDB (async)"))
-            .catch(err => console.error("Failed to save to IndexedDB:", err));
-
-    }, [nodes, edges, isLoaded]);
-
-    const hasUnsavedChanges = useRef(false);
-
-    // Track changes
-    useEffect(() => {
-        if (isLoaded) {
-            hasUnsavedChanges.current = true;
-        }
-    }, [nodes, edges, isLoaded]);
-
-    // Interval Auto-Save
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            if (isLoaded && hasUnsavedChanges.current) {
-                saveProjectToIDB();
-                hasUnsavedChanges.current = false;
-            }
-        }, 5000); // Check every 5 seconds
-
-        return () => clearInterval(intervalId);
-    }, [saveProjectToIDB, isLoaded]);
-
-    // Manual Save to File
-    // Manual Save to File
-    const saveProjectToFile = useCallback(() => {
-        const sanitizedNodes = nodes.map(node => ({
+        const sanitizedNodes = nodesRef.current.map(node => ({
             ...node,
             data: {
                 ...node.data,
@@ -96,69 +40,66 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
                 })) : undefined
             }
         }));
-        const data = { nodes: sanitizedNodes, edges: edges };
-        const json = JSON.stringify(data, null, 2);
 
-        // Fallback to Browser Download
-        const blob = new Blob([json], { type: "application/json" });
-        const href = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = href;
-        link.download = "nodal_project.json";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }, [nodes, edges]);
+        sendMessage({
+            action: "save_project",
+            project_data: { nodes: sanitizedNodes, edges: edgesRef.current }
+        });
+    }, [isLoaded, isConnected, sendMessage]);
 
-    const loadProjectFromJson = useCallback((json) => {
-        if (json.nodes && json.edges) {
-            // Cycle Check Middleware
-            if (containsCycle(json.nodes, json.edges)) {
-                toast.error("Import Failed: Project contains forbidden loops! 🔄❌");
-                console.error("Cycle detected in imported project.");
+    // Track changes to trigger auto-save
+    useEffect(() => {
+        if (isLoaded) {
+            hasUnsavedChanges.current = true;
+        }
+    }, [nodes, edges, isLoaded]);
+
+    // Auto-save every 5 seconds if changes are made
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            if (isLoaded && hasUnsavedChanges.current && isConnected) {
+                saveProjectToBackend();
+                hasUnsavedChanges.current = false;
+            }
+        }, 5000);
+
+        return () => clearInterval(intervalId);
+    }, [saveProjectToBackend, isLoaded, isConnected]);
+
+    const loadProject = useCallback((projectData) => {
+        if (projectData && projectData.nodes && projectData.edges) {
+            if (containsCycle(projectData.nodes, projectData.edges)) {
+                toast.error("Import Failed: Saved project contains loops!");
+                setIsLoaded(true);
                 return;
             }
 
-            // Inject 'fromLoad' flag to prevent auto-execution on mount
-            const loadedNodes = json.nodes.map(node => ({
+            const loadedNodes = projectData.nodes.map(node => ({
                 ...node,
                 data: { ...node.data, fromLoad: true }
             }));
             setNodes(loadedNodes);
-            setEdges(json.edges);
+            setEdges(projectData.edges);
 
-            // Recalculate node count
-            const maxId = json.nodes.reduce((max, node) => {
+            const maxId = projectData.nodes.reduce((max, node) => {
                 const numId = parseInt(node.id);
                 return isNaN(numId) ? max : Math.max(max, numId);
             }, 0);
             setNodeCount(maxId + 1);
-
-            toast.success("Project loaded successfully!");
+            
+            toast.success("Project loaded from server! 💾✨");
         } else {
-            toast.error("Invalid project format.");
+            // First time connecting (no saved project on server yet)
+            setNodes([]);
+            setEdges([]);
+            setNodeCount(0);
         }
+        setIsLoaded(true);
     }, [setNodes, setEdges, setNodeCount]);
-
-    const loadProjectFromFile = useCallback((file) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const json = JSON.parse(e.target.result);
-                loadProjectFromJson(json);
-            } catch (err) {
-                console.error("Load error:", err);
-                toast.error("Failed to parse project file.");
-            }
-        };
-        reader.readAsText(file);
-    }, [loadProjectFromJson]);
 
     return {
         isLoaded,
-        saveProjectToIDB,
-        saveProjectToFile,
-        loadProjectFromFile,
-        loadProjectFromJson
+        setIsLoaded,
+        loadProject
     };
 };

@@ -3,7 +3,7 @@ import { availableNodes } from '../Nodes/nodeConfig';
 import { demos } from '../../utils/demos';
 import './Sidebar.css';
 
-const Sidebar = ({ onSave, onLoad, onLoadDemo, isConnected }) => {
+const Sidebar = ({ onLoadDemo, isConnected }) => {
     const [isFileOpen, setIsFileOpen] = React.useState(false);
 
     const onDragStart = (event, nodeType) => {
@@ -23,12 +23,6 @@ const Sidebar = ({ onSave, onLoad, onLoadDemo, isConnected }) => {
                     <span className="menu-label">File</span>
                     {isFileOpen && (
                         <div className="floating-menu">
-                            <button onClick={() => { onSave(); setIsFileOpen(false); }}>
-                                Save Project
-                            </button>
-                            <button onClick={() => { onLoad(); setIsFileOpen(false); }}>
-                                Open Project
-                            </button>
                             <div className="submenu-container">
                                 <button className="submenu-trigger">
                                     Demos & Examples ▶

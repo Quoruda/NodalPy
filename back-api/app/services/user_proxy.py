@@ -24,6 +24,9 @@ class UserKernelProxy:
         
         # Paths
         self.local_storage_dir = os.path.join(STORAGE_DIR, user_id)
+        self.projects_dir = os.path.join(self.local_storage_dir, "projects")
+        self.files_dir = os.path.join(self.local_storage_dir, "files")
+        self.nodes_dir = os.path.join(self.local_storage_dir, "nodes")
         
         # Local execution properties
         self.process = None
@@ -34,7 +37,7 @@ class UserKernelProxy:
         self.image_name = os.getenv("NODAL_KERNEL_IMAGE", "nodalpy_server:latest")
         self.network_name = os.getenv("NODAL_DOCKER_NETWORK", "nodalpy_network")
         self.host_storage_path = os.getenv("HOST_STORAGE_PATH", os.path.join(os.getcwd(), "storage"))
-        self.user_host_storage_path = os.path.join(self.host_storage_path, user_id)
+        self.user_host_files_path = os.path.join(self.host_storage_path, user_id, "files")
         self.container = None
         self.docker_client = None
 
@@ -49,6 +52,9 @@ class UserKernelProxy:
 
     async def start(self):
         async with self.lock:
+            os.makedirs(self.projects_dir, exist_ok=True)
+            os.makedirs(self.files_dir, exist_ok=True)
+            os.makedirs(self.nodes_dir, exist_ok=True)
             if self.execution_mode == "docker":
                 await self._start_docker()
             else:
@@ -71,7 +77,7 @@ class UserKernelProxy:
                 "--port",
                 str(self.port),
                 "--storage-dir",
-                self.local_storage_dir
+                self.files_dir
             ]
         )
         
@@ -112,7 +118,7 @@ class UserKernelProxy:
             raise RuntimeError(f"Failed to connect to Docker daemon: {e}")
 
         # Ensure container folder exists inside /app/storage
-        os.makedirs(self.local_storage_dir, exist_ok=True)
+        os.makedirs(self.files_dir, exist_ok=True)
 
         # Check and remove any stale container with the same name
         try:
@@ -142,7 +148,7 @@ class UserKernelProxy:
                 name=self.container_name,
                 network=self.network_name,
                 volumes={
-                    self.user_host_storage_path: {
+                    self.user_host_files_path: {
                         "bind": "/app/storage",
                         "mode": "rw"
                     }

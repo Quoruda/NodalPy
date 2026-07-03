@@ -1,4 +1,6 @@
 import asyncio
+import os
+import json
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from ..services.user_manager import UserManager
@@ -133,6 +135,58 @@ class UserWebSocket:
                 "error": str(e)
             })
 
+    async def ws_save_project(self, data: dict):
+        try:
+            if not verif_args(data, ["project_data"]):
+                await self.websocket.send_json({"error": "missing project_data for save_project"})
+                return
+
+            projects_dir = self.user.projects_dir
+            os.makedirs(projects_dir, exist_ok=True)
+            project_path = os.path.join(projects_dir, "project.json")
+
+            with open(project_path, "w", encoding="utf-8") as f:
+                json.dump(data["project_data"], f, indent=2)
+
+            await self.websocket.send_json({
+                "action": "save_project",
+                "status": "success"
+            })
+        except Exception as e:
+            print(f"Error saving project: {e}")
+            await self.websocket.send_json({
+                "action": "save_project",
+                "status": "error",
+                "error": str(e)
+            })
+
+    async def ws_load_project(self):
+        try:
+            projects_dir = self.user.projects_dir
+            project_path = os.path.join(projects_dir, "project.json")
+
+            if os.path.exists(project_path):
+                with open(project_path, "r", encoding="utf-8") as f:
+                    project_data = json.load(f)
+                await self.websocket.send_json({
+                    "action": "load_project",
+                    "status": "success",
+                    "project_data": project_data
+                })
+            else:
+                await self.websocket.send_json({
+                    "action": "load_project",
+                    "status": "empty",
+                    "message": "No saved project found"
+                })
+        except Exception as e:
+            print(f"Error loading project: {e}")
+            await self.websocket.send_json({
+                "action": "load_project",
+                "status": "error",
+                "error": str(e)
+            })
+
     async def loop(self):
         try:
             data = await asyncio.wait_for(self.websocket.receive_json(), timeout=30.0)
@@ -183,6 +237,12 @@ class UserWebSocket:
                     continue
                 if data["action"] == "get_variable":
                     await self.ws_get_variable(data)
+                    continue
+                if data["action"] == "save_project":
+                    await self.ws_save_project(data)
+                    continue
+                if data["action"] == "load_project":
+                    await self.ws_load_project()
                     continue
         except WebSocketDisconnect:
             pass
