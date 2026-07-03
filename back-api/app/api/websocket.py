@@ -36,13 +36,19 @@ class UserWebSocket:
         if not verif_args(data, ["node", "code", "variables"]):
             await self.websocket.send_json({"error": "missing arguments for run_code"})
             return
-        if not self.user.can_run_code():
-            await self.websocket.send_json({"error": "code is already running"})
-            return
 
         timeout = data.get("timeout", None)
         inputs = data.get("inputs", [])
         node_id = data["node"]
+
+        if not self.user.can_run_code():
+            await self.websocket.send_json({
+                "action": "run_code",
+                "status": "error",
+                "node": node_id,
+                "error": "Le serveur est déjà en cours d'exécution"
+            })
+            return
 
         # Server-Side Rate Limiting
         # Allow a small buffer (e.g. 0.8 * debounce) to account for network jitter
@@ -61,7 +67,12 @@ class UserWebSocket:
         # But if user bypasses IS_RUNNING check in some way:
         
         if now - last_time < 10: # Absolute flood protection limits (100Hz)
-             await self.websocket.send_json({"error": "Rate limit exceeded"})
+             await self.websocket.send_json({
+                 "action": "run_code",
+                 "status": "error",
+                 "node": node_id,
+                 "error": "Rate limit exceeded"
+             })
              return
              
         self.last_execution_time[node_id] = now
@@ -140,6 +151,7 @@ class UserWebSocket:
                     await self.websocket.send_json({"error": "missing arguments"})
                     continue
                 if data["action"] == "run_node":
+                    print(f"▶️ Execution call received for node: {data.get('node', 'Unknown')}")
                     await self.ws_run_code(data)
                     continue
                 if data["action"] == "ping":

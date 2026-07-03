@@ -40,7 +40,12 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
                 ...node.data,
                 output: undefined, // Clear large outputs
                 error: undefined,
-                state: 0 // Reset state on save
+                state: 0, // Reset state on save
+                outputs: node.data.outputs ? node.data.outputs.map(out => ({
+                    ...out,
+                    value: undefined,
+                    type: undefined
+                })) : undefined
             }
         }));
 
@@ -83,7 +88,12 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
                 ...node.data,
                 output: undefined,
                 error: undefined,
-                state: 0
+                state: 0,
+                outputs: node.data.outputs ? node.data.outputs.map(out => ({
+                    ...out,
+                    value: undefined,
+                    type: undefined
+                })) : undefined
             }
         }));
         const data = { nodes: sanitizedNodes, edges: edges };
@@ -112,51 +122,55 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
         document.body.removeChild(link);
     }, [nodes, edges]);
 
+    const loadProjectFromJson = useCallback((json) => {
+        if (json.nodes && json.edges) {
+            // Cycle Check Middleware
+            if (containsCycle(json.nodes, json.edges)) {
+                toast.error("Import Failed: Project contains forbidden loops! 🔄❌");
+                console.error("Cycle detected in imported project.");
+                return;
+            }
+
+            // Inject 'fromLoad' flag to prevent auto-execution on mount
+            const loadedNodes = json.nodes.map(node => ({
+                ...node,
+                data: { ...node.data, fromLoad: true }
+            }));
+            setNodes(loadedNodes);
+            setEdges(json.edges);
+
+            // Recalculate node count
+            const maxId = json.nodes.reduce((max, node) => {
+                const numId = parseInt(node.id);
+                return isNaN(numId) ? max : Math.max(max, numId);
+            }, 0);
+            setNodeCount(maxId + 1);
+
+            toast.success("Project loaded successfully!");
+        } else {
+            toast.error("Invalid project format.");
+        }
+    }, [setNodes, setEdges, setNodeCount]);
+
     const loadProjectFromFile = useCallback((file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                if (json.nodes && json.edges) {
-
-                    // Cycle Check Middleware
-                    if (containsCycle(json.nodes, json.edges)) {
-                        toast.error("Import Failed: Project contains forbidden loops! 🔄❌");
-                        console.error("Cycle detected in imported project.");
-                        return;
-                    }
-
-                    // Inject 'fromLoad' flag to prevent auto-execution on mount
-                    const loadedNodes = json.nodes.map(node => ({
-                        ...node,
-                        data: { ...node.data, fromLoad: true }
-                    }));
-                    setNodes(loadedNodes);
-                    setEdges(json.edges);
-
-                    // Recalculate node count
-                    const maxId = json.nodes.reduce((max, node) => {
-                        const numId = parseInt(node.id);
-                        return isNaN(numId) ? max : Math.max(max, numId);
-                    }, 0);
-                    setNodeCount(maxId + 1);
-
-                    toast.success("Project loaded successfully!");
-                } else {
-                    toast.error("Invalid project file format.");
-                }
+                loadProjectFromJson(json);
             } catch (err) {
                 console.error("Load error:", err);
                 toast.error("Failed to parse project file.");
             }
         };
         reader.readAsText(file);
-    }, [setNodes, setEdges, setNodeCount]);
+    }, [loadProjectFromJson]);
 
     return {
         isLoaded,
         saveProjectToIDB,
         saveProjectToFile,
-        loadProjectFromFile
+        loadProjectFromFile,
+        loadProjectFromJson
     };
 };

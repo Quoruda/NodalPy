@@ -1,0 +1,23 @@
+services:
+  nodalpy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_WS_URL=ws://127.0.0.1:8555/ws
+    container_name: nodalpy_server
+    ports:
+      - "8555:8000"
+    volumes:
+      # Garde les sauvegardes des mémoires (pickle) et les images générées même si le container redémarre
+      - nodalpy_storage:/app/storage
+    environment:
+      # Empêche Python de mettre les logs en cache (affiche immédiatement)
+      - PYTHONUNBUFFERED=1
+      # Plus le serveur est distant, plus on augmente le debounce pour éviter de spammer le réseau
+      - NODAL_DEBOUNCE=300
+      - NODAL_BATCH_INTERVAL=50
+    restart: unless-stopped
+
+volumes:
+  nodalpy_storage:
