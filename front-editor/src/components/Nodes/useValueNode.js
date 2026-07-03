@@ -13,7 +13,7 @@ export const useValueNode = (id, data, config = {}) => {
     } = config;
 
     // Reuse useCodeNode for backend communication logic
-    const nodeState = useCodeNode({ ...data, id }, { timeout: 0.5, autoTrigger: true });
+    const nodeState = useCodeNode({ ...data, id }, { autoTrigger: true });
     const { runCode, updateNode } = nodeState;
     const { isConnected } = useFlowContext();
 

@@ -3,37 +3,33 @@ import shutil
 import os
 import sys
 
-# --- Config ---
-FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "front-editor"))  # dossier React
-BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "back-api"))  # dossier React
+FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "front-editor"))
+BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "back-api"))
 
-BUILD_DIR = os.path.join(FRONTEND_DIR, "dist")  # dossier généré par CRA
+BUILD_DIR = os.path.join(FRONTEND_DIR, "dist")
 TARGET_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "build"))
 
 def run_build():
-    print("📦 Lancement du build React...")
+    print("📦 Launching React build...")
     subprocess.run(["npm", "run", "build"], cwd=FRONTEND_DIR, check=True)
 
 def move_build():
-    print(f"📂 Déplacement de {BUILD_DIR} vers {TARGET_DIR} ...")
+    print(f"📂 Moving {BUILD_DIR} to {TARGET_DIR} ...")
 
-    # Supprimer l’ancien build s’il existe
     if os.path.exists(TARGET_DIR):
         shutil.rmtree(TARGET_DIR)
 
     shutil.move(BUILD_DIR, os.path.join(TARGET_DIR, 'front'))
-    print("✅ Build déplacé avec succès !")
-
+    print("✅ Build moved successfully!")
 
 def move_backend():
-    print(f"📂 Déplacement du backend depuis {BACKEND_DIR} ...")
+    print(f"📂 Moving backend from {BACKEND_DIR} ...")
     
-    # Liste des dossiers/fichiers à exclure
     exclusions = {
         "__pycache__", 
         ".venv", 
         ".idea",
-        "front"  # Le dossier front est géré par move_build
+        "front"
     }
 
     for item in os.listdir(BACKEND_DIR):
@@ -46,12 +42,11 @@ def move_backend():
         if os.path.isfile(src_path):
             shutil.copy(src_path, dst_path)
         elif os.path.isdir(src_path):
-             # On copie recursivement les dossiers qui ne sont pas exclus
             if os.path.exists(dst_path):
                 shutil.rmtree(dst_path)
             shutil.copytree(src_path, dst_path)
             
-    print("✅ Backend déplacé avec succès !")
+    print("✅ Backend moved successfully!")
 
 if __name__ == "__main__":
     try:
@@ -59,5 +54,5 @@ if __name__ == "__main__":
         move_build()
         move_backend()
     except subprocess.CalledProcessError:
-        print("❌ Erreur : le build a échoué.")
+        print("❌ Error: build failed.")
         sys.exit(1)

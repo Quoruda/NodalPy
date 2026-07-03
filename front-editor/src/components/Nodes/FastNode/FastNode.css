@@ -17,7 +17,6 @@
     box-shadow: 0 6px 12px rgba(116, 185, 255, 0.3);
 }
 
-/* Éclair géant en diagonal sur le côté droit */
 .lightning-bolt {
     position: absolute;
     top: -25px;

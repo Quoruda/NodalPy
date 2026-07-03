@@ -36,13 +36,6 @@ export const availableNodes = [
         category: 'Input'
     },
     {
-        type: 'FileNode',
-        label: 'File',
-        colorVar: '--color-file',
-        color: '#a29bfe',
-        category: 'Input'
-    },
-    {
         type: 'ObserverNode',
         label: 'Observer',
         colorVar: '--color-observer',

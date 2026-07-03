@@ -1,4 +1,3 @@
-// electron.js
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
@@ -11,11 +10,7 @@ function createWindow() {
     },
   });
 
-  // En développement : charger le serveur Vite
   win.loadURL('http://localhost:5173');
-
-  // En production : charger les fichiers buildés
-  // win.loadFile('dist/index.html');
 }
 
 app.whenReady().then(() => {

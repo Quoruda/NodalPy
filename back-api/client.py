@@ -1,30 +1,22 @@
 import threading
-
 import websocket
 import json
 import time
 
-# URL de ton serveur WebSocket
 WS_URL = "ws://localhost:8000/ws"
 
-
 def on_message(ws, message):
-    print("Réponse du serveur :", message)
-
+    print("Server response:", message)
 
 def on_error(ws, error):
-    print("Erreur :", error)
-
+    print("Error:", error)
 
 def on_close(ws, close_status_code, close_msg):
-    print(f"Connexion fermée ({close_status_code} - {close_msg})")
-
+    print(f"Connection closed ({close_status_code} - {close_msg})")
 
 def on_open(ws):
-    print("Connexion ouverte")
+    print("Connection opened")
 
-
-# Création de la connexion WebSocket
 ws_app = websocket.WebSocketApp(
     WS_URL,
     on_open=on_open,
@@ -64,10 +56,10 @@ tests = [
 ]
 
 for msg in tests:
-    print("➡️ Envoi :", msg)
+    print("➡️ Sending:", msg)
     ws_app.send(json.dumps(msg))
     time.sleep(1)
 
-input("Appuyez sur Entrée pour fermer la connexion...\n")
+input("Press Enter to close connection...\n")
 ws_app.close()
 wst.join()

@@ -50,12 +50,6 @@ export const useNodeFactory = (nodes, setNodes, nodeCount, setNodeCount) => {
             newNode.data.value = "";
             newNode.data.code = 'output = ""';
             newNode.data.outputs = [{ id: 'output', name: 'output' }];
-        } else if (type === 'FileNode') {
-            newNode.data.title = 'File ' + id;
-            newNode.data.fileName = null;
-            newNode.data.value = null;
-            newNode.data.code = "# Upload a file to set path";
-            newNode.data.outputs = [{ id: 'output', name: 'output' }];
         } else if (type === 'ObserverNode') {
             newNode.data.title = 'Observer ' + id;
             newNode.data.inputs = [{ id: 'in1', name: 'input' }];

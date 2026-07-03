@@ -43,13 +43,11 @@
 
 /* App.css */
 
-/* Style des edges non sélectionnées (par défaut) */
 .react-flow__edge-path {
   stroke: #999;
   stroke-width: 1.5px;
 }
 
-/* Style de l’edge sélectionnée */
 .react-flow__edge.selected .react-flow__edge-path {
   stroke: #ff0072 !important;
   stroke-width: 4px !important;
@@ -108,7 +106,6 @@
   fill: #00cec9 !important;
 }
 
-/* Ligne en cours de création */
 .react-flow__connection line {
   stroke: #d63031 !important;
   stroke-width: 3px !important;

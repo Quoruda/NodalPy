@@ -50,7 +50,7 @@ class UserWebSocket:
                 "action": "run_code",
                 "status": "error",
                 "node": node_id,
-                "error": "Le serveur est déjà en cours d'exécution"
+                "error": "The server is already executing code"
             })
             return
 
