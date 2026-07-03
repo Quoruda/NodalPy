@@ -1,5 +1,6 @@
 services:
   nodalpy:
+    image: nodalpy_server:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,11 +11,22 @@ services:
       - "8555:8000"
     volumes:
       - nodalpy_storage:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - PYTHONUNBUFFERED=1
       - NODAL_DEBOUNCE=300
       - NODAL_BATCH_INTERVAL=50
+      - NODAL_EXECUTION_MODE=docker
+      - NODAL_DOCKER_NETWORK=nodalpy_network
+      - NODAL_KERNEL_IMAGE=nodalpy_server:latest
+      - HOST_STORAGE_PATH=${PWD}/storage
+    networks:
+      - nodalpy_network
     restart: unless-stopped
+
+networks:
+  nodalpy_network:
+    name: nodalpy_network
 
 volumes:
   nodalpy_storage:
