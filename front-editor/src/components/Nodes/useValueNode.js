@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useCodeNode } from './useCodeNode.js';
+import { useFlowContext } from '../FlowContext.jsx';
 
 export const useValueNode = (id, data, config = {}) => {
     const {
@@ -14,9 +15,16 @@ export const useValueNode = (id, data, config = {}) => {
     // Reuse useCodeNode for backend communication logic
     const nodeState = useCodeNode({ ...data, id }, { timeout: 0.5, autoTrigger: true });
     const { runCode, updateNode } = nodeState;
+    const { isConnected } = useFlowContext();
+
+    // Ref to track the latest data prop to avoid stale closures
+    const dataRef = useRef(data);
+    useEffect(() => {
+        dataRef.current = data;
+    }, [data]);
 
     // Local state
-    const [localValue, setLocalValue] = useState(defaultValue);
+    const [localValue, setLocalValue] = useState(data.value !== undefined ? data.value : defaultValue);
     const [localTitle, setLocalTitle] = useState(data.title || config.defaultTitle || 'Node');
 
     // Parse code on change
@@ -34,20 +42,31 @@ export const useValueNode = (id, data, config = {}) => {
         }
     }, [data.code, regex]);
 
-    // Auto-run on mount
+    // Auto-run once when the WebSocket connects
+    const hasFiredRef = useRef(false);
+    const runCodeRef = useRef(runCode);
+    useEffect(() => { runCodeRef.current = runCode; }, [runCode]);
+
     useEffect(() => {
-        if (data.fromLoad) return;
-        const timer = setTimeout(() => runCode(), 100);
-        return () => clearTimeout(timer);
-    }, []);
+        if (isConnected && !hasFiredRef.current) {
+            hasFiredRef.current = true;
+            let codeToRun = dataRef.current.code;
+            if (!codeToRun) {
+                const formatted = formatValue(localValue);
+                codeToRun = serialize(formatted);
+                updateNode(id, { code: codeToRun });
+            }
+            const timer = setTimeout(() => runCodeRef.current({ code: codeToRun }), 100);
+            return () => clearTimeout(timer);
+        }
+        if (!isConnected) {
+            hasFiredRef.current = false; // Reset for the next connection
+        }
+    }, [isConnected]); // Minimal dependencies to avoid re-triggering
 
     // Handlers
     const handleTitleChange = useCallback((e) => {
         const newTitle = e.target.value;
-        setLocalValue((prev) => {
-            // Hack: we don't need access to prev state here, just setting title
-            return prev;
-        });
         setLocalTitle(newTitle);
         updateNode(id, { title: newTitle });
     }, [id, updateNode]);

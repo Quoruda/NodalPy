@@ -33,9 +33,10 @@ const FastNode = memo(({ id, data, selected }) => {
     // Refs for debouncing and logic
     const timeoutRef = useRef(null);
     const codeRef = useRef(data.code);
+    const hasFiredRef = useRef(false);
 
     // Context for edge detection
-    const { edges, serverConfig } = useFlowContext();
+    const { edges, isConnected, serverConfig } = useFlowContext();
     const prevInputsRef = useRef([]);
 
     // --- CONNECTION STATUS LOGIC (From BaseNode) ---
@@ -121,13 +122,10 @@ const FastNode = memo(({ id, data, selected }) => {
             // CRITICAL: fromLoad check
             if (data.fromLoad) {
                 // Consume the flag so future changes ARE detected
-                // We use a small timeout to ensure we don't trigger immediate re-run issues, 
-                // but mostly just to clear the state for the user's next interaction.
+                prevInputsRef.current = incomingIds;
                 updateNode(id, { fromLoad: false });
                 return;
             }
-
-            // Debounce run
 
             // Debounce run
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -148,6 +146,22 @@ const FastNode = memo(({ id, data, selected }) => {
             }
         }
     }, [data.code]);
+
+    // 5. Run once when connected if no inputs (independent FastNode — e.g. pure matplotlib plot)
+    useEffect(() => {
+        if (!isConnected) {
+            hasFiredRef.current = false;
+            return;
+        }
+        if (!hasFiredRef.current) {
+            const incomingEdges = edges.filter(e => e.target === id);
+            if (incomingEdges.length === 0) {
+                hasFiredRef.current = true;
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                timeoutRef.current = setTimeout(() => runCode(), 200);
+            }
+        }
+    }, [isConnected, id, edges, runCode]);
 
     // Title Handler
     const handleTitleChange = useCallback((e) => {

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Handle, Position } from '@xyflow/react';
 import { useFlowContext } from '../../FlowContext.jsx';
 
@@ -8,7 +8,7 @@ import '../NodeShell.css';
 import './ObserverNode.css'
 
 const ObserverNode = memo(({ data, id, selected }) => {
-    const { edges, nodes, wsRef, setNodes } = useFlowContext();
+    const { edges, nodes, sendMessage, setNodes } = useFlowContext();
     const [variableValue, setVariableValue] = useState(data.cachedValue || null);
     const [variableType, setVariableType] = useState(data.cachedType || null);
     const [connectedSource, setConnectedSource] = useState(null);
@@ -88,15 +88,13 @@ const ObserverNode = memo(({ data, id, selected }) => {
                         // If sourceNode has fromLoad, it means we just loaded. We should trust cachedValue.
                         // Backend might be empty.
                         if (!sourceNode.data.fromLoad) {
-                            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                                setTimeout(() => {
-                                    wsRef.current.send(JSON.stringify({
-                                        action: "get_variable",
-                                        node: newConnection.nodeId,
-                                        name: newConnection.variableName
-                                    }));
-                                }, 100);
-                            }
+                            setTimeout(() => {
+                                sendMessage({
+                                    action: "get_variable",
+                                    node: newConnection.nodeId,
+                                    name: newConnection.variableName
+                                });
+                            }, 100);
                         }
                     }
                 } else {
@@ -114,29 +112,51 @@ const ObserverNode = memo(({ data, id, selected }) => {
             setVariableValue(null);
             setVariableType(null);
         }
-    }, [edges, nodes, id, prevConnection, wsRef]);
+    }, [edges, nodes, id, prevConnection]);
 
     const handleRefresh = useCallback(() => {
-        if (connectedSource && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            wsRef.current.send(JSON.stringify({
+        if (connectedSource) {
+            sendMessage({
                 action: "get_variable",
                 node: connectedSource.nodeId,
                 name: connectedSource.variableName
-            }));
+            });
         }
-    }, [connectedSource, wsRef]);
+    }, [connectedSource, sendMessage]);
 
 
 
-    // Better Auto-refresh logic:
-    // Watch specifically the source node's state
+    // Auto-refresh: triggered when the source changes state to 2 (completed)
     const sourceNodeState = nodes.find(n => connectedSource && n.id === connectedSource.nodeId)?.data?.state;
+    const prevSourceStateRef = useRef(null);
+    const prevSourceIdRef = useRef(null);
 
     useEffect(() => {
-        if (connectedSource && sourceNodeState === 2) {
-            handleRefresh();
+        if (!connectedSource) {
+            prevSourceStateRef.current = null;
+            prevSourceIdRef.current = null;
+            return;
         }
-    }, [sourceNodeState, connectedSource?.nodeId, connectedSource?.variableName]); // Only run when state changes to 2
+
+        const sourceId = connectedSource.nodeId;
+        const prevState = prevSourceStateRef.current;
+        const prevId = prevSourceIdRef.current;
+
+        // Refresh if:
+        // 1. The source just transitioned to state 2 (completed from any state)
+        // 2. Or it's a new connection and the source is already at state 2 (e.g. demo load)
+        const justFinished = sourceNodeState === 2 && (prevState !== 2 || prevId !== sourceId);
+
+        if (justFinished) {
+            const timer = setTimeout(() => handleRefresh(), 100);
+            prevSourceStateRef.current = sourceNodeState;
+            prevSourceIdRef.current = sourceId;
+            return () => clearTimeout(timer);
+        }
+
+        prevSourceStateRef.current = sourceNodeState;
+        prevSourceIdRef.current = sourceId;
+    }, [connectedSource, sourceNodeState, handleRefresh]);
 
 
     return (

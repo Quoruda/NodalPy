@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from "react-toastify";
 
-// ✅ Hook WebSocket dédié et réutilisable avec reconnexion automatique
+// Dedicated and reusable WebSocket hook with auto-reconnection
 export const useWebSocket = (url, setNodes, setServerConfig) => {
     const wsRef = useRef(null);
     const reconnectAttemptsRef = useRef(0);
@@ -22,6 +22,9 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
     // State for connection status
     const [isConnected, setIsConnected] = useState(false);
 
+    // Queue for messages sent while offline
+    const pendingMessagesRef = useRef([]);
+
     useEffect(() => {
         setNodesRef.current = setNodes;
         setServerConfigRef.current = setServerConfig;
@@ -41,35 +44,26 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
             currentWs.send(JSON.stringify(message));
             return true;
         }
-        console.warn("⚠️ Impossible d'envoyer le message : WebSocket non connecté");
+        
+        // WebSocket not connected: queue the message with deduplication
+        let updatedQueue = [...pendingMessagesRef.current];
+        if (message.action === "run_node") {
+            updatedQueue = updatedQueue.filter(msg => !(msg.action === "run_node" && msg.node === message.node));
+        } else if (message.action === "get_variable") {
+            updatedQueue = updatedQueue.filter(msg => !(msg.action === "get_variable" && msg.node === message.node && msg.name === message.name));
+        }
+        updatedQueue.push(message);
+        pendingMessagesRef.current = updatedQueue;
+        console.warn(`⚠️ WebSocket not connected. Message queued (${message.action} for node ${message.node})`);
         return false;
     }, []);
 
-    const clearNotifs = useCallback(() => {
-        // toast.dismiss(WEBSOCKET_ERROR_TOAST_ID);
-        // toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
-        // toast.dismiss(WEBSOCKET_CONNECTED_TOAST_ID);
-    }, []);
-
-    const notifySuccess = useCallback(() => {
-        // clearNotifs();
-        // toast.success("Websocket ouvert ✅", ...);
-    }, [clearNotifs]);
-
-    const notifyError = useCallback(() => {
-        // toast.dismiss(WEBSOCKET_RECONNECTING_TOAST_ID);
-        // toast.error("WebSocket fermé ❌", ...);
-    }, []);
-
     const notifyReconnecting = useCallback((attemptNumber) => {
-        console.log(`🔄 Programmation reconnexion ${reconnectAttemptsRef.current}`);
-        // toast.info(`Tentative de reconnexion ${attemptNumber}...`, ...);
+        console.log(`🔄 Reconnection scheduled: attempt ${reconnectAttemptsRef.current}`);
     }, []);
-
-    // ... (notifyExecution remains)
 
     const notifyExecution = useCallback((name, id) => {
-        toast.info(`L'exécution du noeud '${name}' est terminée`, {
+        toast.info(`Node '${name}' execution completed`, {
             toastId: id,
             position: "bottom-right",
             autoClose: 2000,
@@ -79,9 +73,6 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
             draggable: true,
         });
     }, []);
-
-    // ...
-
 
     const scheduleReconnect = useCallback(() => {
         if (reconnectTimeoutRef.current) {
@@ -108,7 +99,6 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
     }, [scheduleReconnect]);
 
     const connect = useCallback(() => {
-        // ... (close existing)
         if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
             isManualCloseRef.current = true;
             wsRef.current.close();
@@ -126,13 +116,26 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
 
             reconnectAttemptsRef.current = 0;
             setIsConnected(true);
-            // notifySuccess(); // Removed
 
-            // ... (login logic)
-            // 🔥 Send login with persistent User ID
+            // Reset any node stuck in "Running" (state 1) back to "Error" (interrupted)
+            setNodesRef.current((currentNodes) =>
+                currentNodes.map(node =>
+                    node.data?.state === 1
+                        ? { 
+                            ...node, 
+                            data: { 
+                                ...node.data, 
+                                state: 3, 
+                                error: "Interrupted by connection drop" 
+                            } 
+                          }
+                        : node
+                )
+            );
+
+            // Send login with persistent User ID
             let userId = localStorage.getItem("nodal_user_id");
             if (!userId) {
-                // Simple UUID generation if crypto.randomUUID not available (older browsers)
                 if (typeof crypto !== 'undefined' && crypto.randomUUID) {
                     userId = crypto.randomUUID();
                 } else {
@@ -145,16 +148,23 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
                 action: "login",
                 identifier: userId
             }));
+
+            // Flush pending messages
+            const pending = pendingMessagesRef.current;
+            pendingMessagesRef.current = [];
+            if (pending.length > 0) {
+                console.log(`🚀 Connection established: sending ${pending.length} pending messages.`);
+                pending.forEach(msg => {
+                    socket.send(JSON.stringify(msg));
+                });
+            }
         };
 
-        // ...
-
         socket.onclose = (event) => {
-            console.log("❌ WebSocket fermé", event.code, event.reason);
+            console.log("❌ WebSocket closed", event.code, event.reason);
             setIsConnected(false);
 
             if (!isManualCloseRef.current) {
-                // notifyError(); // Removed
                 scheduleReconnectRef.current();
             }
         };
@@ -163,8 +173,6 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
             console.error("⚠️ WS error", err);
             setIsConnected(false);
         };
-
-        // ...
 
         let messageQueue = [];
         let timeoutId = null;
@@ -179,10 +187,6 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
             setNodesRef.current((currentNodes) => {
                 let updatedNodes = [...currentNodes];
                 let hasChanges = false;
-
-                // Optimization: Map node ID to index for O(1) lookup ?? 
-                // Overhead of creating map might exceed benefit for small N
-                // Just iteration is fine for now < 100 nodes
 
                 messages.forEach(msg => {
                     if (msg.action === "run_code") {
@@ -199,9 +203,8 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
                                 if (newData.state !== 2) { newData.state = 2; changed = true; }
                                 newData.error = null;
 
-                                // Side Effect: Notifications (Non-pure, but safe-ish here)
+                                // Side Effect: Notifications
                                 if (node.type === 'custom') {
-                                    // Throttle notifications to avoid UI lag
                                     const now = Date.now();
                                     const lastTime = notificationThrottleMap.current.get(node.id) || 0;
                                     if (now - lastTime > 1000) { // Max 1 notification per second per node
@@ -232,13 +235,9 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
                                 return output;
                             });
 
-                            // Check deep equality ?? No, just assume change for variable update
                             updatedNodes[nodeIndex] = { ...node, data: { ...node.data, outputs: newOutputs } };
                             hasChanges = true;
                         }
-                    }
-                    else if (!msg.action) {
-                        // console.log("Message sans action ?", msg);
                     }
                 });
 
@@ -248,8 +247,6 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
 
         socket.onmessage = (event) => {
             const msg = JSON.parse(event.data);
-            // console.log("WS reçu:", msg); // Removed for performance in loops
-
             messageQueue.push(msg);
 
             if (timeoutId) clearTimeout(timeoutId);
@@ -263,16 +260,14 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
             }
         });
 
-    }, [url, sendMessage, notifySuccess, notifyError]);
+    }, [url, sendMessage, notifyExecution]);
 
-
-
-    // 🔥 SOLUTION : Créer connect et scheduleReconnect avec des refs pour briser la dépendance circulaire
+    // Create connect and scheduleReconnect with refs to break the circular dependency
     useEffect(() => {
         connectRef.current = connect;
     }, [connect]);
 
-    // ✅ Ce useEffect ne se déclenchera qu'une seule fois au montage
+    // This useEffect will only run once on mount
     useEffect(() => {
         connect();
 
@@ -290,8 +285,6 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
             }
         };
     }, [connect]);
-
-
 
     const disconnect = useCallback(() => {
         isManualCloseRef.current = true;
@@ -314,7 +307,7 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
     return {
         wsRef,
         sendMessage,
-        isConnected, // This is now a boolean state
+        isConnected,
         disconnect,
         reconnect
     };
