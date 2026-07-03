@@ -27,13 +27,13 @@ const NodeHeader = memo(({
                 <button
                     onClick={runCode}
                     className="execute-button nodrag"
-                    title="Exécuter"
+                    title="Execute"
                 >
                     ▶
                 </button>
             )}
             {!hideState && state === 1 && (
-                <div className="running-button nodrag" title="Attendre">
+                <div className="running-button nodrag" title="Running">
                     ⏱
                 </div>
             )}
@@ -41,7 +41,7 @@ const NodeHeader = memo(({
                 <button
                     onClick={runCode}
                     className="execute-button nodrag"
-                    title="Ré-exécuter"
+                    title="Re-execute"
                 >
                     🔄
                 </button>
@@ -49,7 +49,7 @@ const NodeHeader = memo(({
         </div>
     </div>
 ), (prevProps, nextProps) => {
-    // ✅ Comparaison fine pour éviter les re-renders inutiles
+    // Fine-grained comparison to avoid useless re-renders
     return prevProps.tempTitle === nextProps.tempTitle &&
         prevProps.state === nextProps.state &&
         prevProps.handleSave === nextProps.handleSave &&
