@@ -39,23 +39,23 @@ export const useNodeFactory = (nodes, setNodes, nodeCount, setNodeCount) => {
             newNode.data.title = 'Number ' + id;
             newNode.data.value = 0;
             newNode.data.code = "output = 0";
-            newNode.data.outputs = [{ id: 'out1', name: 'output' }];
+            newNode.data.outputs = [{ id: 'output', name: 'output' }];
         } else if (type === 'BooleanNode') {
             newNode.data.title = 'Boolean ' + id;
             newNode.data.value = false;
             newNode.data.code = "output = False";
-            newNode.data.outputs = [{ id: 'out1', name: 'output' }];
+            newNode.data.outputs = [{ id: 'output', name: 'output' }];
         } else if (type === 'StringNode') {
             newNode.data.title = 'String ' + id;
             newNode.data.value = "";
             newNode.data.code = 'output = ""';
-            newNode.data.outputs = [{ id: 'out1', name: 'output' }];
+            newNode.data.outputs = [{ id: 'output', name: 'output' }];
         } else if (type === 'FileNode') {
             newNode.data.title = 'File ' + id;
             newNode.data.fileName = null;
-            newNode.data.value = null; // Path
+            newNode.data.value = null;
             newNode.data.code = "# Upload a file to set path";
-            newNode.data.outputs = [{ id: 'out1', name: 'output' }];
+            newNode.data.outputs = [{ id: 'output', name: 'output' }];
         } else if (type === 'ObserverNode') {
             newNode.data.title = 'Observer ' + id;
             newNode.data.inputs = [{ id: 'in1', name: 'input' }];
