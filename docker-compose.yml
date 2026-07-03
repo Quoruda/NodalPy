@@ -9,12 +9,9 @@ services:
     ports:
       - "8555:8000"
     volumes:
-      # Garde les sauvegardes des mémoires (pickle) et les images générées même si le container redémarre
       - nodalpy_storage:/app/storage
     environment:
-      # Empêche Python de mettre les logs en cache (affiche immédiatement)
       - PYTHONUNBUFFERED=1
-      # Plus le serveur est distant, plus on augmente le debounce pour éviter de spammer le réseau
       - NODAL_DEBOUNCE=300
       - NODAL_BATCH_INTERVAL=50
     restart: unless-stopped
