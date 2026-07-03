@@ -16,6 +16,7 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
+    await user_manager.cleanup_orphans()
     await user_manager.start_cleanup_loop()
 
 @app.on_event("shutdown")
