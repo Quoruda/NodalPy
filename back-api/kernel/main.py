@@ -107,6 +107,7 @@ async def handle_client(reader, writer, runner):
 async def main():
     parser = argparse.ArgumentParser(description="NodalPy Isolated Execution Kernel")
     parser.add_argument("--user-id", required=True, help="User identifier")
+    parser.add_argument("--host", default="127.0.0.1", help="Host IP to bind to")
     parser.add_argument("--port", type=int, required=True, help="TCP port to listen on")
     parser.add_argument("--storage-dir", required=True, help="Path to persist user files and states")
     args = parser.parse_args()
@@ -115,7 +116,7 @@ async def main():
 
     server = await asyncio.start_server(
         lambda r, w: handle_client(r, w, runner),
-        '127.0.0.1',
+        args.host,
         args.port
     )
 

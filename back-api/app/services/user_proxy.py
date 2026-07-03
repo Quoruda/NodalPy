@@ -44,6 +44,9 @@ class UserKernelProxy:
         self.last_activity = time.time()
         self.lock = asyncio.Lock()
 
+    def can_run_code(self) -> bool:
+        return not self.lock.locked()
+
     async def start(self):
         async with self.lock:
             if self.execution_mode == "docker":
@@ -129,6 +132,8 @@ class UserKernelProxy:
                     "kernel.main",
                     "--user-id",
                     self.user_id,
+                    "--host",
+                    "0.0.0.0",
                     "--port",
                     "8000",
                     "--storage-dir",
