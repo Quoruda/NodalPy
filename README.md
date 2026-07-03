@@ -61,13 +61,8 @@ pip install -r requirements.txt
 
 ### 4. Run the Application
 
-```bash
-python3 main.py desktop
+python3 main.py
 ```
-
-Available modes:
-*   `desktop`: Launches the application in a native window (via PyWebView).
-*   `local`: Starts the backend server only (accessible via `http://127.0.0.1:8000`).
 
 ---
 
