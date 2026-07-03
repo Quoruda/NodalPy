@@ -130,8 +130,11 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
     }, [runCodeBackend, setNodes]);
 
     const addNodeToQueue = useCallback((node, timeout = null) => {
-        if (executionQueueRef.current.some(item => item.node.id === node.id)) {
-            return; // Avoid duplicates in the queue
+        const index = executionQueueRef.current.findIndex(item => item.node.id === node.id);
+        if (index !== -1) {
+            // Update the existing queue item with the latest node state/code
+            executionQueueRef.current[index] = { node, timeout };
+            return;
         }
 
         executionQueueRef.current.push({ node, timeout });
