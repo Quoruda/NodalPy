@@ -43,9 +43,7 @@ class UserKernelProxy:
                     str(self.port),
                     "--storage-dir",
                     self.storage_dir
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                ]
             )
             
             # Wait for kernel to start up and listen on port (retry connection for 3 seconds)
@@ -53,10 +51,9 @@ class UserKernelProxy:
             for _ in range(30):
                 # Check if process died early
                 if self.process.poll() is not None:
-                    stdout, stderr = self.process.communicate()
-                    print(f"❌ Kernel process died with code {self.process.returncode}. Stderr: {stderr.decode('utf-8')}", flush=True)
+                    print(f"❌ Kernel process died with code {self.process.returncode}.", flush=True)
                     self.process = None
-                    raise RuntimeError("Kernel process died immediately after spawning")
+                    raise RuntimeError(f"Kernel process died immediately with code {self.process.returncode}")
 
                 try:
                     self.reader, self.writer = await asyncio.open_connection('127.0.0.1', self.port)
