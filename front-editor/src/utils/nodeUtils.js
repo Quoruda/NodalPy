@@ -1,11 +1,11 @@
 /**
- * Construit la liste des variables à passer au backend pour l'exécution d'un nœud.
- * Fait la correspondance entre les edges, les outputs du nœud source et les inputs du nœud cible.
+ * Builds the list of variables to pass to the backend for node execution.
+ * Maps edges, source node outputs, and target node inputs.
  *
- * @param {Object} node   - Données du nœud cible (doit avoir `id` et `inputs`)
- * @param {Array}  edges  - Liste des edges du graphe
- * @param {Array}  nodes  - Liste des nœuds du graphe
- * @returns {Array} Liste de { source, name, target }
+ * @param {Object} node   - Target node data (must have `id` and `inputs`)
+ * @param {Array}  edges  - List of edges in the graph
+ * @param {Array}  nodes  - List of nodes in the graph
+ * @returns {Array} List of { source, name, target }
  */
 export const buildVariables = (node, edges, nodes) => {
     const variables = [];
