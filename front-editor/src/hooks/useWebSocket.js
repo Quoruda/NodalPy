@@ -136,15 +136,7 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
             );
 
             // Send login with persistent User ID
-            let userId = localStorage.getItem("nodal_user_id");
-            if (!userId) {
-                if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-                    userId = crypto.randomUUID();
-                } else {
-                    userId = 'user_' + Math.random().toString(36).substr(2, 9) + Date.now();
-                }
-                localStorage.setItem("nodal_user_id", userId);
-            }
+            const userId = "default_user";
 
             socket.send(JSON.stringify({
                 action: "login",

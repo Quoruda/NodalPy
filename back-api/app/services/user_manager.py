@@ -5,6 +5,7 @@ import time
 class UserManager:
     def __init__(self):
         self.users = {}
+        self.active_connections = {}
         self.cleanup_task = None
 
     def get_user(self, user_id) -> UserKernelProxy:

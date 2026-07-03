@@ -194,6 +194,17 @@ class UserWebSocket:
                 identifier = data["identifier"]
                 self.user = self.user_manager.get_user(identifier)
                 
+                # Close existing connection if any
+                old_conn = self.user_manager.active_connections.get(identifier)
+                if old_conn and old_conn is not self:
+                    print(f"⚠️ User {identifier} connected from another session. Terminating previous connection...", flush=True)
+                    try:
+                        await old_conn.websocket.close(code=1008)
+                    except Exception:
+                        pass
+                
+                self.user_manager.active_connections[identifier] = self
+
                 is_running = self.user.process is not None or self.user.container is not None
                 if not is_running:
                     await self.websocket.send_json({
@@ -248,4 +259,7 @@ class UserWebSocket:
             pass
         except Exception as e:
             await self.websocket.close()
+        finally:
+            if self.user and self.user_manager.active_connections.get(self.user.user_id) is self:
+                del self.user_manager.active_connections[self.user.user_id]
 
