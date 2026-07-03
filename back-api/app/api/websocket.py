@@ -2,7 +2,7 @@ import asyncio
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from ..services.user_manager import UserManager
-from ..core.config import EXECUTION_DEBOUNCE, WS_BATCH_INTERVAL
+from ..core.config import EXECUTION_DEBOUNCE, WS_BATCH_INTERVAL, FAST_NODE_TIMEOUT, MANUAL_NODE_TIMEOUT
 import time
 
 
@@ -36,7 +36,12 @@ class UserWebSocket:
             await self.websocket.send_json({"error": "missing arguments for run_code"})
             return
 
-        timeout = data.get("timeout", None)
+        node_type = data.get("node_type", "CustomNode")
+        if node_type == "FastNode":
+            timeout = FAST_NODE_TIMEOUT
+        else:
+            timeout = MANUAL_NODE_TIMEOUT if MANUAL_NODE_TIMEOUT > 0 else None
+
         inputs = data.get("inputs", [])
         node_id = data["node"]
 
@@ -150,7 +155,9 @@ class UserWebSocket:
                 "status": "success",
                 "config": {
                     "debounce": EXECUTION_DEBOUNCE,
-                    "batch_interval": WS_BATCH_INTERVAL
+                    "batch_interval": WS_BATCH_INTERVAL,
+                    "fast_timeout": FAST_NODE_TIMEOUT,
+                    "manual_timeout": MANUAL_NODE_TIMEOUT
                 }
             })
             while True:

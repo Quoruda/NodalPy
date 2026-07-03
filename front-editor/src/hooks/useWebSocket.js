@@ -183,12 +183,23 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
             const messages = [...messageQueue];
             messageQueue = [];
 
+            // Process login config updates outside setNodes to avoid nested state update warnings
+            messages.forEach(msg => {
+                if (msg.action === "login" && msg.status === "success" && msg.config) {
+                    setServerConfigRef.current(msg.config);
+                }
+            });
+
+            // Filter messages for node updates
+            const nodeMessages = messages.filter(msg => msg.action === "run_code" || msg.action === "get_variable");
+            if (nodeMessages.length === 0) return;
+
             // Batch update state once
             setNodesRef.current((currentNodes) => {
                 let updatedNodes = [...currentNodes];
                 let hasChanges = false;
 
-                messages.forEach(msg => {
+                nodeMessages.forEach(msg => {
                     if (msg.action === "run_code") {
                         const nodeIndex = updatedNodes.findIndex(n => n.id === msg.node);
                         if (nodeIndex !== -1) {

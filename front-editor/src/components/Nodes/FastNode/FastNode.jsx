@@ -15,7 +15,7 @@ const FastNode = memo(({ id, data, selected }) => {
     // Reuse useCodeNode for backend communication logic
     // We pass autoTrigger: true so useCodeNode knows it should trigger downstream
     // We pass data.inputs/outputs to useCodeNode so it manages them
-    const nodeState = useCodeNode({ ...data, id }, { timeout: 1.0, autoTrigger: true });
+    const nodeState = useCodeNode({ ...data, id }, { autoTrigger: true });
 
     // Destructure all needed props from nodeState
     const {

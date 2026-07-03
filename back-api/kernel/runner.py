@@ -1,7 +1,7 @@
 import copy
 import os
 import cloudpickle as pickle
-from .execution import prepare_contexts, run_code_in_thread
+from .execution import run_code_in_process
 from .converter import convert_value
 
 class KernelRunner:
@@ -71,33 +71,30 @@ class KernelRunner:
                 if input_name not in new_context:
                     new_context[input_name] = None
 
-        exec_globals, local_scope = prepare_contexts(new_context)
-        
         # Ensure user storage directory exists
         os.makedirs(self.storage_dir, exist_ok=True)
-        
-        exec_globals['STORAGE_DIR'] = self.storage_dir
-        exec_globals['os'] = os
         
         self.is_running_code = True
         
         status = "finished"
         output = ""
         error_msg = ""
+        local_scope = {}
         
         try:
-            run_code_in_thread(code, exec_globals, local_scope, timeout, cwd=self.storage_dir)
-        except TimeoutError:
-             status = "timeout"
-             error_msg = f"Execution timed out ({timeout}s)"
+            result = run_code_in_process(code, new_context, timeout, cwd=self.storage_dir)
+            status = result["status"]
+            output = result.get("stdout", "")
+            error_msg = result.get("error", "")
+            local_scope = result.get("local_scope", {})
+        except TimeoutError as e:
+            status = "timeout"
+            error_msg = str(e)
         except Exception as e:
-             status = "error"
-             error_msg = str(e)
+            status = "error"
+            error_msg = str(e)
             
         self.is_running_code = False
         self._save_node_state(node, local_scope)
-        
-        if "__stdout__" in local_scope:
-            output = local_scope["__stdout__"].getvalue()
             
         return status, output, error_msg

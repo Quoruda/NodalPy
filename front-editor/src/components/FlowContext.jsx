@@ -10,7 +10,7 @@ const FlowContext = createContext({
     wsRef: { current: null },
     sendMessage: () => { },
     isConnected: false,
-    serverConfig: { debounce: 50, batch_interval: 0 }, // Defaults
+    serverConfig: { debounce: 50, batch_interval: 0, fast_timeout: 1.0, manual_timeout: 0.0 }, // Defaults
     setServerConfig: () => { },
     addNodeToQueue: () => { },
     triggerDownstreamNodes: () => { },
@@ -46,7 +46,6 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
     const executionQueueRef = useRef([]);
     const isExecutingRef = useRef(false);
     const activeNodeRef = useRef(null);
-    const watchdogRef = useRef(null);
 
     const updateNode = useCallback((nodeId, updates) => {
         setNodes((nds) =>
@@ -66,6 +65,8 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
 
     const runCodeBackend = useCallback((node, timeout = null) => {
         const variables = buildVariables(node, edgesRef.current, nodesRef.current);
+        const fullNode = nodesRef.current.find(n => n.id === node.id);
+        const nodeType = fullNode ? fullNode.type : 'CustomNode';
 
         sendMessage({
             action: "run_node",
@@ -73,6 +74,7 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
             variables,
             inputs: (node.inputs || []).map(i => i.name),
             node: node.id,
+            node_type: nodeType,
             timeout,
         });
 
@@ -89,45 +91,18 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
 
         isExecutingRef.current = true;
 
-        // Clean up the old watchdog if it exists
-        if (watchdogRef.current) {
-            clearTimeout(watchdogRef.current);
-            watchdogRef.current = null;
-        }
-
         try {
             const { node, timeout } = executionQueueRef.current.shift();
             activeNodeRef.current = node.id;
 
-            // Arm a safety watchdog (10 seconds) to avoid queue deadlocks
-            watchdogRef.current = setTimeout(() => {
-                console.warn(`[Watchdog] Node ${node.id} timed out on the client. Unblocking the queue.`);
-                
-                // Set node to error state to warn the user
-                setNodes((nds) =>
-                    nds.map((n) =>
-                        n.id === node.id ? { ...n, data: { ...n.data, state: 3, error: "Execution timeout (Client Watchdog)" } } : n
-                    )
-                );
-
-                isExecutingRef.current = false;
-                activeNodeRef.current = null;
-                watchdogRef.current = null;
-                processQueue();
-            }, 10000);
-
             runCodeBackend(node, timeout);
         } catch (error) {
             console.error("Queue execution error:", error);
-            if (watchdogRef.current) {
-                clearTimeout(watchdogRef.current);
-                watchdogRef.current = null;
-            }
             isExecutingRef.current = false;
             activeNodeRef.current = null;
             setTimeout(() => processQueue(), 0);
         }
-    }, [runCodeBackend, setNodes]);
+    }, [runCodeBackend]);
 
     const addNodeToQueue = useCallback((node, timeout = null) => {
         const index = executionQueueRef.current.findIndex(item => item.node.id === node.id);
@@ -175,10 +150,6 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
         const activeNode = nodes.find(n => n.id === activeNodeRef.current);
         if (!activeNode) {
             // The active node was deleted or no longer exists! Unblock the queue.
-            if (watchdogRef.current) {
-                clearTimeout(watchdogRef.current);
-                watchdogRef.current = null;
-            }
             isExecutingRef.current = false;
             activeNodeRef.current = null;
             processQueue();
@@ -192,28 +163,25 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
                 triggerDownstreamNodes(activeNode.id);
             }
 
-            if (watchdogRef.current) {
-                clearTimeout(watchdogRef.current);
-                watchdogRef.current = null;
-            }
             isExecutingRef.current = false;
             activeNodeRef.current = null;
             processQueue();
         }
     }, [nodes, processQueue, triggerDownstreamNodes]);
 
-    // Empty the queue on disconnect and clean up the watchdog
+    // Empty the queue on disconnect and cancel active nodes
     useEffect(() => {
         if (!isConnected) {
-            if (watchdogRef.current) {
-                clearTimeout(watchdogRef.current);
-                watchdogRef.current = null;
-            }
             executionQueueRef.current = [];
             isExecutingRef.current = false;
             activeNodeRef.current = null;
+            setNodes((nds) =>
+                nds.map((n) =>
+                    n.data.state === 1 ? { ...n, data: { ...n.data, state: 3, error: "Disconnected from server" } } : n
+                )
+            );
         }
-    }, [isConnected]);
+    }, [isConnected, setNodes]);
 
     return (
         <FlowContext.Provider value={{
