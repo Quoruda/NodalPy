@@ -44,9 +44,13 @@ function Flow() {
     const { screenToFlowPosition } = useReactFlow();
 
     // === Custom Hooks ===
-    const { isLoaded, saveProjectToIDB, saveProjectToFile, loadProjectFromFile } = useProjectPersistence(nodes, edges, setNodes, setEdges, setNodeCount);
+    const { isLoaded, saveProjectToIDB, saveProjectToFile, loadProjectFromFile, loadProjectFromJson } = useProjectPersistence(nodes, edges, setNodes, setEdges, setNodeCount);
     const { addNode } = useNodeFactory(nodes, setNodes, nodeCount, setNodeCount);
-    const { wsRef, isConnected } = useWebSocket("ws://127.0.0.1:8000/ws", setNodes, setServerConfig);
+
+    // WebSocket URL from Environment Variables (.env in dev, docker-compose build args in prod)
+    const wsUrl = import.meta.env.VITE_WS_URL || "ws://127.0.0.1:8000/ws";
+
+    const { wsRef, isConnected, sendMessage } = useWebSocket(wsUrl, setNodes, setServerConfig);
 
     // === Event Handlers ===
     const onConnectEdge = useCallback(
@@ -136,9 +140,9 @@ function Flow() {
     }
 
     return (
-        <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef} serverConfig={serverConfig} setServerConfig={setServerConfig}>
+        <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef} sendMessage={sendMessage} isConnected={isConnected} serverConfig={serverConfig} setServerConfig={setServerConfig}>
             <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
-                <Sidebar onSave={saveProjectToFile} onLoad={handleImportClick} isConnected={isConnected} />
+                <Sidebar onSave={saveProjectToFile} onLoad={handleImportClick} onLoadDemo={loadProjectFromJson} isConnected={isConnected} />
                 <div style={{ flex: 1, height: '100vh', position: 'relative' }} onDrop={onDrop} onDragOver={onDragOver}>
 
                     {/* Hidden Input for File Loading */}

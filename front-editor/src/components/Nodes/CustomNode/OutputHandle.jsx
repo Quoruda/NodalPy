@@ -89,7 +89,8 @@ const OutputHandle = memo(({ output, id, index, isEditing, updateOutput, removeO
         </div>
     );
 }, (prevProps, nextProps) => {
-    return prevProps.output === nextProps.output &&
+    return prevProps.id === nextProps.id &&
+        prevProps.output === nextProps.output &&
         prevProps.index === nextProps.index &&
         prevProps.isEditing === nextProps.isEditing &&
         prevProps.updateOutput === nextProps.updateOutput;

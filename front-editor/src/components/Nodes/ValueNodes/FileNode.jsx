@@ -1,6 +1,7 @@
 import React, { memo, useState, useEffect, useCallback, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../useCodeNode.js';
+import { useFlowContext } from '../../FlowContext.jsx';
 import '../NodeShell.css';
 import './FileNode.css';
 
@@ -8,6 +9,7 @@ const FileNode = memo(({ id, data, selected }) => {
     // Reuse useCodeNode for backend communication logic
     const nodeState = useCodeNode({ ...data, id }, { timeout: 0.5, autoTrigger: true });
     const { runCode, updateNode } = nodeState;
+    const { isConnected } = useFlowContext();
 
     // Local state
     const [localTitle, setLocalTitle] = useState(data.title || 'Import File');
@@ -23,6 +25,14 @@ const FileNode = memo(({ id, data, selected }) => {
         if (data.fileName) setFileName(data.fileName);
         if (data.fileSize) setFileSize(data.fileSize);
     }, [data.fileName, data.fileSize]);
+
+    // Auto-run on mount or when WebSocket connects if code exists
+    useEffect(() => {
+        if (isConnected && data.code) {
+            const timer = setTimeout(() => runCode({ code: data.code }), 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isConnected, runCode, data.code]);
 
     // Handle Title Change
     const handleTitleChange = useCallback((e) => {

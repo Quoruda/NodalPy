@@ -89,7 +89,8 @@ const InputHandle = memo(({ input, id, index, isEditing, updateInput, isConnecta
         </div>
     );
 }, (prevProps, nextProps) => {
-    return prevProps.input === nextProps.input &&
+    return prevProps.id === nextProps.id &&
+        prevProps.input === nextProps.input &&
         prevProps.index === nextProps.index &&
         prevProps.isEditing === nextProps.isEditing &&
         prevProps.isConnectable === nextProps.isConnectable &&

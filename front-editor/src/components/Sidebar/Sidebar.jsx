@@ -1,8 +1,9 @@
 import React from 'react';
 import { availableNodes } from '../Nodes/nodeConfig';
+import { demos } from '../../utils/demos';
 import './Sidebar.css';
 
-const Sidebar = ({ onSave, onLoad, isConnected }) => {
+const Sidebar = ({ onSave, onLoad, onLoadDemo, isConnected }) => {
     const [isFileOpen, setIsFileOpen] = React.useState(false);
 
     const onDragStart = (event, nodeType) => {
@@ -28,6 +29,18 @@ const Sidebar = ({ onSave, onLoad, isConnected }) => {
                             <button onClick={() => { onLoad(); setIsFileOpen(false); }}>
                                 Open Project
                             </button>
+                            <div className="submenu-container">
+                                <button className="submenu-trigger">
+                                    Demos & Examples ▶
+                                </button>
+                                <div className="floating-submenu">
+                                    {Object.keys(demos).map(demoName => (
+                                        <button key={demoName} onClick={() => { onLoadDemo(demos[demoName]); setIsFileOpen(false); }}>
+                                            {demoName}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

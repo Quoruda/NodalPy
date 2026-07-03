@@ -5,3 +5,5 @@ pywebview[Qt]
 matplotlib
 pandas
 numpy
+cloudpickle
+python-multipart
