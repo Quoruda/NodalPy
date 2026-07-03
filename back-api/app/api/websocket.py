@@ -205,7 +205,7 @@ class UserWebSocket:
                 
                 self.user_manager.active_connections[identifier] = self
 
-                is_running = self.user.process is not None or self.user.container is not None
+                is_running = self.user.container is not None
                 if not is_running:
                     await self.websocket.send_json({
                         "action": "login",

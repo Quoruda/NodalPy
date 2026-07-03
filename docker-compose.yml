@@ -16,7 +16,6 @@ services:
       - PYTHONUNBUFFERED=1
       - NODAL_DEBOUNCE=300
       - NODAL_BATCH_INTERVAL=50
-      - NODAL_EXECUTION_MODE=docker
       - NODAL_DOCKER_NETWORK=nodalpy_network
       - NODAL_KERNEL_IMAGE=nodalpy_server:latest
       - NODAL_FAST_TIMEOUT=1.0

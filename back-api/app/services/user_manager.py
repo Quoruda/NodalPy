@@ -22,8 +22,8 @@ class UserManager:
                 await asyncio.sleep(60)  # Check every minute
                 now = time.time()
                 for user_id, proxy in list(self.users.items()):
-                    # Check if the kernel is running (either locally or in Docker)
-                    is_running = proxy.process is not None or proxy.container is not None
+                    # Check if the kernel container is running
+                    is_running = proxy.container is not None
                     if is_running and (now - proxy.last_activity) > 600:
                         print(f"⏰ Idle timeout (10m) for user {user_id}. Stopping kernel.", flush=True)
                         await proxy.stop()
@@ -33,20 +33,19 @@ class UserManager:
     async def cleanup_orphans(self):
         def do_cleanup():
             import os
-            if os.getenv("NODAL_EXECUTION_MODE") == "docker":
-                try:
-                    import docker
-                    client = docker.from_env()
-                    containers = client.containers.list(all=True)
-                    for container in containers:
-                        if container.name.startswith("nodalpy_kernel_"):
-                            print(f"🧹 Found orphaned kernel container '{container.name}'. Stopping & removing...", flush=True)
-                            try:
-                                container.stop(timeout=2)
-                                container.remove()
-                            except Exception:
-                                pass
-                except Exception as e:
+            try:
+                import docker
+                client = docker.from_env()
+                containers = client.containers.list(all=True)
+                for container in containers:
+                    if container.name.startswith("nodalpy_kernel_"):
+                        print(f"🧹 Found orphaned kernel container '{container.name}'. Stopping & removing...", flush=True)
+                        try:
+                            container.stop(timeout=2)
+                            container.remove()
+                        except Exception:
+                            pass
+            except Exception as e:
                     print(f"⚠️ Docker connection error during startup cleanup: {e}", flush=True)
         
         await asyncio.to_thread(do_cleanup)

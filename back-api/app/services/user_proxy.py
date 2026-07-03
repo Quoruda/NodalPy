@@ -1,36 +1,19 @@
-import subprocess
-import sys
 import os
 import asyncio
-import socket
 import time
 import json
+import docker
 from ..core.config import STORAGE_DIR
-
-try:
-    import docker
-except ImportError:
-    docker = None
-
-def find_free_port():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('127.0.0.1', 0))
-        return s.getsockname()[1]
 
 class UserKernelProxy:
     def __init__(self, user_id: str):
         self.user_id = user_id
-        self.execution_mode = os.getenv("NODAL_EXECUTION_MODE", "local")
         
         # Paths
         self.local_storage_dir = os.path.join(STORAGE_DIR, user_id)
         self.projects_dir = os.path.join(self.local_storage_dir, "projects")
         self.files_dir = os.path.join(self.local_storage_dir, "files")
         self.nodes_dir = os.path.join(self.local_storage_dir, "nodes")
-        
-        # Local execution properties
-        self.process = None
-        self.port = None
         
         # Docker execution properties
         self.container_name = f"nodalpy_kernel_{user_id}"
@@ -55,59 +38,11 @@ class UserKernelProxy:
             os.makedirs(self.projects_dir, exist_ok=True)
             os.makedirs(self.files_dir, exist_ok=True)
             os.makedirs(self.nodes_dir, exist_ok=True)
-            if self.execution_mode == "docker":
-                await self._start_docker()
-            else:
-                await self._start_local()
-
-    async def _start_local(self):
-        if self.process is not None:
-            return
-
-        self.port = find_free_port()
-        print(f"🔧 Spawning local kernel process for user {self.user_id} on port {self.port}...", flush=True)
-        
-        self.process = subprocess.Popen(
-            [
-                sys.executable,
-                "-m",
-                "kernel.main",
-                "--user-id",
-                self.user_id,
-                "--port",
-                str(self.port),
-                "--storage-dir",
-                self.files_dir
-            ]
-        )
-        
-        connected = False
-        for _ in range(30):
-            if self.process.poll() is not None:
-                print(f"❌ Local kernel process died with code {self.process.returncode}.", flush=True)
-                self.process = None
-                raise RuntimeError(f"Local kernel process died immediately with code {self.process.returncode}")
-
-            try:
-                self.reader, self.writer = await asyncio.open_connection('127.0.0.1', self.port)
-                connected = True
-                break
-            except ConnectionRefusedError:
-                await asyncio.sleep(0.1)
-        
-        if not connected:
-            self.process.terminate()
-            self.process = None
-            raise RuntimeError("Failed to connect to spawned local user kernel process")
-            
-        print(f"✅ Connected to local user kernel {self.user_id}", flush=True)
+            await self._start_docker()
 
     async def _start_docker(self):
         if self.container is not None:
             return
-
-        if docker is None:
-            raise RuntimeError("Python 'docker' package is not installed. Cannot use docker execution mode.")
 
         print(f"🐳 Spawning kernel container '{self.container_name}' using image '{self.image_name}'...", flush=True)
         
@@ -193,33 +128,7 @@ class UserKernelProxy:
 
     async def stop(self):
         async with self.lock:
-            if self.execution_mode == "docker":
-                await self._stop_docker()
-            else:
-                await self._stop_local()
-
-    async def _stop_local(self):
-        if self.process is None:
-            return
-        
-        print(f"🛑 Stopping local user kernel {self.user_id}...", flush=True)
-        try:
-            if self.writer:
-                self.writer.write(json.dumps({"action": "shutdown"}).encode('utf-8') + b"\n")
-                await self.writer.drain()
-        except Exception:
-            pass
-        
-        self.process.terminate()
-        try:
-            self.process.wait(timeout=2)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
-            
-        self.process = None
-        self.reader = None
-        self.writer = None
-        print(f"Local user kernel {self.user_id} stopped.", flush=True)
+            await self._stop_docker()
 
     async def _stop_docker(self):
         if self.container is None:
@@ -246,8 +155,7 @@ class UserKernelProxy:
     async def send_request(self, request: dict) -> dict:
         self.last_activity = time.time()
         
-        if (self.execution_mode == "docker" and self.container is None) or \
-           (self.execution_mode != "docker" and self.process is None):
+        if self.container is None:
             await self.start()
             
         async with self.lock:
@@ -263,22 +171,10 @@ class UserKernelProxy:
                 return json.loads(response_bytes.decode('utf-8'))
             except Exception as e:
                 print(f"⚠️ Kernel communication error for user {self.user_id}: {e}. Restarting...", flush=True)
-                await self._stop_internal()
-                await self._start_internal()
+                await self._stop_docker()
+                await self._start_docker()
                 payload = json.dumps(request) + "\n"
                 self.writer.write(payload.encode('utf-8'))
                 await self.writer.drain()
                 response_bytes = await self.reader.readline()
                 return json.loads(response_bytes.decode('utf-8'))
-
-    async def _stop_internal(self):
-        if self.execution_mode == "docker":
-            await self._stop_docker()
-        else:
-            await self._stop_local()
-
-    async def _start_internal(self):
-        if self.execution_mode == "docker":
-            await self._start_docker()
-        else:
-            await self._start_local()
