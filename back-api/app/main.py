@@ -14,6 +14,14 @@ user_manager = UserManager()
 
 app = FastAPI()
 
+@app.on_event("startup")
+async def startup_event():
+    await user_manager.start_cleanup_loop()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await user_manager.stop_all_kernels()
+
 app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
 
 # Ajoute ce middleware CORS

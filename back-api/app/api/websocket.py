@@ -1,5 +1,4 @@
 import asyncio
-from ..utils.converter import convert_value
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from ..services.user_manager import UserManager
@@ -80,20 +79,20 @@ class UserWebSocket:
         await self.websocket.send_json({"action": "run_code", "status": "running", "node": data["node"]})
         
         try:
-            status, output, error = await asyncio.to_thread(
-                self.user.run_node,
-                data["node"],
-                data["code"],
-                data["variables"],
-                timeout,
-                inputs
-            )
+            response = await self.user.send_request({
+                "action": "run_node",
+                "node": data["node"],
+                "code": data["code"],
+                "variables": data["variables"],
+                "timeout": timeout,
+                "inputs": inputs
+            })
             await self.websocket.send_json({
                 "action": "run_code", 
-                "status": status, 
+                "status": response.get("status"), 
                 "node": data["node"],
-                "output": output,
-                "error": error
+                "output": response.get("output", ""),
+                "error": response.get("error", "")
             })
         except Exception as e:
             await self.websocket.send_json({
@@ -108,15 +107,17 @@ class UserWebSocket:
             if not verif_args(data, ["node", "name"]):
                 await self.websocket.send_json({"error": "missing arguments for get_variable"})
                 return
-            value = self.user.get_variable(data["node"], data["name"])
-            convertion = convert_value(value)
-            # print(convertion) # Removed verbose print
+            response = await self.user.send_request({
+                "action": "get_variable",
+                "node": data["node"],
+                "name": data["name"]
+            })
             await self.websocket.send_json({
                 "action": "get_variable",
                 "node": data["node"],
                 "name": data["name"],
-                "value": convertion["value"],
-                "type": convertion["type"]
+                "value": response.get("value"),
+                "type": response.get("type")
             })
         except Exception as e:
             print(f"Error in ws_get_variable: {e}")
@@ -133,6 +134,13 @@ class UserWebSocket:
             if data["action"] == "login":
                 identifier = data["identifier"]
                 self.user = self.user_manager.get_user(identifier)
+                try:
+                    await self.user.start()
+                except Exception as e:
+                    print(f"❌ Failed to start kernel for user {identifier}: {e}", flush=True)
+                    await self.websocket.send_json({"error": f"Failed to initialize Python environment: {str(e)}"})
+                    await self.websocket.close()
+                    return
             if self.user is None:
                 await self.websocket.close()
                 print("❌ WebSocket error: no user")

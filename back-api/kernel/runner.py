@@ -1,17 +1,17 @@
 import copy
 import os
 import cloudpickle as pickle
-import types
-from .execution import *
-from ..core.config import STORAGE_DIR
+from .execution import prepare_contexts, run_code_in_thread
+from .converter import convert_value
 
-class UserData:
-    def __init__(self, identifier: str):
-        self.userId = identifier
+class KernelRunner:
+    def __init__(self, user_id: str, storage_dir: str):
+        self.user_id = user_id
+        self.storage_dir = storage_dir
         self.is_running_code = False
 
     def _get_state_dir(self):
-        state_dir = os.path.join(STORAGE_DIR, self.userId, ".states")
+        state_dir = os.path.join(self.storage_dir, ".states")
         os.makedirs(state_dir, exist_ok=True)
         return state_dir
 
@@ -25,17 +25,17 @@ class UserData:
                 continue
             
             try:
-                # Test pickleability to avoid crashing the whole dump
+                # Test pickleability
                 pickle.dumps(value)
                 clean_scope[key] = value
             except Exception as e:
-                print(f"Warning: Could not pickle variable '{key}': {e}")
+                print(f"Warning: Could not pickle variable '{key}': {e}", flush=True)
                 
         try:
             with open(state_file, 'wb') as f:
                 pickle.dump(clean_scope, f)
         except Exception as e:
-            print(f"Error saving state for node {node_id}: {e}")
+            print(f"Error saving state for node {node_id}: {e}", flush=True)
 
     def _load_node_state(self, node_id: str) -> dict:
         state_dir = self._get_state_dir()
@@ -46,18 +46,16 @@ class UserData:
                 with open(state_file, 'rb') as f:
                     return pickle.load(f)
             except Exception as e:
-                print(f"Error loading state for node {node_id}: {e}")
+                print(f"Error loading state for node {node_id}: {e}", flush=True)
         return {}
-
-    def can_run_code(self):
-        return not self.is_running_code
 
     def get_variable(self, node: str, name: str):
         node_context = self._load_node_state(node)
-        return node_context.get(name, None)
+        value = node_context.get(name, None)
+        return convert_value(value)
 
-    def run_node(self, node: str, code: str, variables: list[dict], timeout: float = None, inputs: list[str] = None) -> tuple[str, str]:
-        if not self.can_run_code():
+    def run_node(self, node: str, code: str, variables: list[dict], timeout: float = None, inputs: list[str] = None) -> tuple[str, str, str]:
+        if self.is_running_code:
             raise RuntimeError("Code is already running")
 
         new_context = {}
@@ -73,18 +71,13 @@ class UserData:
                 if input_name not in new_context:
                     new_context[input_name] = None
 
-
         exec_globals, local_scope = prepare_contexts(new_context)
         
-        # Inject STORAGE_DIR and 'os' for portability
-        # Use absolute path for robustness. 
+        # Ensure user storage directory exists
+        os.makedirs(self.storage_dir, exist_ok=True)
         
-        # Ensure directory exists (execution safety)
-        user_storage_dir = os.path.join(STORAGE_DIR, self.userId)
-        os.makedirs(user_storage_dir, exist_ok=True)
-        
-        exec_globals['STORAGE_DIR'] = user_storage_dir
-        exec_globals['os'] = os # Expose os module directly
+        exec_globals['STORAGE_DIR'] = self.storage_dir
+        exec_globals['os'] = os
         
         self.is_running_code = True
         
@@ -93,24 +86,18 @@ class UserData:
         error_msg = ""
         
         try:
-            # Pass storage_dir as cwd to allow relative path access (e.g. open("file.txt"))
-            run_code_in_thread(code, exec_globals, local_scope, timeout, cwd=user_storage_dir)
+            run_code_in_thread(code, exec_globals, local_scope, timeout, cwd=self.storage_dir)
         except TimeoutError:
              status = "timeout"
              error_msg = f"Execution timed out ({timeout}s)"
-             print(error_msg)
         except Exception as e:
-            status = "error"
-            error_msg = str(e)
-            print(e)
+             status = "error"
+             error_msg = str(e)
             
         self.is_running_code = False
-        
         self._save_node_state(node, local_scope)
         
         if "__stdout__" in local_scope:
             output = local_scope["__stdout__"].getvalue()
             
         return status, output, error_msg
-
-
