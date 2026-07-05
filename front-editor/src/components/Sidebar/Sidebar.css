@@ -94,6 +94,13 @@
     color: white;
 }
 
+.floating-menu button.active {
+    background: rgba(108, 92, 231, 0.3);
+    border-left: 3px solid #6c5ce7;
+    color: white;
+    font-weight: 600;
+}
+
 /* Nodes Header */
 .sidebar-header {
     padding: 15px 10px 5px;

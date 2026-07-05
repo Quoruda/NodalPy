@@ -4,6 +4,7 @@ import json
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from ..services.user_manager import UserManager
+from ..services import filesystem as fs
 from ..core.config import EXECUTION_DEBOUNCE, WS_BATCH_INTERVAL, FAST_NODE_TIMEOUT, MANUAL_NODE_TIMEOUT
 import time
 
@@ -187,6 +188,54 @@ class UserWebSocket:
                 "error": str(e)
             })
 
+    async def ws_fs_list(self):
+        result = await fs.fs_list(self.user.files_dir)
+        await self.websocket.send_json(result)
+
+    async def ws_fs_read(self, data: dict):
+        if not verif_args(data, ["path"]):
+            await self.websocket.send_json({"action": "fs_read", "status": "error", "error": "missing path"})
+            return
+        result = await fs.fs_read(self.user.files_dir, data["path"])
+        await self.websocket.send_json(result)
+
+    async def ws_fs_write(self, data: dict):
+        if not verif_args(data, ["path", "content"]):
+            await self.websocket.send_json({"action": "fs_write", "status": "error", "error": "missing path or content"})
+            return
+        result = await fs.fs_write(self.user.files_dir, data["path"], data["content"], data.get("encoding", "utf-8"))
+        await self.websocket.send_json(result)
+        # Notify client to refresh file tree
+        tree_result = await fs.fs_list(self.user.files_dir)
+        await self.websocket.send_json(tree_result)
+
+    async def ws_fs_delete(self, data: dict):
+        if not verif_args(data, ["path"]):
+            await self.websocket.send_json({"action": "fs_delete", "status": "error", "error": "missing path"})
+            return
+        result = await fs.fs_delete(self.user.files_dir, data["path"])
+        await self.websocket.send_json(result)
+        tree_result = await fs.fs_list(self.user.files_dir)
+        await self.websocket.send_json(tree_result)
+
+    async def ws_fs_mkdir(self, data: dict):
+        if not verif_args(data, ["path"]):
+            await self.websocket.send_json({"action": "fs_mkdir", "status": "error", "error": "missing path"})
+            return
+        result = await fs.fs_mkdir(self.user.files_dir, data["path"])
+        await self.websocket.send_json(result)
+        tree_result = await fs.fs_list(self.user.files_dir)
+        await self.websocket.send_json(tree_result)
+
+    async def ws_fs_rename(self, data: dict):
+        if not verif_args(data, ["old_path", "new_path"]):
+            await self.websocket.send_json({"action": "fs_rename", "status": "error", "error": "missing old_path or new_path"})
+            return
+        result = await fs.fs_rename(self.user.files_dir, data["old_path"], data["new_path"])
+        await self.websocket.send_json(result)
+        tree_result = await fs.fs_list(self.user.files_dir)
+        await self.websocket.send_json(tree_result)
+
     async def loop(self):
         try:
             data = await asyncio.wait_for(self.websocket.receive_json(), timeout=30.0)
@@ -254,6 +303,24 @@ class UserWebSocket:
                     continue
                 if data["action"] == "load_project":
                     await self.ws_load_project()
+                    continue
+                if data["action"] == "fs_list":
+                    await self.ws_fs_list()
+                    continue
+                if data["action"] == "fs_read":
+                    await self.ws_fs_read(data)
+                    continue
+                if data["action"] == "fs_write":
+                    await self.ws_fs_write(data)
+                    continue
+                if data["action"] == "fs_delete":
+                    await self.ws_fs_delete(data)
+                    continue
+                if data["action"] == "fs_mkdir":
+                    await self.ws_fs_mkdir(data)
+                    continue
+                if data["action"] == "fs_rename":
+                    await self.ws_fs_rename(data)
                     continue
         except WebSocketDisconnect:
             pass

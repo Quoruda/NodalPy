@@ -35,6 +35,7 @@ function Flow() {
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
     const [serverConfig, setServerConfig] = useState({ debounce: 50, batch_interval: 0 });
+    const [sidebarView, setSidebarView] = useState('nodes');
 
     const { screenToFlowPosition } = useReactFlow();
 
@@ -101,7 +102,13 @@ function Flow() {
     return (
         <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef} sendMessage={sendMessage} isConnected={isConnected} serverConfig={serverConfig} setServerConfig={setServerConfig}>
             <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
-                <Sidebar onLoadDemo={loadProject} isConnected={isConnected} />
+                <Sidebar
+                    onLoadDemo={loadProject}
+                    isConnected={isConnected}
+                    sendMessage={sendMessage}
+                    sidebarView={sidebarView}
+                    setSidebarView={setSidebarView}
+                />
                 <div style={{ flex: 1, height: '100vh', position: 'relative' }} onDrop={onDrop} onDragOver={onDragOver}>
                     <ReactFlow
                         nodes={nodes}

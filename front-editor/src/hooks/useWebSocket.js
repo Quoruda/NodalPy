@@ -213,6 +213,12 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
                     } else if (msg.status === "error") {
                         toast.error(`Failed to save project: ${msg.error}`);
                     }
+                } else if (msg.action === "fs_list") {
+                    if (msg.status === "success") {
+                        window.dispatchEvent(new CustomEvent('fs_tree_update', { detail: msg.tree }));
+                    }
+                } else if (msg.action === "fs_read") {
+                    window.dispatchEvent(new CustomEvent('fs_read_result', { detail: msg }));
                 }
             });
 
