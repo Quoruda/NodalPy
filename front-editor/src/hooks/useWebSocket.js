@@ -177,8 +177,8 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
             const messages = [...messageQueue];
             messageQueue = [];
 
-            // Process login and project config updates outside setNodes to avoid nested state update warnings
             messages.forEach(msg => {
+                window.dispatchEvent(new CustomEvent(`ws_${msg.action}`, { detail: msg }));
                 if (msg.action === "login") {
                     if (msg.status === "preparing") {
                         toast.loading(msg.message || "Initializing Python environment...", {

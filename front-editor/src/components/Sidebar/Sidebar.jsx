@@ -1,8 +1,33 @@
 import React from 'react';
 import { availableNodes } from '../Nodes/nodeConfig';
 import { demos } from '../../utils/demos';
-import FileTree from '../FileTree/FileTree.jsx';
+import { uiRegistry } from '../../core/uiRegistry';
 import './Sidebar.css';
+
+const NodePalette = ({ onDragStart }) => (
+    <>
+        {availableNodes.map((node) => (
+            <div
+                key={node.type}
+                className="sidebar-node"
+                onDragStart={(event) => onDragStart(event, node.type)}
+                draggable
+                style={{
+                    '--node-color': `var(${node.colorVar})`
+                }}
+            >
+                {node.icon && <span className="sidebar-node-icon">{node.icon}</span>}
+                <span className="sidebar-node-label">{node.label}</span>
+            </div>
+        ))}
+    </>
+);
+
+uiRegistry.registerSidebarTab({
+    id: 'nodes',
+    label: '🧩 Nodes',
+    component: NodePalette
+});
 
 const Sidebar = ({ onLoadDemo, isConnected, sendMessage, sidebarView, setSidebarView }) => {
     const [isFileOpen, setIsFileOpen] = React.useState(false);
@@ -48,18 +73,15 @@ const Sidebar = ({ onLoadDemo, isConnected, sendMessage, sidebarView, setSidebar
                     <span className="menu-label">View</span>
                     {isViewOpen && (
                         <div className="floating-menu">
-                            <button
-                                className={sidebarView === 'nodes' ? 'active' : ''}
-                                onClick={() => { setSidebarView('nodes'); setIsViewOpen(false); }}
-                            >
-                                🧩 Nodes
-                            </button>
-                            <button
-                                className={sidebarView === 'files' ? 'active' : ''}
-                                onClick={() => { setSidebarView('files'); setIsViewOpen(false); }}
-                            >
-                                📂 Files
-                            </button>
+                            {uiRegistry.slots.sidebarTabs.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    className={sidebarView === tab.id ? 'active' : ''}
+                                    onClick={() => { setSidebarView(tab.id); setIsViewOpen(false); }}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -71,27 +93,16 @@ const Sidebar = ({ onLoadDemo, isConnected, sendMessage, sidebarView, setSidebar
             {/* View Content */}
             <div className="sidebar-section flex-grow">
                 <div className="sidebar-header">
-                    <h3>{sidebarView === 'nodes' ? 'Nodes' : 'Files'}</h3>
+                    <h3>{uiRegistry.slots.sidebarTabs.find(t => t.id === sidebarView)?.label?.split(' ')[1] || 'Tab'}</h3>
                 </div>
                 <div className="sidebar-content">
-                    {sidebarView === 'nodes' ? (
-                        availableNodes.map((node) => (
-                            <div
-                                key={node.type}
-                                className="sidebar-node"
-                                onDragStart={(event) => onDragStart(event, node.type)}
-                                draggable
-                                style={{
-                                    '--node-color': `var(${node.colorVar})`
-                                }}
-                            >
-                                {node.icon && <span className="sidebar-node-icon">{node.icon}</span>}
-                                <span className="sidebar-node-label">{node.label}</span>
-                            </div>
-                        ))
-                    ) : (
-                        <FileTree sendMessage={sendMessage} />
-                    )}
+                    {uiRegistry.slots.sidebarTabs.map(tab => {
+                        if (sidebarView === tab.id) {
+                            const Component = tab.component;
+                            return <Component key={tab.id} onDragStart={onDragStart} sendMessage={sendMessage} />;
+                        }
+                        return null;
+                    })}
                 </div>
             </div>
 
