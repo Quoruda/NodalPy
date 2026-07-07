@@ -83,7 +83,7 @@ class UserKernelProxy:
                 name=self.container_name,
                 network=self.network_name,
                 volumes={
-                    self.user_host_files_path: {
+                    os.path.join(self.host_storage_path, self.user_id): {
                         "bind": "/app/storage",
                         "mode": "rw"
                     }

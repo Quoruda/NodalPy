@@ -82,7 +82,7 @@ class KernelRunner:
         local_scope = {}
         
         try:
-            result = run_code_in_process(code, new_context, timeout, cwd=self.storage_dir)
+            result = run_code_in_process(code, new_context, timeout, cwd=os.path.join(self.storage_dir, 'files'))
             status = result["status"]
             output = result.get("stdout", "")
             error_msg = result.get("error", "")

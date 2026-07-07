@@ -10,7 +10,7 @@ services:
     ports:
       - "8555:8000"
     volumes:
-      - nodalpy_storage:/app/storage
+      - .storage:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - PYTHONUNBUFFERED=1
@@ -20,7 +20,7 @@ services:
       - NODAL_KERNEL_IMAGE=nodalpy_server:latest
       - NODAL_FAST_TIMEOUT=1.0
       - NODAL_MANUAL_TIMEOUT=60.0
-      - HOST_STORAGE_PATH=${PWD}/storage
+      - HOST_STORAGE_PATH=${PWD}/.storage
     networks:
       - nodalpy_network
     restart: unless-stopped
@@ -29,5 +29,3 @@ networks:
   nodalpy_network:
     name: nodalpy_network
 
-volumes:
-  nodalpy_storage:
