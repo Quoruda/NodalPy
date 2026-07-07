@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { uiRegistry } from '../../front-editor/src/core/uiRegistry';
 import './FileTree.css';
 
 const FileIcon = ({ name, isDir, isOpen }) => {
@@ -21,7 +22,6 @@ const formatSize = (bytes) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-// Build a flat ordered list of all visible paths (for Shift-range selection)
 const flattenVisible = (nodes, openDirs) => {
     const result = [];
     for (const node of nodes) {
@@ -53,7 +53,6 @@ const TreeNode = ({ node, depth, onDelete, onRename, onMove, selected, onSelect,
     const handleContextMenu = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        // If right-clicking an unselected item, select only that item
         if (!isSelected) {
             onSelect(node.path, e);
         }
@@ -65,7 +64,6 @@ const TreeNode = ({ node, depth, onDelete, onRename, onMove, selected, onSelect,
 
     const handleDragStart = (e) => {
         e.stopPropagation();
-        // Drag all selected items, or just this one if not selected
         const paths = isSelected ? [...selected] : [node.path];
         e.dataTransfer.setData('application/filetree-paths', JSON.stringify(paths));
         e.dataTransfer.effectAllowed = 'move';
@@ -93,7 +91,6 @@ const TreeNode = ({ node, depth, onDelete, onRename, onMove, selected, onSelect,
         const paths = JSON.parse(raw);
         paths.forEach((srcPath) => {
             if (srcPath === node.path) return;
-            // Don't move a parent into its own child
             if (node.path.startsWith(srcPath + '/')) return;
             const fileName = srcPath.split('/').pop();
             const newPath = node.path + '/' + fileName;
@@ -204,7 +201,6 @@ const FileTree = ({ sendMessage }) => {
 
     const handleSelect = useCallback((path, e) => {
         if (e.ctrlKey || e.metaKey) {
-            // Toggle individual selection
             setSelected((prev) => {
                 const next = new Set(prev);
                 if (next.has(path)) next.delete(path);
@@ -213,7 +209,6 @@ const FileTree = ({ sendMessage }) => {
             });
             lastSelectedRef.current = path;
         } else if (e.shiftKey && lastSelectedRef.current) {
-            // Range selection
             const flat = flattenVisible(tree, openDirs);
             const startIdx = flat.indexOf(lastSelectedRef.current);
             const endIdx = flat.indexOf(path);
@@ -228,7 +223,6 @@ const FileTree = ({ sendMessage }) => {
                 });
             }
         } else {
-            // Single click — select only this item
             setSelected(new Set([path]));
             lastSelectedRef.current = path;
         }
@@ -303,21 +297,18 @@ const FileTree = ({ sendMessage }) => {
         const paths = JSON.parse(raw);
         paths.forEach((srcPath) => {
             const fileName = srcPath.split('/').pop();
-            // Only move if currently nested inside a folder
             if (srcPath !== fileName) {
                 handleMove(srcPath, fileName);
             }
         });
     };
 
-    // Clear selection when clicking empty area
     const handleBackgroundClick = (e) => {
         if (e.target === e.currentTarget) {
             setSelected(new Set());
         }
     };
 
-    // Keyboard shortcut: Delete key
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Delete' && selected.size > 0) {
@@ -383,7 +374,6 @@ const FileTree = ({ sendMessage }) => {
                         />
                     ))
                 )}
-                {/* Root drop zone — always visible at the bottom */}
                 <div
                     className={`root-drop-zone${rootDragOver ? ' drag-over' : ''}`}
                     onDragOver={handleRootDragOver}
@@ -396,5 +386,11 @@ const FileTree = ({ sendMessage }) => {
         </div>
     );
 };
+
+uiRegistry.registerSidebarTab({
+    id: 'files',
+    label: '📂 Files',
+    component: FileTree
+});
 
 export default FileTree;
