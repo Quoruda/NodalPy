@@ -4,24 +4,30 @@ import { demos } from '../../utils/demos';
 import { uiRegistry } from '../../core/uiRegistry';
 import './Sidebar.css';
 
-const NodePalette = ({ onDragStart }) => (
-    <>
-        {availableNodes.map((node) => (
-            <div
-                key={node.type}
-                className="sidebar-node"
-                onDragStart={(event) => onDragStart(event, node.type)}
-                draggable
-                style={{
-                    '--node-color': `var(${node.colorVar})`
-                }}
-            >
-                {node.icon && <span className="sidebar-node-icon">{node.icon}</span>}
-                <span className="sidebar-node-label">{node.label}</span>
-            </div>
-        ))}
-    </>
-);
+const NodePalette = ({ onDragStart }) => {
+    const allNodes = [
+        ...availableNodes,
+        ...uiRegistry.slots.nodeTypes.map(node => node.config)
+    ];
+    return (
+        <>
+            {allNodes.map((node) => (
+                <div
+                    key={node.type}
+                    className="sidebar-node"
+                    onDragStart={(event) => onDragStart(event, node.type)}
+                    draggable
+                    style={{
+                        '--node-color': `var(${node.colorVar})`
+                    }}
+                >
+                    {node.icon && <span className="sidebar-node-icon">{node.icon}</span>}
+                    <span className="sidebar-node-label">{node.label}</span>
+                </div>
+            ))}
+        </>
+    );
+};
 
 uiRegistry.registerSidebarTab({
     id: 'nodes',
@@ -36,6 +42,11 @@ const Sidebar = ({ onLoadDemo, isConnected, sendMessage, sidebarView, setSidebar
     const onDragStart = (event, nodeType) => {
         event.dataTransfer.setData('application/reactflow', nodeType);
         event.dataTransfer.effectAllowed = 'move';
+    };
+
+    const allDemos = {
+        ...demos,
+        ...uiRegistry.slots.demos
     };
 
     return (
@@ -55,8 +66,8 @@ const Sidebar = ({ onLoadDemo, isConnected, sendMessage, sidebarView, setSidebar
                                     Demos & Examples ▶
                                 </button>
                                 <div className="floating-submenu">
-                                    {Object.keys(demos).map(demoName => (
-                                        <button key={demoName} onClick={() => { onLoadDemo(demos[demoName]); setIsFileOpen(false); }}>
+                                    {Object.keys(allDemos).map(demoName => (
+                                        <button key={demoName} onClick={() => { onLoadDemo(allDemos[demoName]); setIsFileOpen(false); }}>
                                             {demoName}
                                         </button>
                                     ))}

@@ -24,6 +24,8 @@ import { toast } from 'react-toastify';
 import { wouldCreateCycle } from './utils/cycleDetection.js';
 import '../../plugins/storageMonitor/frontend.jsx';
 import '../../plugins/fileExplorer/frontend.jsx';
+import '../../plugins/fastNode/frontend.jsx';
+import { uiRegistry } from './core/uiRegistry';
 
 const edgeTypes = {};
 
@@ -97,6 +99,14 @@ function Flow() {
         [addNode, screenToFlowPosition],
     );
 
+    const allNodeTypes = useMemo(() => {
+        const types = { ...NodeTypes };
+        uiRegistry.slots.nodeTypes.forEach(n => {
+            types[n.type] = n.component;
+        });
+        return types;
+    }, []);
+
     if (!isLoaded) {
         return <div className="loading-screen">Loading Project...</div>;
     }
@@ -119,7 +129,7 @@ function Flow() {
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
                         onConnect={onConnectEdge}
-                        nodeTypes={NodeTypes}
+                        nodeTypes={allNodeTypes}
                         edgeTypes={edgeTypes}
                         defaultEdgeOptions={{ type: 'default' }}
                         nodeOrigin={[0.5, 0.5]}
@@ -128,7 +138,11 @@ function Flow() {
                         <Background variant="dots" gap={16} size={1} />
                         <MiniMap
                             nodeColor={(n) => {
-                                const config = availableNodes.find(node => node.type === n.type);
+                                const allConfigs = [
+                                    ...availableNodes,
+                                    ...uiRegistry.slots.nodeTypes.map(node => node.config)
+                                ];
+                                const config = allConfigs.find(node => node.type === n.type);
                                 return config ? config.color : '#aaa';
                             }}
                             position="bottom-left"

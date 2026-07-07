@@ -8,13 +8,6 @@ export const availableNodes = [
         category: 'Logic'
     },
     {
-        type: 'FastNode',
-        label: 'Fast Node',
-        colorVar: '--color-fast',
-        color: '#74b9ff',
-        category: 'Logic'
-    },
-    {
         type: 'NumberNode',
         label: 'Number',
         colorVar: '--color-number',

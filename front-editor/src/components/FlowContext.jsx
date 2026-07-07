@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useCallback } from 'react';
 import { buildVariables } from '../utils/nodeUtils.js';
+import { uiRegistry } from '../core/uiRegistry';
 
 // Create the context to share flow data and handle sequential execution
 const FlowContext = createContext({
@@ -128,7 +129,9 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
 
         uniqueTargetIds.forEach(targetId => {
             const targetNode = currentNodes.find(n => n.id === targetId);
-            if (!targetNode || targetNode.type !== 'FastNode') return;
+            if (!targetNode) return;
+            const nodeConfig = uiRegistry.slots.nodeTypes.find(n => n.type === targetNode.type)?.config;
+            if (!nodeConfig || !nodeConfig.autoTrigger) return;
 
             // Check that ALL source nodes of the FastNode have completed (state 2)
             const incomingEdges = currentEdges.filter(e => e.target === targetId);

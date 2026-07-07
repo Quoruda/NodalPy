@@ -5,11 +5,13 @@ from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from ..services.user_manager import UserManager
 from ..services import filesystem as fs
-from ..core.config import EXECUTION_DEBOUNCE, WS_BATCH_INTERVAL, FAST_NODE_TIMEOUT, MANUAL_NODE_TIMEOUT
+from ..core.config import EXECUTION_DEBOUNCE, WS_BATCH_INTERVAL, MANUAL_NODE_TIMEOUT
 from ..core.registry import ws_registry
+from ..core.node_registry import node_registry
 import app.api.websocket_actions
 import plugins.storageMonitor.backend
 import plugins.fileExplorer.backend
+import plugins.fastNode.backend
 
 def verif_args(data: dict, required_args: list[str]) -> bool:
     for arg in required_args:
@@ -79,7 +81,7 @@ class UserWebSocket:
                 "config": {
                     "debounce": EXECUTION_DEBOUNCE,
                     "batch_interval": WS_BATCH_INTERVAL,
-                    "fast_timeout": FAST_NODE_TIMEOUT,
+                    "fast_timeout": node_registry.get_timeout("FastNode"),
                     "manual_timeout": MANUAL_NODE_TIMEOUT
                 }
             })

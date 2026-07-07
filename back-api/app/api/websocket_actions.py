@@ -3,7 +3,7 @@ import json
 import time
 from ..core.registry import ws_registry
 from ..services import filesystem as fs
-from ..core.config import FAST_NODE_TIMEOUT, MANUAL_NODE_TIMEOUT
+from ..core.node_registry import node_registry
 
 def verif_args(data: dict, required_args: list[str]) -> bool:
     for arg in required_args:
@@ -22,10 +22,7 @@ async def handle_run_node(session, data: dict):
         return
 
     node_type = data.get("node_type", "CustomNode")
-    if node_type == "FastNode":
-        timeout = FAST_NODE_TIMEOUT
-    else:
-        timeout = MANUAL_NODE_TIMEOUT if MANUAL_NODE_TIMEOUT > 0 else None
+    timeout = node_registry.get_timeout(node_type)
 
     inputs = data.get("inputs", [])
     node_id = data["node"]

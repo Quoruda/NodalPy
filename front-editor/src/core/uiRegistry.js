@@ -2,7 +2,9 @@ class UiRegistry {
     constructor() {
         this.slots = {
             sidebarTabs: [],
-            menuItems: []
+            menuItems: [],
+            nodeTypes: [],
+            demos: {}
         };
     }
 
@@ -12,6 +14,14 @@ class UiRegistry {
 
     registerMenuItem(item) {
         this.slots.menuItems.push(item);
+    }
+
+    registerNodeType(node) {
+        this.slots.nodeTypes.push(node);
+    }
+
+    registerDemo(name, demoData) {
+        this.slots.demos[name] = demoData;
     }
 }
 

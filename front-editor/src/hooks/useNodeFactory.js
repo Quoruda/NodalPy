@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { uiRegistry } from '../core/uiRegistry';
 
 export const useNodeFactory = (nodes, setNodes, nodeCount, setNodeCount) => {
 
@@ -24,15 +25,16 @@ export const useNodeFactory = (nodes, setNodes, nodeCount, setNodeCount) => {
             },
         };
 
-        // Specific configurations based on type
-        if (type === 'CustomNode') {
+        const registeredNode = uiRegistry.slots.nodeTypes.find(n => n.type === type);
+        if (registeredNode && registeredNode.defaultData) {
+            newNode.data = {
+                ...newNode.data,
+                ...registeredNode.defaultData,
+                title: `${registeredNode.defaultData.title} ${id}`
+            };
+        } else if (type === 'CustomNode') {
             newNode.data.title = 'Manual Node ' + id;
             newNode.data.code = "# Write your Python code here\noutput = 'Hello World'";
-            newNode.data.inputs = [{ id: 'in1', name: 'input1' }];
-            newNode.data.outputs = [{ id: 'out1', name: 'output' }];
-        } else if (type === 'FastNode') {
-            newNode.data.title = 'Fast Node ' + id;
-            newNode.data.code = "# Safe default: check if input exists\noutput = (input1 * 2) if 'input1' in locals() else 0";
             newNode.data.inputs = [{ id: 'in1', name: 'input1' }];
             newNode.data.outputs = [{ id: 'out1', name: 'output' }];
         } else if (type === 'NumberNode') {
