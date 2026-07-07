@@ -6,7 +6,9 @@ WORKDIR /app/front-editor
 COPY front-editor/package*.json ./
 RUN npm install --legacy-peer-deps
 
-# Copy source and build
+# Copy source and plugins
+COPY plugins/ /app/plugins/
+RUN find /app/plugins -name "package.json" -execdir npm install --legacy-peer-deps \;
 COPY front-editor/ ./
 
 ARG VITE_WS_URL
@@ -31,6 +33,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Structure the app directory to match the expected NodalPy build architecture
 COPY back-api/ /app/
+COPY plugins/ /app/plugins/
+RUN find /app/plugins -name "requirements.txt" -exec pip install --no-cache-dir -r {} \;
 COPY --from=frontend-build /app/front-editor/dist /app/front
 
 # Persist user storage
