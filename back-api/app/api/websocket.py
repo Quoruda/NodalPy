@@ -9,9 +9,22 @@ from ..core.config import EXECUTION_DEBOUNCE, WS_BATCH_INTERVAL, MANUAL_NODE_TIM
 from ..core.registry import ws_registry
 from ..core.node_registry import node_registry
 import app.api.websocket_actions
-import plugins.storageMonitor.backend
-import plugins.fileExplorer.backend
-import plugins.fastNode.backend
+import importlib
+import plugins
+
+plugins_path = plugins.__path__[0] if hasattr(plugins, "__path__") else os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "plugins")
+if os.path.exists(plugins_path):
+    for item in os.listdir(plugins_path):
+        item_path = os.path.join(plugins_path, item)
+        if os.path.isdir(item_path):
+            backend_file = os.path.join(item_path, "backend.py")
+            if os.path.exists(backend_file):
+                try:
+                    importlib.import_module(f"plugins.{item}.backend")
+                except Exception as e:
+                    import traceback
+                    print(f"❌ Error loading plugin backend {item}: {e}", flush=True)
+                    traceback.print_exc()
 
 def verif_args(data: dict, required_args: list[str]) -> bool:
     for arg in required_args:

@@ -22,9 +22,7 @@ import { useProjectPersistence } from './hooks/useProjectPersistence.js';
 import { useNodeFactory } from './hooks/useNodeFactory.js';
 import { toast } from 'react-toastify';
 import { wouldCreateCycle } from './utils/cycleDetection.js';
-import '../../plugins/storageMonitor/frontend.jsx';
-import '../../plugins/fileExplorer/frontend.jsx';
-import '../../plugins/fastNode/frontend.jsx';
+import.meta.glob('../../plugins/*/frontend.jsx', { eager: true });
 import { uiRegistry } from './core/uiRegistry';
 
 const edgeTypes = {};

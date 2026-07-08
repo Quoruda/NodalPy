@@ -12,6 +12,7 @@ export default defineConfig({
       '@uiw/react-codemirror': path.resolve(__dirname, 'node_modules/@uiw/react-codemirror'),
       '@codemirror/lang-python': path.resolve(__dirname, 'node_modules/@codemirror/lang-python'),
       '@uiw/codemirror-theme-vscode': path.resolve(__dirname, 'node_modules/@uiw/codemirror-theme-vscode'),
+      'react-toastify': path.resolve(__dirname, 'node_modules/react-toastify'),
     }
   },
   build: {
