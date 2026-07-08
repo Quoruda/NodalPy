@@ -1,0 +1,191 @@
+.pkg-manager-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: #dfe6e9;
+    background: rgba(30, 30, 40, 0.4);
+    backdrop-filter: blur(10px);
+}
+
+.pkg-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pkg-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #a29bfe;
+    margin-bottom: 12px;
+}
+
+.pkg-install-box {
+    display: flex;
+    gap: 8px;
+}
+
+.pkg-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.85rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.pkg-input:focus {
+    border-color: #6c5ce7;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.2);
+}
+
+.pkg-btn-install {
+    padding: 8px 14px;
+    background: #6c5ce7;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pkg-btn-install:hover:not(:disabled) {
+    background: #5b4bc4;
+    transform: translateY(-1px);
+}
+
+.pkg-btn-install:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: not-allowed;
+}
+
+.pkg-search-bar {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pkg-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+}
+
+.pkg-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.pkg-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.pkg-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pkg-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.pkg-version {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.pkg-btn-delete {
+    background: transparent;
+    border: none;
+    color: #ff7675;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.pkg-btn-delete:hover:not(:disabled) {
+    background: rgba(255, 118, 117, 0.15);
+}
+
+.pkg-btn-delete:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pkg-logs-panel {
+    background: #0f0f14;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    transition: height 0.3s ease;
+}
+
+.pkg-logs-panel.collapsed {
+    height: 0;
+    border-top: none;
+    overflow: hidden;
+}
+
+.pkg-logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 16px;
+    background: #1a1a24;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #a29bfe;
+}
+
+.pkg-logs-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.pkg-logs-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 16px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.75rem;
+    color: #55efc4;
+    line-height: 1.4;
+}
+
+.pkg-loader {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 6px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
