@@ -7,8 +7,17 @@ import time
 import cloudpickle as pickle
 
 def child_target(code: str, initial_context: dict, cwd: str, q: Queue):
-    # Change working directory if needed
     if cwd:
+        storage_dir = os.path.dirname(cwd)
+        venv_site_packages = os.path.join(
+            storage_dir,
+            ".venv",
+            "lib",
+            f"python{sys.version_info.major}.{sys.version_info.minor}",
+            "site-packages"
+        )
+        if os.path.exists(venv_site_packages):
+            sys.path.insert(0, venv_site_packages)
         try:
             os.chdir(cwd)
         except Exception as e:

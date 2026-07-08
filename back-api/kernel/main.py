@@ -2,6 +2,8 @@ import asyncio
 import json
 import argparse
 import sys
+import os
+import venv
 from .runner import KernelRunner
 
 async def handle_client(reader, writer, runner):
@@ -111,6 +113,15 @@ async def main():
     parser.add_argument("--port", type=int, required=True, help="TCP port to listen on")
     parser.add_argument("--storage-dir", required=True, help="Path to persist user files and states")
     args = parser.parse_args()
+
+    venv_dir = os.path.join(args.storage_dir, ".venv")
+    if not os.path.exists(venv_dir):
+        print(f"📦 Initializing user virtual environment in {venv_dir}...", flush=True)
+        try:
+            venv.create(venv_dir, with_pip=True, system_site_packages=True)
+            print(f"📦 Virtual environment initialized successfully.", flush=True)
+        except Exception as e:
+            print(f"⚠️ Failed to create virtual environment: {e}", flush=True)
 
     runner = KernelRunner(user_id=args.user_id, storage_dir=args.storage_dir)
 
