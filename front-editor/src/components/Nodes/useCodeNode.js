@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useFlowContext } from '../FlowContext.jsx';
+import { uiRegistry } from '../../core/uiRegistry';
 
 const arraysEqualObjects = (a, b) => {
     if (a === b) return true;
@@ -24,7 +25,7 @@ export const useCodeNode = (data, config = null) => {
 
     const prevDataRef = useRef({});
     const throttleRef = useRef(null);
-    const { addNodeToQueue, updateNode } = useFlowContext();
+    const { addNodeToQueue, updateNode, nodes, sendMessage } = useFlowContext();
 
     // Sync title/inputs/outputs from props (e.g. on project load)
     useEffect(() => {
@@ -153,6 +154,38 @@ export const useCodeNode = (data, config = null) => {
             updateNode(data.id, { inputs, outputs });
         }
     }, [inputs, outputs, updateNode, data.id, data.inputs, data.outputs]);
+
+    const isInitializedRef = useRef(false);
+
+    useEffect(() => {
+        if (isInitializedRef.current || !sendMessage) return;
+
+        const fullNode = nodes.find(n => n.id === data.id);
+        if (!fullNode) return;
+
+        isInitializedRef.current = true;
+
+        const registeredNode = uiRegistry.slots.nodeTypes.find(n => n.type === fullNode.type);
+        const isAutoTrigger = registeredNode?.config?.autoTrigger;
+        const forceRunOnLoad = registeredNode?.config?.forceRunOnLoad;
+
+        if (forceRunOnLoad) {
+            setTimeout(() => runCode(), 300);
+        } else {
+            if (outputs && outputs.length > 0) {
+                outputs.forEach(out => {
+                    sendMessage({
+                        action: "get_variable",
+                        node: fullNode.id,
+                        name: out.name
+                    });
+                });
+            } else if (isAutoTrigger) {
+                setTimeout(() => runCode(), 300);
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return {
         isEditing, setIsEditing,

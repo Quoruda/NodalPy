@@ -11,7 +11,8 @@ uiRegistry.registerNodeType({
         label: 'Number',
         colorVar: '--color-number',
         color: '#0984e3',
-        category: 'Input'
+        category: 'Input',
+        forceRunOnLoad: true
     },
     defaultData: {
         title: 'Number',
@@ -29,7 +30,8 @@ uiRegistry.registerNodeType({
         label: 'Boolean',
         colorVar: '--color-boolean',
         color: '#fd79a8',
-        category: 'Input'
+        category: 'Input',
+        forceRunOnLoad: true
     },
     defaultData: {
         title: 'Boolean',
@@ -47,7 +49,8 @@ uiRegistry.registerNodeType({
         label: 'String',
         colorVar: '--color-string',
         color: '#2ecc71',
-        category: 'Input'
+        category: 'Input',
+        forceRunOnLoad: true
     },
     defaultData: {
         title: 'String',

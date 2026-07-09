@@ -146,6 +146,22 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
         });
     }, [addNodeToQueue]);
 
+    useEffect(() => {
+        const handleAutoRun = (e) => {
+            const { nodeId } = e.detail;
+            const targetNode = nodesRef.current.find(n => n.id === nodeId);
+            if (!targetNode) return;
+
+            const nodeConfig = uiRegistry.slots.nodeTypes.find(n => n.type === targetNode.type)?.config;
+            if (nodeConfig && nodeConfig.autoTrigger) {
+                addNodeToQueue({ ...targetNode.data, id: targetNode.id });
+            }
+        };
+
+        window.addEventListener('auto_run_node', handleAutoRun);
+        return () => window.removeEventListener('auto_run_node', handleAutoRun);
+    }, [addNodeToQueue]);
+
     // Unblocks and executes the next node as soon as the active node completes (success or error)
     useEffect(() => {
         if (!isExecutingRef.current || !activeNodeRef.current) return;

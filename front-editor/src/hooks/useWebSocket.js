@@ -280,6 +280,11 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
 
                             updatedNodes[nodeIndex] = { ...node, data: { ...node.data, outputs: newOutputs } };
                             hasChanges = true;
+
+                            const isValueMissing = msg.error || msg.value === null || msg.value === undefined;
+                            if (isValueMissing) {
+                                window.dispatchEvent(new CustomEvent('auto_run_node', { detail: { nodeId: node.id } }));
+                            }
                         }
                     }
                 });

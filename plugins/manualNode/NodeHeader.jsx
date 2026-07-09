@@ -22,7 +22,7 @@ const NodeHeader = memo(({
         </div>
 
         <div className="controls-section" style={{ display: 'flex', alignItems: 'center' }}>
-            {!hideState && state === 0 && (
+            {!hideState && (state === 0 || state === undefined) && (
                 <button
                     onClick={runCode}
                     className="execute-button nodrag"
@@ -36,7 +36,7 @@ const NodeHeader = memo(({
                     ⏱
                 </div>
             )}
-            {!hideState && state === 2 && (
+            {!hideState && (state === 2 || state === 3) && (
                 <button
                     onClick={runCode}
                     className="execute-button nodrag"
