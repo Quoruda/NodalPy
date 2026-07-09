@@ -3,22 +3,17 @@
     border-radius: 12px;
     min-width: 200px;
     min-height: 100px;
-    /* overflow: hidden; Removed to align with NodeShell or likely needed for content? Keep visible for now unless clipping needed. */
     overflow: hidden;
 }
 
-/* Selected state handled by NodeShell */
-
 .observer-header {
     background: linear-gradient(135deg, #01a3a4 0%, #00d2d3 100%);
-    /* Padding handled by NodeShell */
     gap: 12px;
     border-bottom: 3px solid #017374;
     position: relative;
     z-index: 1;
 }
 
-/* Yeux avec style bulle */
 .observer-eyes {
     display: flex;
     gap: 10px;
@@ -41,12 +36,10 @@
 }
 
 @keyframes float {
-
     0%,
     100% {
         transform: translateY(0);
     }
-
     50% {
         transform: translateY(-4px);
     }
@@ -65,26 +58,21 @@
 }
 
 @keyframes wander {
-
     0%,
     100% {
         transform: translate(0, 0);
     }
-
     25% {
         transform: translate(3px, -2px);
     }
-
     50% {
         transform: translate(-2px, 2px);
     }
-
     75% {
         transform: translate(2px, 3px);
     }
 }
 
-/* Highlight dans l'oeil */
 .eye::after {
     content: '';
     position: absolute;
@@ -153,13 +141,11 @@
     color: #1e3a5f;
 }
 
-
 .no-connection {
     opacity: 0.6;
     font-style: italic;
 }
 
-/* Table Styles for DataFrame */
 .observer-node .table-container table {
     width: 100%;
     border-collapse: collapse;

@@ -1,41 +1,26 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Handle, Position } from '@xyflow/react';
-import { useFlowContext } from '../../FlowContext.jsx';
+import { useFlowContext } from '../../front-editor/src/components/FlowContext.jsx';
 
-import '../nodes.css'
-import '../node_content.css'
-import '../NodeShell.css';
-import './ObserverNode.css'
+import '../../front-editor/src/components/Nodes/nodes.css';
+import '../../front-editor/src/components/Nodes/node_content.css';
+import '../../front-editor/src/components/Nodes/NodeShell.css';
+import './ObserverNode.css';
 
 const ObserverNode = memo(({ data, id, selected }) => {
     const { edges, nodes, sendMessage, setNodes } = useFlowContext();
     const [variableValue, setVariableValue] = useState(data.cachedValue || null);
     const [variableType, setVariableType] = useState(data.cachedType || null);
     const [connectedSource, setConnectedSource] = useState(null);
-
-    // Track previous connection to detect changes
     const [prevConnection, setPrevConnection] = useState(null);
 
-    // Find the connected source
     useEffect(() => {
         const edge = edges.find(e => e.target === id);
         if (edge) {
             const sourceNode = nodes.find(n => n.id === edge.source);
             if (sourceNode) {
-                // Debug logs with JSON.stringify to see content
-                // console.log("Observer checking connection:", JSON.stringify({ 
-                //    edgeHandle: edge.sourceHandle, 
-                //    sourceOutputs: sourceNode.data.outputs 
-                // }));
-
-                // --- START SEARCH ---
-
-                // 1. Try exact ID match
                 let output = sourceNode.data.outputs?.find(o => o.id === edge.sourceHandle);
-
-                // 2. Try fallback: if only 1 output, use it (robustness)
                 if (!output && sourceNode.data.outputs?.length === 1) {
-                    // console.log("Observer: Fallback to single available output");
                     output = sourceNode.data.outputs[0];
                 }
 
@@ -47,7 +32,6 @@ const ObserverNode = memo(({ data, id, selected }) => {
                         cachedType: output.type
                     };
 
-                    // Only update state if something actually changed to avoid render loops
                     if (!connectedSource ||
                         connectedSource.nodeId !== newConnection.nodeId ||
                         connectedSource.variableName !== newConnection.variableName ||
@@ -56,12 +40,10 @@ const ObserverNode = memo(({ data, id, selected }) => {
 
                         setConnectedSource(newConnection);
 
-                        // Update local state immediately if value is present
                         if (output.value !== undefined) {
                             setVariableValue(output.value);
                             setVariableType(output.type);
 
-                            // Sync to global node data for persistence (Save/Load)
                             setNodes((nds) => nds.map(n => {
                                 if (n.id === id) {
                                     return {
@@ -78,15 +60,11 @@ const ObserverNode = memo(({ data, id, selected }) => {
                         }
                     }
 
-                    // Check if connection changed
                     if (!prevConnection ||
                         prevConnection.nodeId !== newConnection.nodeId ||
                         prevConnection.variableName !== newConnection.variableName) {
                         setPrevConnection(newConnection);
 
-                        // Trigger fetch on new connection ONLY if source is not in 'load' mode
-                        // If sourceNode has fromLoad, it means we just loaded. We should trust cachedValue.
-                        // Backend might be empty.
                         if (!sourceNode.data.fromLoad) {
                             setTimeout(() => {
                                 sendMessage({
@@ -97,13 +75,6 @@ const ObserverNode = memo(({ data, id, selected }) => {
                             }, 100);
                         }
                     }
-                } else {
-                    // Check if we already warned to avoid spam? 
-                    // For now just fix the log format
-                    // console.warn("Observer: Connected but output handle not found in source node outputs. Details: " + JSON.stringify({
-                    //    edgeHandle: edge.sourceHandle,
-                    //    outputs: sourceNode.data.outputs
-                    // }));
                 }
             }
         } else {
@@ -112,7 +83,7 @@ const ObserverNode = memo(({ data, id, selected }) => {
             setVariableValue(null);
             setVariableType(null);
         }
-    }, [edges, nodes, id, prevConnection]);
+    }, [edges, nodes, id, prevConnection, connectedSource, setNodes, sendMessage]);
 
     const handleRefresh = useCallback(() => {
         if (connectedSource) {
@@ -124,9 +95,6 @@ const ObserverNode = memo(({ data, id, selected }) => {
         }
     }, [connectedSource, sendMessage]);
 
-
-
-    // Auto-refresh: triggered when the source changes state to 2 (completed)
     const sourceNodeState = nodes.find(n => connectedSource && n.id === connectedSource.nodeId)?.data?.state;
     const prevSourceStateRef = useRef(null);
     const prevSourceIdRef = useRef(null);
@@ -141,10 +109,6 @@ const ObserverNode = memo(({ data, id, selected }) => {
         const sourceId = connectedSource.nodeId;
         const prevState = prevSourceStateRef.current;
         const prevId = prevSourceIdRef.current;
-
-        // Refresh if:
-        // 1. The source just transitioned to state 2 (completed from any state)
-        // 2. Or it's a new connection and the source is already at state 2 (e.g. demo load)
         const justFinished = sourceNodeState === 2 && (prevState !== 2 || prevId !== sourceId);
 
         if (justFinished) {
@@ -158,14 +122,13 @@ const ObserverNode = memo(({ data, id, selected }) => {
         prevSourceIdRef.current = sourceId;
     }, [connectedSource, sourceNodeState, handleRefresh]);
 
-
     return (
         <div className={`node-shell observer-node ${selected ? 'selected' : ''}`}>
             <Handle
                 type="target"
                 position={Position.Left}
                 style={{ background: '#555' }}
-                isConnectable={!connectedSource} // Only allow one connection
+                isConnectable={!connectedSource}
             />
 
             <div className="node-shell-header observer-header">

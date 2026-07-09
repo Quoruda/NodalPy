@@ -1,4 +1,3 @@
-// Configuration for all available node types
 export const availableNodes = [
     {
         type: 'CustomNode',
@@ -25,14 +24,7 @@ export const availableNodes = [
         type: 'StringNode',
         label: 'String',
         colorVar: '--color-string',
-        color: '#2ecc71', // Corrected from Yellow to Green
+        color: '#2ecc71',
         category: 'Input'
-    },
-    {
-        type: 'ObserverNode',
-        label: 'Observer',
-        colorVar: '--color-observer',
-        color: '#00d2d3', // Corrected from Green to Cyan
-        category: 'Output'
     }
 ];
