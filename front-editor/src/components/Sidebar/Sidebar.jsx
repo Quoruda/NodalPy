@@ -35,7 +35,7 @@ uiRegistry.registerSidebarTab({
     component: NodePalette
 });
 
-const Sidebar = ({ onLoadDemo, isConnected, sendMessage, sidebarView, setSidebarView }) => {
+const Sidebar = ({ onLoadDemo, onImport, onExport, isConnected, sendMessage, sidebarView, setSidebarView }) => {
     const [isFileOpen, setIsFileOpen] = React.useState(false);
     const [isViewOpen, setIsViewOpen] = React.useState(false);
 
@@ -61,6 +61,12 @@ const Sidebar = ({ onLoadDemo, isConnected, sendMessage, sidebarView, setSidebar
                     <span className="menu-label">File</span>
                     {isFileOpen && (
                         <div className="floating-menu">
+                            <button onClick={() => { onImport(); setIsFileOpen(false); }}>
+                                Import Project (.json)
+                            </button>
+                            <button onClick={() => { onExport(); setIsFileOpen(false); }}>
+                                Export Project (.json)
+                            </button>
                             <div className="submenu-container">
                                 <button className="submenu-trigger">
                                     Demos & Examples ▶

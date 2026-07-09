@@ -44,8 +44,31 @@ function Flow() {
     const wsUrl = import.meta.env.VITE_WS_URL || "ws://127.0.0.1:8000/ws";
 
     const { wsRef, isConnected, sendMessage } = useWebSocket(wsUrl, setNodes, setServerConfig, (data) => loadProject(data));
-    const { isLoaded, loadProject } = useProjectPersistence(nodes, edges, setNodes, setEdges, setNodeCount, isConnected, sendMessage);
+    const { isLoaded, loadProject, saveProjectToFile, loadProjectFromFile } = useProjectPersistence(nodes, edges, setNodes, setEdges, setNodeCount, isConnected, sendMessage);
     const { addNode } = useNodeFactory(nodes, setNodes, nodeCount, setNodeCount);
+
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+                event.preventDefault();
+                saveProjectToFile();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [saveProjectToFile]);
+
+    const handleImportClick = () => {
+        document.getElementById('loading-file-input').click();
+    };
+
+    const handleFileLoad = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            loadProjectFromFile(file);
+        }
+        event.target.value = '';
+    };
 
     const onConnectEdge = useCallback(
         (params) => {
@@ -114,12 +137,21 @@ function Flow() {
             <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
                 <Sidebar
                     onLoadDemo={loadProject}
+                    onImport={handleImportClick}
+                    onExport={saveProjectToFile}
                     isConnected={isConnected}
                     sendMessage={sendMessage}
                     sidebarView={sidebarView}
                     setSidebarView={setSidebarView}
                 />
                 <div style={{ flex: 1, height: '100vh', position: 'relative' }} onDrop={onDrop} onDragOver={onDragOver}>
+                    <input
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileLoad}
+                        style={{ display: 'none' }}
+                        id="loading-file-input"
+                    />
                     <ReactFlow
                         nodes={nodes}
                         edges={styledEdges}

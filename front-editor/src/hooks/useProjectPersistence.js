@@ -97,9 +97,73 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
         setIsLoaded(true);
     }, [setNodes, setEdges, setNodeCount]);
 
+    const saveProjectToFile = useCallback(() => {
+        const sanitizedNodes = nodesRef.current.map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                output: undefined,
+                error: undefined,
+                state: 0,
+                outputs: node.data.outputs ? node.data.outputs.map(out => ({
+                    ...out,
+                    value: undefined,
+                    type: undefined
+                })) : undefined
+            }
+        }));
+        const data = { nodes: sanitizedNodes, edges: edgesRef.current };
+        const json = JSON.stringify(data, null, 2);
+
+        const blob = new Blob([json], { type: "application/json" });
+        const href = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = href;
+        link.download = "nodal_project.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }, []);
+
+    const loadProjectFromFile = useCallback((file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                if (json.nodes && json.edges) {
+                    if (containsCycle(json.nodes, json.edges)) {
+                        toast.error("Import Failed: Project contains loops!");
+                        return;
+                    }
+                    const loadedNodes = json.nodes.map(node => ({
+                        ...node,
+                        data: { ...node.data, fromLoad: true }
+                    }));
+                    setNodes(loadedNodes);
+                    setEdges(json.edges);
+
+                    const maxId = json.nodes.reduce((max, node) => {
+                        const numId = parseInt(node.id);
+                        return isNaN(numId) ? max : Math.max(max, numId);
+                    }, 0);
+                    setNodeCount(maxId + 1);
+                    toast.success("Project imported successfully!");
+                } else {
+                    toast.error("Invalid project file format.");
+                }
+            } catch (err) {
+                console.error("Load error:", err);
+                toast.error("Failed to parse project file.");
+            }
+        };
+        reader.readAsText(file);
+    }, [setNodes, setEdges, setNodeCount]);
+
     return {
         isLoaded,
         setIsLoaded,
-        loadProject
+        loadProject,
+        saveProjectToFile,
+        loadProjectFromFile
     };
 };
