@@ -13,6 +13,7 @@ uiRegistry.registerNodeType({
     },
     defaultData: {
         title: 'Observer',
+        inputs: [{ id: 'in1', name: 'input' }],
         outputs: []
     }
 });

@@ -1,8 +1,8 @@
-import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { useValueNode } from '../useValueNode.js';
-import '../NodeShell.css';
-import './NumberNode.css'; // Make sure this CSS imports the styles from IntegerNode adaptation
+import { useValueNode } from './useValueNode.js';
+import '../../front-editor/src/components/Nodes/NodeShell.css';
+import './NumberNode.css';
 
 const NumberNode = memo(({ id, data, selected }) => {
     const {
@@ -17,7 +17,6 @@ const NumberNode = memo(({ id, data, selected }) => {
         parseValue: parseFloat
     });
 
-    // Configurable Range State (Local only)
     const [minRange, setMinRange] = useState(-50);
     const [maxRange, setMaxRange] = useState(50);
     const [step, setStep] = useState(1);
@@ -29,26 +28,21 @@ const NumberNode = memo(({ id, data, selected }) => {
         }
     }, [updateValue]);
 
-    // Slider Handler (Linear)
     const handleSliderChange = useCallback((e) => {
         const val = parseFloat(e.target.value);
         updateValue(val);
     }, [updateValue]);
 
-    // Config Handlers
     const handleMinChange = useCallback((e) => setMinRange(parseFloat(e.target.value) || -100), []);
     const handleMaxChange = useCallback((e) => setMaxRange(parseFloat(e.target.value) || 100), []);
     const handleStepChange = useCallback((e) => setStep(parseFloat(e.target.value) || 1), []);
 
-    // Stop propagation
     const stopPropagation = useCallback((e) => e.stopPropagation(), []);
 
     return (
         <div className={`node-shell number-node ${selected ? 'selected' : ''}`}>
-            {/* Decoration - Static 123 as requested */}
             <div className="big-number">123</div>
 
-            {/* Header with Title */}
             <div className="node-shell-header number-header">
                 <input
                     type="text"
@@ -72,7 +66,6 @@ const NumberNode = memo(({ id, data, selected }) => {
                     />
                 </div>
 
-                {/* Linear Slider with Configurable Range */}
                 <div className="value-slider-container nodrag">
                     <input
                         type="range"
@@ -85,7 +78,6 @@ const NumberNode = memo(({ id, data, selected }) => {
                     />
                 </div>
 
-                {/* Range & Step Config */}
                 <div className="range-config nodrag">
                     <input
                         type="number"

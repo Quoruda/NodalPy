@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useCodeNode } from './useCodeNode.js';
-import { useFlowContext } from '../FlowContext.jsx';
+import { useCodeNode } from '../../front-editor/src/components/Nodes/useCodeNode.js';
+import { useFlowContext } from '../../front-editor/src/components/FlowContext.jsx';
 
 export const useValueNode = (id, data, config = {}) => {
     const {
@@ -12,22 +12,18 @@ export const useValueNode = (id, data, config = {}) => {
         matchGroupIndex = 1
     } = config;
 
-    // Reuse useCodeNode for backend communication logic
     const nodeState = useCodeNode({ ...data, id }, { autoTrigger: true });
     const { runCode, updateNode } = nodeState;
     const { isConnected } = useFlowContext();
 
-    // Ref to track the latest data prop to avoid stale closures
     const dataRef = useRef(data);
     useEffect(() => {
         dataRef.current = data;
     }, [data]);
 
-    // Local state
     const [localValue, setLocalValue] = useState(data.value !== undefined ? data.value : defaultValue);
     const [localTitle, setLocalTitle] = useState(data.title || config.defaultTitle || 'Node');
 
-    // Parse code on change
     useEffect(() => {
         if (data.code && regex) {
             const match = data.code.match(regex);
@@ -40,9 +36,8 @@ export const useValueNode = (id, data, config = {}) => {
                 }
             }
         }
-    }, [data.code, regex]);
+    }, [data.code, regex, parseValue, matchGroupIndex]);
 
-    // Auto-run once when the WebSocket connects
     const hasFiredRef = useRef(false);
     const runCodeRef = useRef(runCode);
     useEffect(() => { runCodeRef.current = runCode; }, [runCode]);
@@ -60,11 +55,10 @@ export const useValueNode = (id, data, config = {}) => {
             return () => clearTimeout(timer);
         }
         if (!isConnected) {
-            hasFiredRef.current = false; // Reset for the next connection
+            hasFiredRef.current = false;
         }
-    }, [isConnected]); // Minimal dependencies to avoid re-triggering
+    }, [isConnected, id, localValue, updateNode, formatValue, serialize]);
 
-    // Handlers
     const handleTitleChange = useCallback((e) => {
         const newTitle = e.target.value;
         setLocalTitle(newTitle);
@@ -82,7 +76,7 @@ export const useValueNode = (id, data, config = {}) => {
     return {
         ...nodeState,
         localValue,
-        setLocalValue, // In case we need raw set
+        setLocalValue,
         updateValue,
         localTitle,
         handleTitleChange,

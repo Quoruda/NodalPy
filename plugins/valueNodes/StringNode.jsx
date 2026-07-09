@@ -1,7 +1,7 @@
-import React, { memo, useState, useEffect, useCallback } from 'react';
+import React, { memo, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { useValueNode } from '../useValueNode.js';
-import '../NodeShell.css'; // Shared styles
+import { useValueNode } from './useValueNode.js';
+import '../../front-editor/src/components/Nodes/NodeShell.css';
 import './StringNode.css';
 
 const StringNode = memo(({ id, data, selected }) => {
@@ -15,8 +15,7 @@ const StringNode = memo(({ id, data, selected }) => {
         matchGroupIndex: 2,
         defaultValue: '',
         defaultTitle: 'String',
-        formatValue: (v) => `"${v.replace(/"/g, '\\"')}"`,
-        // serialze default is output = {v} which works because formatValue returns quoted string
+        formatValue: (v) => `"${v.replace(/"/g, '\\"')}"`
     });
 
     const handleInputChange = useCallback((e) => updateValue(e.target.value), [updateValue]);
@@ -24,10 +23,8 @@ const StringNode = memo(({ id, data, selected }) => {
 
     return (
         <div className={`node-shell string-node ${selected ? 'selected' : ''}`}>
-            {/* Decoration - Green Theme Symbol */}
             <div className="string-decoration">@#?!</div>
 
-            {/* Header with Title */}
             <div className="node-shell-header string-header">
                 <input
                     type="text"

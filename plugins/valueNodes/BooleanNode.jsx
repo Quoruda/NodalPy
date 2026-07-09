@@ -1,7 +1,7 @@
-import React, { memo, useState, useEffect, useCallback } from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { useValueNode } from '../useValueNode.js';
-import '../NodeShell.css';
+import { useValueNode } from './useValueNode.js';
+import '../../front-editor/src/components/Nodes/NodeShell.css';
 import './BooleanNode.css';
 
 const BooleanNode = memo(({ id, data, selected }) => {
@@ -20,13 +20,11 @@ const BooleanNode = memo(({ id, data, selected }) => {
 
     const [isHovered, setIsHovered] = useState(false);
 
-    // Toggle Handler
     const toggleValue = useCallback((e) => {
-        e.stopPropagation(); // Prevent drag
+        e.stopPropagation();
         updateValue(!localValue);
     }, [localValue, updateValue]);
 
-    // Stop propagation
     const stopPropagation = useCallback((e) => e.stopPropagation(), []);
 
     return (
@@ -35,12 +33,10 @@ const BooleanNode = memo(({ id, data, selected }) => {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            {/* Decoration - Static BOOL */}
             <div className={`boolean-decoration`}>
                 BOOL
             </div>
 
-            {/* Header with Title */}
             <div className="node-shell-header boolean-header">
                 <input
                     type="text"
