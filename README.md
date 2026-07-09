@@ -1,6 +1,6 @@
 # NodalPy
 
-![Licence MIT](https://img.shields.io/badge/License-MIT-green.svg)
+![License: Elastic 2.0](https://img.shields.io/badge/License-Elastic_2.0-blue.svg)
 ![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-20-brightgreen.svg)
 ![React](https://img.shields.io/badge/React-18-blue.svg)
@@ -10,6 +10,9 @@
 
 ## Key Features
 
+*   **Zero-Code Dynamic Plugins**: Auto-discovery and loading of backend execution logic and frontend React components.
+*   **Isolated Environments**: Multi-tenant isolation with dedicated per-user Python virtual environments (`.venv`).
+*   **Built-in PackageManager**: Real-time management (search, install, uninstall) of Python libraries at runtime.
 *   **FastNodes**: Automatic and reactive execution. Updates to code or inputs trigger instant recalculation (debounced).
 *   **Custom Nodes**: Designed for heavy tasks or precise control. Execution is triggered manually and is isolated from upstream parents.
 *   **Value Nodes**: Ready-to-use typed inputs including Integer, Float, Boolean, String, and File (supports file uploads and relative paths).
@@ -83,4 +86,5 @@ Contributions are welcome.
 
 ## License
 
-Distributed under the **MIT** license. See the [LICENSE](LICENSE) file for more details.
+Distributed under the **Elastic License 2.0 (ELv2)**. See the [LICENSE](LICENSE) file for more details.
+
