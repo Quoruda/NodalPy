@@ -1,16 +1,14 @@
-
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
-import { useFlowContext } from '../FlowContext.jsx';
-import InputHandle from './CustomNode/InputHandle.jsx';
-import OutputHandle from './CustomNode/OutputHandle.jsx';
-import NodeHeader from './CustomNode/NodeHeader.jsx';
-import './nodes.css';
-import './CustomNode/CustomNode.css';
-import './BaseNode.css';
-import './node_content.css';
+import { useFlowContext } from '../../front-editor/src/components/FlowContext.jsx';
+import InputHandle from '../../front-editor/src/components/Nodes/InputHandle.jsx';
+import OutputHandle from '../../front-editor/src/components/Nodes/OutputHandle.jsx';
+import NodeHeader from './NodeHeader.jsx';
+import '../../front-editor/src/components/Nodes/nodes.css';
+import './ManualNode.css';
+import '../../front-editor/src/components/Nodes/node_content.css';
 
 const BaseNode = ({
     data,
@@ -19,12 +17,10 @@ const BaseNode = ({
     handleSave,
     runCode,
     inputs,
-    setInputs,
-    outputs,
-    setOutputs,
     updateInput,
     removeInput,
     addInput,
+    outputs,
     updateOutput,
     removeOutput,
     addOutput,
@@ -34,12 +30,10 @@ const BaseNode = ({
     const { edges } = useFlowContext();
     const nodeId = data.id;
 
-    // Stop drag propagation when interacting with editor
     const handleEditorMouseDown = useCallback((e) => {
         e.stopPropagation();
     }, []);
 
-    // Connection status calculation
     const connectionStatus = useMemo(() => {
         const nodeEdges = edges.filter(e => e.target === nodeId);
         return inputs.map((_, index) => {
@@ -92,16 +86,6 @@ const BaseNode = ({
                 state={data.state}
                 runCode={runCode}
                 hideState={nodeTypeClass === 'fast-node'}
-                // Pass update logic if needed, or rely on internal implementation
-                // For now, NodeHeader handles its own Autosize, but we need to pass the update function
-                // Actually, BaseNode doesn't have `updateNode` in props... 
-                // Wait, BaseNode relies on parent to pass `data`. 
-                // We need `updateNode` or equivalent to change title.
-                // Let's assume `setTempTitle` was local to BaseNode/CustomNode logic.
-                // We need to pass a callback to update title eventually.
-                // For now, let's keep it simple and assume NodeHeader will take `handleSave` equivalent 
-                // or we pass a `onTitleChange` prop if we refactor BaseNode props.
-                // Re-reading BaseNode props: it has `setTempTitle`.
                 tempTitle={tempTitle}
                 setTempTitle={setTempTitle}
                 handleSave={handleSave}
@@ -129,7 +113,7 @@ const BaseNode = ({
                         <div className="node-content-container" style={{ resize: 'both', overflow: 'auto' }}>
                             <CodeMirror
                                 value={data.code || ''}
-                                height="auto" // Let container control scroll
+                                height="auto"
                                 extensions={[python()]}
                                 onChange={handleCodeChange}
                                 theme={vscodeDark}
@@ -149,7 +133,6 @@ const BaseNode = ({
                         </div>
                     </div>
 
-                    {/* Output Display */}
                     {data.output && (
                         <div className="node-output" style={{ padding: '8px', borderTop: '1px solid #444' }}>
                             <strong>Output:</strong>
@@ -159,7 +142,6 @@ const BaseNode = ({
                         </div>
                     )}
 
-                    {/* Error Display */}
                     {data.error && (
                         <div className="node-error" style={{ padding: '8px', borderTop: '1px solid #ff4444', color: '#ff4444' }}>
                             <strong>Error:</strong>

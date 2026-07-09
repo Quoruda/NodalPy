@@ -30,11 +30,6 @@ export const useNodeFactory = (nodes, setNodes, nodeCount, setNodeCount) => {
                 ...registeredNode.defaultData,
                 title: `${registeredNode.defaultData.title} ${id}`
             };
-        } else if (type === 'CustomNode') {
-            newNode.data.title = 'Manual Node ' + id;
-            newNode.data.code = "output = 'Hello World'";
-            newNode.data.inputs = [{ id: 'in1', name: 'input1' }];
-            newNode.data.outputs = [{ id: 'out1', name: 'output' }];
         }
 
         setNodes((nds) => nds.concat(newNode));

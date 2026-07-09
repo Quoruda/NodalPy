@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 
-
 const NodeHeader = memo(({
     tempTitle,
     setTempTitle,
@@ -9,7 +8,7 @@ const NodeHeader = memo(({
     runCode,
     hideState = false
 }) => (
-    <div className="custom-node-header">
+    <div className="manual-node-header">
         <div className="title-section" style={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
             <input
                 type="text"
@@ -49,7 +48,6 @@ const NodeHeader = memo(({
         </div>
     </div>
 ), (prevProps, nextProps) => {
-    // Fine-grained comparison to avoid useless re-renders
     return prevProps.tempTitle === nextProps.tempTitle &&
         prevProps.state === nextProps.state &&
         prevProps.handleSave === nextProps.handleSave &&

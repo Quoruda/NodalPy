@@ -2,19 +2,18 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import AutosizeInput from 'react-input-autosize';
 
-const OutputHandle = memo(({ output, id, index, isEditing, updateOutput, removeOutput }) => {
+const InputHandle = memo(({ input, id, index, isEditing, updateInput, isConnectable, removeInput }) => {
     const [localEditing, setLocalEditing] = React.useState(false);
     const [hovered, setHovered] = React.useState(false);
-    const [tempValue, setTempValue] = React.useState(output);
+    const [tempValue, setTempValue] = React.useState(input);
 
-    // Combine parent editing state with local
     const isEditMode = isEditing || localEditing;
 
     React.useEffect(() => {
         if (localEditing) {
-            setTempValue(output);
+            setTempValue(input);
         }
-    }, [localEditing, output]);
+    }, [localEditing, input]);
 
     const handleDoubleClick = (e) => {
         e.stopPropagation();
@@ -23,9 +22,9 @@ const OutputHandle = memo(({ output, id, index, isEditing, updateOutput, removeO
 
     const handleBlur = () => {
         if (!tempValue || tempValue.trim() === '') {
-            removeOutput(index);
+            removeInput(index);
         } else {
-            updateOutput(index, tempValue);
+            updateInput(index, tempValue);
             setLocalEditing(false);
         }
     };
@@ -33,9 +32,9 @@ const OutputHandle = memo(({ output, id, index, isEditing, updateOutput, removeO
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             if (!tempValue || tempValue.trim() === '') {
-                removeOutput(index);
+                removeInput(index);
             } else {
-                updateOutput(index, tempValue);
+                updateInput(index, tempValue);
                 setLocalEditing(false);
             }
         }
@@ -47,9 +46,15 @@ const OutputHandle = memo(({ output, id, index, isEditing, updateOutput, removeO
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
         >
+            <Handle
+                type="target"
+                position={Position.Left}
+                id={id}
+                style={{ background: 'blue' }}
+                isConnectable={isConnectable}
+            />
             {isEditMode ? (
                 <span>
-                    <btn onClick={() => removeOutput(index)} style={{ cursor: 'pointer', marginRight: 4 }}>❌</btn>
                     <AutosizeInput
                         value={tempValue}
                         onChange={(e) => setTempValue(e.target.value)}
@@ -57,45 +62,40 @@ const OutputHandle = memo(({ output, id, index, isEditing, updateOutput, removeO
                         onKeyDown={handleKeyDown}
                         className="var-input"
                         inputClassName="nodrag"
-                        placeholder="output"
+                        placeholder="input"
                         autoFocus
                     />
+                    <btn onClick={() => removeInput(index)} style={{ cursor: 'pointer', marginLeft: 4 }}>❌</btn>
                 </span>
             ) : (
                 <span
-                    style={{ marginRight: 8, whiteSpace: 'nowrap', cursor: 'text', opacity: 0.9 }}
+                    style={{ marginLeft: 8, whiteSpace: 'nowrap', cursor: 'text', opacity: 0.9 }}
                     onDoubleClick={handleDoubleClick}
                     title="Double-click to rename"
                 >
+                    {input || <span style={{ color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>(empty)</span>}
                     {hovered && (
                         <span
-                            onClick={(e) => { e.stopPropagation(); removeOutput(index); }}
-                            style={{ marginRight: 6, cursor: 'pointer', fontSize: '10px', color: '#ff6b6b' }}
+                            onClick={(e) => { e.stopPropagation(); removeInput(index); }}
+                            style={{ marginLeft: 6, cursor: 'pointer', fontSize: '10px', color: '#ff6b6b' }}
                             title="Remove"
                         >
                             ✕
                         </span>
                     )}
-                    {output || <span style={{ color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>(empty)</span>}
                 </span>
             )}
-            <Handle
-                type="source"
-                position={Position.Right}
-                id={id}
-                style={{ background: 'red' }}
-                isConnectable={true}
-            />
         </div>
     );
 }, (prevProps, nextProps) => {
     return prevProps.id === nextProps.id &&
-        prevProps.output === nextProps.output &&
+        prevProps.input === nextProps.input &&
         prevProps.index === nextProps.index &&
         prevProps.isEditing === nextProps.isEditing &&
-        prevProps.updateOutput === nextProps.updateOutput;
+        prevProps.isConnectable === nextProps.isConnectable &&
+        prevProps.updateInput === nextProps.updateInput;
 });
 
-OutputHandle.displayName = 'OutputHandle';
+InputHandle.displayName = 'InputHandle';
 
-export default OutputHandle;
+export default InputHandle;

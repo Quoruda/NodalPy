@@ -2,8 +2,8 @@ import React, { memo, useState, useEffect, useCallback, useRef, useMemo } from '
 import { Handle, Position } from '@xyflow/react';
 import { useCodeNode } from '../../front-editor/src/components/Nodes/useCodeNode.js';
 import { useFlowContext } from '../../front-editor/src/components/FlowContext.jsx';
-import InputHandle from '../../front-editor/src/components/Nodes/CustomNode/InputHandle.jsx';
-import OutputHandle from '../../front-editor/src/components/Nodes/CustomNode/OutputHandle.jsx';
+import InputHandle from '../../front-editor/src/components/Nodes/InputHandle.jsx';
+import OutputHandle from '../../front-editor/src/components/Nodes/OutputHandle.jsx';
 import '../../front-editor/src/components/Nodes/NodeShell.css';
 import './FastNode.css';
 import CodeMirror from '@uiw/react-codemirror';
