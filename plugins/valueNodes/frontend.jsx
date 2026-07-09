@@ -76,7 +76,7 @@ uiRegistry.registerDemo("String Processing (Word Counter)", {
             "position": { "x": 500, "y": 150 },
             "data": {
                 "title": "Word Counter",
-                "code": "text = str(output) if output is not None else ''\nword_count = len(text.split())",
+                "code": "word_count = len(output.split())",
                 "inputs": [{ "id": "in-text", "name": "output" }],
                 "outputs": [{ "id": "out-count", "name": "word_count" }]
             }
@@ -116,7 +116,7 @@ uiRegistry.registerDemo("Number Processing (Square)", {
             "position": { "x": 500, "y": 150 },
             "data": {
                 "title": "Square Calculator",
-                "code": "val = float(output) if output is not None else 0.0\nsquare = val ** 2",
+                "code": "square = output ** 2",
                 "inputs": [{ "id": "in-val", "name": "output" }],
                 "outputs": [{ "id": "out-sq", "name": "square" }]
             }
@@ -156,7 +156,7 @@ uiRegistry.registerDemo("Boolean Inverter (NOT Gate)", {
                 "position": { "x": 500, "y": 150 },
                 "data": {
                     "title": "Logic Gate NOT",
-                    "code": "inverted = not bool(output)",
+                    "code": "inverted = not output",
                     "inputs": [{ "id": "in-bool", "name": "output" }],
                     "outputs": [{ "id": "out-inv", "name": "inverted" }]
                 }
