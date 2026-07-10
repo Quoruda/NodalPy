@@ -33,7 +33,6 @@ const defaultEdges = [];
 function Flow() {
     const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
-    const [nodeCount, setNodeCount] = useState(3);
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
     const [serverConfig, setServerConfig] = useState({ debounce: 50, batch_interval: 0 });
@@ -44,8 +43,8 @@ function Flow() {
     const wsUrl = import.meta.env.VITE_WS_URL || "ws://127.0.0.1:8000/ws";
 
     const { wsRef, isConnected, sendMessage } = useWebSocket(wsUrl, setNodes, setServerConfig, (data) => loadProject(data));
-    const { isLoaded, loadProject, saveProjectToFile, loadProjectFromFile } = useProjectPersistence(nodes, edges, setNodes, setEdges, setNodeCount, isConnected, sendMessage);
-    const { addNode } = useNodeFactory(nodes, setNodes, nodeCount, setNodeCount);
+    const { isLoaded, loadProject, saveProjectToFile, loadProjectFromFile } = useProjectPersistence(nodes, edges, setNodes, setEdges, isConnected, sendMessage);
+    const { addNode } = useNodeFactory(nodes, setNodes);
 
     useEffect(() => {
         const handleKeyDown = (event) => {

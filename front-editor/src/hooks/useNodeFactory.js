@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { uiRegistry } from '../core/uiRegistry';
 
-export const useNodeFactory = (nodes, setNodes, nodeCount, setNodeCount) => {
+export const useNodeFactory = (nodes, setNodes) => {
 
     const addNode = useCallback((type, position = null) => {
-        const id = `${nodeCount}`;
+        const id = crypto.randomUUID();
 
         const defaultPos = { x: 250, y: 5 + (nodes.length * 100) };
         const finalPos = position || defaultPos;
@@ -28,13 +28,12 @@ export const useNodeFactory = (nodes, setNodes, nodeCount, setNodeCount) => {
             newNode.data = {
                 ...newNode.data,
                 ...registeredNode.defaultData,
-                title: `${registeredNode.defaultData.title} ${id}`
+                title: `${registeredNode.defaultData.title}`
             };
         }
 
         setNodes((nds) => nds.concat(newNode));
-        setNodeCount((count) => count + 1);
-    }, [nodes, nodeCount, setNodes, setNodeCount]);
+    }, [nodes, setNodes]);
 
     return { addNode };
 };

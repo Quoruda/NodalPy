@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { containsCycle } from '../utils/cycleDetection';
 
-export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeCount, isConnected, sendMessage) => {
+export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnected, sendMessage) => {
     const [isLoaded, setIsLoaded] = useState(false);
     const hasUnsavedChanges = useRef(false);
     const nodesRef = useRef(nodes);
@@ -80,22 +80,15 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
             }));
             setNodes(loadedNodes);
             setEdges(projectData.edges);
-
-            const maxId = projectData.nodes.reduce((max, node) => {
-                const numId = parseInt(node.id);
-                return isNaN(numId) ? max : Math.max(max, numId);
-            }, 0);
-            setNodeCount(maxId + 1);
             
             toast.success("Project loaded from server! 💾✨");
         } else {
             // First time connecting (no saved project on server yet)
             setNodes([]);
             setEdges([]);
-            setNodeCount(0);
         }
         setIsLoaded(true);
-    }, [setNodes, setEdges, setNodeCount]);
+    }, [setNodes, setEdges]);
 
     const saveProjectToFile = useCallback(() => {
         const sanitizedNodes = nodesRef.current.map(node => ({
@@ -135,18 +128,28 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
                         toast.error("Import Failed: Project contains loops!");
                         return;
                     }
-                    const loadedNodes = json.nodes.map(node => ({
-                        ...node,
-                        data: { ...node.data, fromLoad: true }
+                    
+                    const idMapping = {};
+                    const loadedNodes = json.nodes.map(node => {
+                        const newId = crypto.randomUUID();
+                        idMapping[node.id] = newId;
+                        return {
+                            ...node,
+                            id: newId,
+                            data: { ...node.data, fromLoad: true }
+                        };
+                    });
+                    
+                    const loadedEdges = json.edges.map(edge => ({
+                        ...edge,
+                        id: `reactflow__edge-${idMapping[edge.source] || edge.source}-${edge.sourceHandle}-${idMapping[edge.target] || edge.target}-${edge.targetHandle}`,
+                        source: idMapping[edge.source] || edge.source,
+                        target: idMapping[edge.target] || edge.target
                     }));
-                    setNodes(loadedNodes);
-                    setEdges(json.edges);
+                    
+                    setNodes((current) => [...current, ...loadedNodes]);
+                    setEdges((current) => [...current, ...loadedEdges]);
 
-                    const maxId = json.nodes.reduce((max, node) => {
-                        const numId = parseInt(node.id);
-                        return isNaN(numId) ? max : Math.max(max, numId);
-                    }, 0);
-                    setNodeCount(maxId + 1);
                     toast.success("Project imported successfully!");
                 } else {
                     toast.error("Invalid project file format.");
@@ -157,7 +160,7 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, setNodeC
             }
         };
         reader.readAsText(file);
-    }, [setNodes, setEdges, setNodeCount]);
+    }, [setNodes, setEdges]);
 
     return {
         isLoaded,
