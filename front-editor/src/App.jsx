@@ -20,6 +20,8 @@ import { FlowProvider } from './components/FlowContext.jsx';
 import { useWebSocket } from './hooks/useWebSocket.js';
 import { useProjectPersistence } from './hooks/useProjectPersistence.js';
 import { useNodeFactory } from './hooks/useNodeFactory.js';
+import { useHistory } from './hooks/useHistory.js';
+import { useClipboard } from './hooks/useClipboard.js';
 import { toast } from 'react-toastify';
 import { wouldCreateCycle } from './utils/cycleDetection.js';
 import.meta.glob('../../plugins/*/frontend.jsx', { eager: true });
@@ -45,6 +47,32 @@ function Flow() {
     const { wsRef, isConnected, sendMessage } = useWebSocket(wsUrl, setNodes, setServerConfig, (data) => loadProject(data));
     const { isLoaded, loadProject, saveProjectToFile, loadProjectFromFile } = useProjectPersistence(nodes, edges, setNodes, setEdges, isConnected, sendMessage);
     const { addNode } = useNodeFactory(nodes, setNodes);
+
+    const { takeSnapshot } = useHistory(nodes, edges, setNodes, setEdges);
+    useClipboard(nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot);
+
+    const handleNodesChange = useCallback((changes) => {
+        const shouldSnapshot = changes.some(c => 
+            c.type === 'remove' || 
+            c.type === 'add' || 
+            c.type === 'replace'
+        );
+        if (shouldSnapshot) takeSnapshot();
+        onNodesChange(changes);
+    }, [onNodesChange, takeSnapshot]);
+
+    const handleEdgesChange = useCallback((changes) => {
+        const shouldSnapshot = changes.some(c => 
+            c.type === 'remove' || 
+            c.type === 'add'
+        );
+        if (shouldSnapshot) takeSnapshot();
+        onEdgesChange(changes);
+    }, [onEdgesChange, takeSnapshot]);
+
+    const onNodeDragStart = useCallback(() => {
+        takeSnapshot();
+    }, [takeSnapshot]);
 
     useEffect(() => {
         const handleKeyDown = (event) => {
@@ -75,9 +103,10 @@ function Flow() {
                 toast.error("Cycles forbidden! 🚫 Loop detected.");
                 return;
             }
+            takeSnapshot();
             setEdges((eds) => addEdge(params, eds));
         },
-        [setEdges, nodes, edges]
+        [setEdges, nodes, edges, takeSnapshot]
     );
 
     const onSelectionChange = useCallback(({ nodes, edges }) => {
@@ -114,9 +143,10 @@ function Flow() {
                 y: event.clientY,
             });
 
+            takeSnapshot();
             addNode(type, position);
         },
-        [addNode, screenToFlowPosition],
+        [addNode, screenToFlowPosition, takeSnapshot],
     );
 
     const allNodeTypes = useMemo(() => {
@@ -155,8 +185,9 @@ function Flow() {
                         nodes={nodes}
                         edges={styledEdges}
                         onSelectionChange={onSelectionChange}
-                        onNodesChange={onNodesChange}
-                        onEdgesChange={onEdgesChange}
+                        onNodesChange={handleNodesChange}
+                        onEdgesChange={handleEdgesChange}
+                        onNodeDragStart={onNodeDragStart}
                         onConnect={onConnectEdge}
                         nodeTypes={allNodeTypes}
                         edgeTypes={edgeTypes}
