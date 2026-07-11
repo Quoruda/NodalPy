@@ -138,6 +138,19 @@ const FastNode = memo(({ id, data, selected }) => {
         }
     }, [isConnected, id, edges, runCode]);
 
+    const isCodeOpen = data.isCodeOpen !== false;
+    const isLogsOpen = data.isLogsOpen !== false;
+    
+    const toggleCode = useCallback((e) => {
+        e.stopPropagation();
+        updateNode(id, { isCodeOpen: !isCodeOpen });
+    }, [updateNode, id, isCodeOpen]);
+
+    const toggleLogs = useCallback((e) => {
+        e.stopPropagation();
+        updateNode(id, { isLogsOpen: !isLogsOpen });
+    }, [updateNode, id, isLogsOpen]);
+
     const handleTitleChange = useCallback((e) => {
         const newTitle = e.target.value;
         setLocalTitle(newTitle);
@@ -169,28 +182,77 @@ const FastNode = memo(({ id, data, selected }) => {
                     <button className="add-io-btn" onClick={addInput} title="Add Input" style={{ opacity: 0.5 }}>+</button>
                 </div>
 
-                <div className="fast-center" onMouseDown={stopPropagation}>
-                    <div className="code-mirror-wrapper nodrag">
-                        <CodeMirror
-                            value={code}
-                            height="100%"
-                            extensions={[python()]}
-                            onChange={handleCodeChange}
-                            theme={vscodeDark}
-                            basicSetup={{
-                                lineNumbers: true,
-                                foldGutter: true,
-                                dropCursor: true,
-                                allowMultipleSelections: true,
-                                indentOnInput: true,
-                                bracketMatching: true,
-                                closeBrackets: true,
-                                autocompletion: true,
-                                highlightActiveLine: true,
-                                highlightSelectionMatches: true,
-                            }}
-                        />
+                <div className="fast-center" onMouseDown={stopPropagation} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    
+                    {/* --- CODE SECTION --- */}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div 
+                            className="section-toggle nodrag" 
+                            onClick={toggleCode}
+                            style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 8px', cursor: 'pointer', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '11px', userSelect: 'none' }}
+                        >
+                            <span style={{ opacity: 0.7 }}>Code</span>
+                            <span style={{ opacity: 0.5 }}>{isCodeOpen ? '▼' : '▶'}</span>
+                        </div>
+                        
+                        {isCodeOpen && (
+                            <div className="code-mirror-wrapper nodrag" style={{ marginTop: '4px' }}>
+                                <CodeMirror
+                                    value={code}
+                                    height="100%"
+                                    extensions={[python()]}
+                                    onChange={handleCodeChange}
+                                    theme={vscodeDark}
+                                    basicSetup={{
+                                        lineNumbers: true,
+                                        foldGutter: true,
+                                        dropCursor: true,
+                                        allowMultipleSelections: true,
+                                        indentOnInput: true,
+                                        bracketMatching: true,
+                                        closeBrackets: true,
+                                        autocompletion: true,
+                                        highlightActiveLine: true,
+                                        highlightSelectionMatches: true,
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
+
+                    {/* --- LOGS / ERROR SECTION --- */}
+                    {(data.logs || data.error) && (
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div 
+                                className="section-toggle nodrag" 
+                                onClick={toggleLogs}
+                                style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 8px', cursor: 'pointer', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '11px', userSelect: 'none', color: data.error ? '#ff6b6b' : 'inherit' }}
+                            >
+                                <span style={{ opacity: 0.7 }}>{data.error ? 'Error' : 'Output Logs'}</span>
+                                <span style={{ opacity: 0.5 }}>{isLogsOpen ? '▼' : '▶'}</span>
+                            </div>
+                            
+                            {isLogsOpen && (
+                                <>
+                                    {data.logs && !data.error && (
+                                        <div className="node-output nodrag" style={{ padding: '4px 0', cursor: 'text' }}>
+                                            <div className="node-content-container" style={{ maxHeight: '150px', resize: 'vertical', overflow: 'auto' }}>
+                                                <pre style={{ margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap', color: '#a8c7fa' }}>{data.logs}</pre>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {data.error && (
+                                        <div className="node-error nodrag" style={{ padding: '4px 0', cursor: 'text' }}>
+                                            <div className="node-content-container" style={{ maxHeight: '150px', resize: 'vertical', overflow: 'auto', borderColor: '#ff4444' }}>
+                                                <pre style={{ margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap', color: '#ff6b6b' }}>{data.error}</pre>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="fast-outputs">

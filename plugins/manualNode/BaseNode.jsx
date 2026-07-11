@@ -11,6 +11,7 @@ import './ManualNode.css';
 import '../../front-editor/src/components/Nodes/node_content.css';
 
 const BaseNode = ({
+    id,
     data,
     tempTitle,
     setTempTitle,
@@ -25,10 +26,24 @@ const BaseNode = ({
     removeOutput,
     addOutput,
     handleCodeChange,
+    updateNode,
     nodeTypeClass
 }) => {
     const { edges } = useFlowContext();
-    const nodeId = data.id;
+    const nodeId = id || data.id;
+    
+    const isCodeOpen = data.isCodeOpen !== false;
+    const isLogsOpen = data.isLogsOpen !== false;
+    
+    const toggleCode = useCallback((e) => {
+        e.stopPropagation();
+        updateNode(nodeId, { isCodeOpen: !isCodeOpen });
+    }, [updateNode, nodeId, isCodeOpen]);
+
+    const toggleLogs = useCallback((e) => {
+        e.stopPropagation();
+        updateNode(nodeId, { isLogsOpen: !isLogsOpen });
+    }, [updateNode, nodeId, isLogsOpen]);
 
     const handleEditorMouseDown = useCallback((e) => {
         e.stopPropagation();
@@ -108,46 +123,79 @@ const BaseNode = ({
                     <button className="add-io-btn" onClick={addInput} title="Add Input" style={{ opacity: 0.5 }}>+</button>
                 </div>
 
-                <div style={{ flexGrow: 1 }}>
-                    <div className="nodrag" style={{ padding: '8px', cursor: 'text' }} onMouseDown={handleEditorMouseDown}>
-                        <div className="node-content-container" style={{ resize: 'both', overflow: 'auto' }}>
-                            <CodeMirror
-                                value={data.code || ''}
-                                height="auto"
-                                extensions={[python()]}
-                                onChange={handleCodeChange}
-                                theme={vscodeDark}
-                                basicSetup={{
-                                    lineNumbers: true,
-                                    foldGutter: true,
-                                    dropCursor: true,
-                                    allowMultipleSelections: true,
-                                    indentOnInput: true,
-                                    bracketMatching: true,
-                                    closeBrackets: true,
-                                    autocompletion: true,
-                                    highlightActiveLine: true,
-                                    highlightSelectionMatches: true,
-                                }}
-                            />
+                <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    
+                    {/* --- CODE SECTION --- */}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div 
+                            className="section-toggle nodrag" 
+                            onClick={toggleCode}
+                            onMouseDown={handleEditorMouseDown}
+                            style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 8px', cursor: 'pointer', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '11px', userSelect: 'none' }}
+                        >
+                            <span style={{ opacity: 0.7 }}>Code</span>
+                            <span style={{ opacity: 0.5 }}>{isCodeOpen ? '▼' : '▶'}</span>
                         </div>
+                        
+                        {isCodeOpen && (
+                            <div className="nodrag" style={{ padding: '8px 0', cursor: 'text' }} onMouseDown={handleEditorMouseDown}>
+                                <div className="node-content-container" style={{ resize: 'vertical', overflow: 'auto' }}>
+                                    <CodeMirror
+                                        value={data.code || ''}
+                                        height="auto"
+                                        extensions={[python()]}
+                                        onChange={handleCodeChange}
+                                        theme={vscodeDark}
+                                        basicSetup={{
+                                            lineNumbers: true,
+                                            foldGutter: true,
+                                            dropCursor: true,
+                                            allowMultipleSelections: true,
+                                            indentOnInput: true,
+                                            bracketMatching: true,
+                                            closeBrackets: true,
+                                            autocompletion: true,
+                                            highlightActiveLine: true,
+                                            highlightSelectionMatches: true,
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {data.output && (
-                        <div className="node-output" style={{ padding: '8px', borderTop: '1px solid #444' }}>
-                            <strong>Output:</strong>
-                            <div className="node-content-container" style={{ marginTop: '5px', maxHeight: '100px' }}>
-                                <pre style={{ margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap' }}>{data.output}</pre>
+                    {/* --- LOGS / ERROR SECTION --- */}
+                    {(data.logs || data.error) && (
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div 
+                                className="section-toggle nodrag" 
+                                onClick={toggleLogs}
+                                onMouseDown={handleEditorMouseDown}
+                                style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 8px', cursor: 'pointer', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '11px', userSelect: 'none', color: data.error ? '#ff6b6b' : 'inherit' }}
+                            >
+                                <span style={{ opacity: 0.7 }}>{data.error ? 'Error' : 'Output Logs'}</span>
+                                <span style={{ opacity: 0.5 }}>{isLogsOpen ? '▼' : '▶'}</span>
                             </div>
-                        </div>
-                    )}
+                            
+                            {isLogsOpen && (
+                                <>
+                                    {data.logs && !data.error && (
+                                        <div className="node-output nodrag" style={{ padding: '8px 0', cursor: 'text' }} onMouseDown={handleEditorMouseDown}>
+                                            <div className="node-content-container" style={{ maxHeight: '150px', resize: 'vertical', overflow: 'auto' }}>
+                                                <pre style={{ margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap', color: '#a8c7fa' }}>{data.logs}</pre>
+                                            </div>
+                                        </div>
+                                    )}
 
-                    {data.error && (
-                        <div className="node-error" style={{ padding: '8px', borderTop: '1px solid #ff4444', color: '#ff4444' }}>
-                            <strong>Error:</strong>
-                            <div className="node-content-container" style={{ marginTop: '5px', maxHeight: '100px', borderColor: '#ff4444' }}>
-                                <pre style={{ margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap' }}>{data.error}</pre>
-                            </div>
+                                    {data.error && (
+                                        <div className="node-error nodrag" style={{ padding: '8px 0', cursor: 'text' }} onMouseDown={handleEditorMouseDown}>
+                                            <div className="node-content-container" style={{ maxHeight: '150px', resize: 'vertical', overflow: 'auto', borderColor: '#ff4444' }}>
+                                                <pre style={{ margin: 0, fontSize: '11px', whiteSpace: 'pre-wrap', color: '#ff6b6b' }}>{data.error}</pre>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
                     )}
                 </div>

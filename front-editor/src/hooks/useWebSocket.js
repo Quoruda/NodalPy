@@ -245,6 +245,14 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
                             if (msg.status === "finished") {
                                 if (newData.state !== 2) { newData.state = 2; changed = true; }
                                 newData.error = null;
+                                
+                                if (msg.output !== undefined && msg.output !== "") {
+                                    newData.logs = msg.output;
+                                    changed = true;
+                                } else if (newData.logs) {
+                                    newData.logs = null;
+                                    changed = true;
+                                }
 
                                 // Side Effect: Notifications
                                 if (node.type === 'custom') {

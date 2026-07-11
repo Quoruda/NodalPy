@@ -7,6 +7,7 @@ const ManualNode = memo(({ id, data }) => {
 
     return (
         <BaseNode
+            id={id}
             data={data}
             nodeTypeClass="manual-node"
             {...nodeState}
@@ -22,6 +23,9 @@ const ManualNode = memo(({ id, data }) => {
     if (prev.title !== next.title) return false;
     if (prev.state !== next.state) return false;
 
+    if (prev.isCodeOpen !== next.isCodeOpen) return false;
+    if (prev.isLogsOpen !== next.isLogsOpen) return false;
+
     if (prev.inputs !== next.inputs) {
         if (JSON.stringify(prev.inputs) !== JSON.stringify(next.inputs)) return false;
     }
@@ -32,6 +36,7 @@ const ManualNode = memo(({ id, data }) => {
     if (prev.onChange !== next.onChange) return false;
 
     if (prev.output !== next.output) return false;
+    if (prev.logs !== next.logs) return false;
     if (prev.error !== next.error) return false;
 
     return true;
