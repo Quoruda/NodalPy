@@ -5,24 +5,60 @@ export const useClipboard = (nodes, edges, selectedNodes, selectedEdges, setNode
     const onCopy = useCallback(() => {
         if (selectedNodes.length === 0) return;
         
+        const nodesToCopy = [...selectedNodes];
+        const groupIds = selectedNodes.map(n => n.id);
+        
+        nodes.forEach(n => {
+            const isChild = (n.parentId && groupIds.includes(n.parentId)) || 
+                            (n.data?.groupBaseId && groupIds.includes(n.data.groupBaseId));
+            if (isChild) {
+                if (!nodesToCopy.some(copiedNode => copiedNode.id === n.id)) {
+                    nodesToCopy.push(n);
+                }
+            }
+        });
+        
+        const nodeIds = nodesToCopy.map(n => n.id);
+        const edgesToCopy = edges.filter(e => nodeIds.includes(e.source) && nodeIds.includes(e.target));
+        
         const clipboard = {
-            nodes: selectedNodes,
-            edges: selectedEdges,
+            nodes: nodesToCopy,
+            edges: edgesToCopy,
         };
         localStorage.setItem('nodalpy_clipboard', JSON.stringify(clipboard));
-    }, [selectedNodes, selectedEdges]);
+    }, [selectedNodes, nodes, edges]);
 
     const onCut = useCallback(() => {
         if (selectedNodes.length === 0) return;
-        onCopy();
+        
+        const nodesToCut = [...selectedNodes];
+        const groupIds = selectedNodes.map(n => n.id);
+        
+        nodes.forEach(n => {
+            const isChild = (n.parentId && groupIds.includes(n.parentId)) || 
+                            (n.data?.groupBaseId && groupIds.includes(n.data.groupBaseId));
+            if (isChild) {
+                if (!nodesToCut.some(cutNode => cutNode.id === n.id)) {
+                    nodesToCut.push(n);
+                }
+            }
+        });
+        
+        const nodeIds = nodesToCut.map(n => n.id);
+        const edgesToCut = edges.filter(e => nodeIds.includes(e.source) && nodeIds.includes(e.target));
+        
+        const clipboard = {
+            nodes: nodesToCut,
+            edges: edgesToCut,
+        };
+        localStorage.setItem('nodalpy_clipboard', JSON.stringify(clipboard));
         
         if (takeSnapshot) takeSnapshot();
-        const nodeIds = selectedNodes.map(n => n.id);
-        const edgeIds = selectedEdges.map(e => e.id);
         
         setNodes(nds => nds.filter(n => !nodeIds.includes(n.id)));
-        setEdges(eds => eds.filter(e => !edgeIds.includes(e.id)));
-    }, [selectedNodes, selectedEdges, onCopy, setNodes, setEdges, takeSnapshot]);
+        const edgeIdsToCut = edgesToCut.map(e => e.id);
+        setEdges(eds => eds.filter(e => !edgeIdsToCut.includes(e.id)));
+    }, [selectedNodes, nodes, edges, setNodes, setEdges, takeSnapshot]);
 
     const onPaste = useCallback(() => {
         const clipboardStr = localStorage.getItem('nodalpy_clipboard');
@@ -75,7 +111,18 @@ export const useClipboard = (nodes, edges, selectedNodes, selectedEdges, setNode
                 }
             });
             
-            setNodes(nds => nds.map(n => ({ ...n, selected: false })).concat(newNodes));
+            const mappedNodes = newNodes.map(n => {
+                let updatedNode = { ...n };
+                if (updatedNode.parentId && idMap[updatedNode.parentId]) {
+                    updatedNode.parentId = idMap[updatedNode.parentId];
+                }
+                if (updatedNode.data?.groupBaseId && idMap[updatedNode.data.groupBaseId]) {
+                    updatedNode.data = { ...updatedNode.data, groupBaseId: idMap[updatedNode.data.groupBaseId] };
+                }
+                return updatedNode;
+            });
+            
+            setNodes(nds => nds.map(n => ({ ...n, selected: false })).concat(mappedNodes));
             setEdges(eds => eds.map(e => ({ ...e, selected: false })).concat(newEdges));
             
         } catch (err) {
