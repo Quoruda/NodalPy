@@ -8,7 +8,7 @@ const NodePalette = ({ onDragStart }) => {
     const allNodes = [
         ...availableNodes,
         ...uiRegistry.slots.nodeTypes.map(node => node.config)
-    ];
+    ].filter(config => !config.hideFromSidebar);
     return (
         <>
             {allNodes.map((node) => (

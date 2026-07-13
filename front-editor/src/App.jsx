@@ -22,6 +22,7 @@ import { useProjectPersistence } from './hooks/useProjectPersistence.js';
 import { useNodeFactory } from './hooks/useNodeFactory.js';
 import { useHistory } from './hooks/useHistory.js';
 import { useClipboard } from './hooks/useClipboard.js';
+import { usePluginShortcuts } from './hooks/usePluginShortcuts.js';
 import { toast } from 'react-toastify';
 import { wouldCreateCycle } from './utils/cycleDetection.js';
 import.meta.glob('../../plugins/*/frontend.jsx', { eager: true });
@@ -50,22 +51,19 @@ function Flow() {
 
     const { takeSnapshot } = useHistory(nodes, edges, setNodes, setEdges);
     useClipboard(nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot);
+    usePluginShortcuts({ nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot });
 
     const handleNodesChange = useCallback((changes) => {
-        const shouldSnapshot = changes.some(c => 
-            c.type === 'remove' || 
-            c.type === 'add' || 
-            c.type === 'replace'
+        const shouldSnapshot = changes.some(c =>
+            c.type === 'remove' || c.type === 'add' || c.type === 'replace'
         );
         if (shouldSnapshot) takeSnapshot();
         onNodesChange(changes);
+        uiRegistry.fireCallbacks('onNodesChange', changes, contextRef.current);
     }, [onNodesChange, takeSnapshot]);
 
     const handleEdgesChange = useCallback((changes) => {
-        const shouldSnapshot = changes.some(c => 
-            c.type === 'remove' || 
-            c.type === 'add'
-        );
+        const shouldSnapshot = changes.some(c => c.type === 'remove' || c.type === 'add');
         if (shouldSnapshot) takeSnapshot();
         onEdgesChange(changes);
     }, [onEdgesChange, takeSnapshot]);
@@ -74,8 +72,24 @@ function Flow() {
         takeSnapshot();
     }, [takeSnapshot]);
 
+    const contextRef = React.useRef({ nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot });
+    React.useEffect(() => {
+        contextRef.current = { nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot };
+    });
+
+    const onNodeDragStop = useCallback((_event, node) => {
+        uiRegistry.fireCallbacks('onNodeDragStop', _event, node, contextRef.current);
+    }, []);
+
+    const onNodeDrag = useCallback((_event, node) => {
+        uiRegistry.fireCallbacks('onNodeDrag', _event, node, contextRef.current);
+    }, []);
+
     useEffect(() => {
         const handleKeyDown = (event) => {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.closest('.cm-editor') || event.target.closest('.nodrag')) {
+                return;
+            }
             if ((event.ctrlKey || event.metaKey) && event.key === 's') {
                 event.preventDefault();
                 saveProjectToFile();
@@ -188,6 +202,8 @@ function Flow() {
                         onNodesChange={handleNodesChange}
                         onEdgesChange={handleEdgesChange}
                         onNodeDragStart={onNodeDragStart}
+                        onNodeDrag={onNodeDrag}
+                        onNodeDragStop={onNodeDragStop}
                         onConnect={onConnectEdge}
                         nodeTypes={allNodeTypes}
                         edgeTypes={edgeTypes}
