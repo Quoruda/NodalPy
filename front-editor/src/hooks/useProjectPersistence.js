@@ -167,8 +167,8 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
                         target: idMapping[edge.target] || edge.target
                     }));
                     
-                    setNodes((current) => [...current, ...loadedNodes]);
-                    setEdges((current) => [...current, ...loadedEdges]);
+                    setNodes(loadedNodes);
+                    setEdges(loadedEdges);
 
                     toast.success("Project imported successfully!");
                 } else {
