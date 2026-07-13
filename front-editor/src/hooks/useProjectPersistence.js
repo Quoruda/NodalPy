@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { containsCycle } from '../utils/cycleDetection';
+import { uiRegistry } from '../core/uiRegistry';
+
+const isValidType = (type) => {
+    if (type === 'custom' || type === 'missingPlugin') return true;
+    return uiRegistry.slots.nodeTypes.some(p => p.type === type);
+};
 
 export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnected, sendMessage) => {
     const [isLoaded, setIsLoaded] = useState(false);
@@ -74,10 +80,18 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
                 return;
             }
 
-            const loadedNodes = projectData.nodes.map(node => ({
-                ...node,
-                data: { ...node.data, fromLoad: true }
-            }));
+            const loadedNodes = projectData.nodes.map(node => {
+                const isValid = isValidType(node.type);
+                return {
+                    ...node,
+                    type: isValid ? node.type : 'missingPlugin',
+                    data: { 
+                        ...node.data, 
+                        fromLoad: true,
+                        missingType: isValid ? undefined : node.type 
+                    }
+                };
+            });
             setNodes(loadedNodes);
             setEdges(projectData.edges);
             
@@ -133,10 +147,16 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
                     const loadedNodes = json.nodes.map(node => {
                         const newId = crypto.randomUUID();
                         idMapping[node.id] = newId;
+                        const isValid = isValidType(node.type);
                         return {
                             ...node,
                             id: newId,
-                            data: { ...node.data, fromLoad: true }
+                            type: isValid ? node.type : 'missingPlugin',
+                            data: { 
+                                ...node.data, 
+                                fromLoad: true,
+                                missingType: isValid ? undefined : node.type 
+                            }
                         };
                     });
                     

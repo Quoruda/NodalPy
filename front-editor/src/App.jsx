@@ -14,6 +14,7 @@ import '@xyflow/react/dist/style.css';
 import './App.css';
 
 import { NodeTypes } from './components/Nodes/NodeTypes.jsx';
+import MissingPluginNode from './components/Nodes/MissingPluginNode.jsx';
 import Sidebar from './components/Sidebar/Sidebar.jsx';
 import { availableNodes } from './components/Nodes/nodeConfig';
 import { FlowProvider } from './components/FlowContext.jsx';
@@ -164,7 +165,10 @@ function Flow() {
     );
 
     const allNodeTypes = useMemo(() => {
-        const types = { ...NodeTypes };
+        const types = { 
+            ...NodeTypes,
+            missingPlugin: MissingPluginNode 
+        };
         uiRegistry.slots.nodeTypes.forEach(n => {
             types[n.type] = n.component;
         });
