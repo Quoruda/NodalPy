@@ -158,6 +158,18 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
             console.log("❌ WebSocket closed", event.code, event.reason);
             setIsConnected(false);
 
+            if (event.code === 1008) {
+                console.log("🛑 Connection closed by server due to conflict (another tab opened).");
+                isManualCloseRef.current = true;
+                toast.error("Session disconnected. You have NodalPy open in another tab.", {
+                    toastId: "ws_conflict",
+                    autoClose: false,
+                    closeOnClick: false,
+                    draggable: false
+                });
+                return;
+            }
+
             if (!isManualCloseRef.current) {
                 scheduleReconnectRef.current();
             }
