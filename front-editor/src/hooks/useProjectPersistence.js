@@ -139,10 +139,22 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
                     }
                     
                     const idMapping = {};
+                    
+                    // First pass: generate new IDs for all nodes
+                    json.nodes.forEach(node => {
+                        idMapping[node.id] = crypto.randomUUID();
+                    });
+
                     const loadedNodes = json.nodes.map(node => {
-                        const newId = crypto.randomUUID();
-                        idMapping[node.id] = newId;
+                        const newId = idMapping[node.id];
                         const isValid = isValidType(node.type);
+                        
+                        // Map groupBaseId to new ID if it exists in the project
+                        let newGroupBaseId = node.data?.groupBaseId;
+                        if (newGroupBaseId && idMapping[newGroupBaseId]) {
+                            newGroupBaseId = idMapping[newGroupBaseId];
+                        }
+
                         return {
                             ...node,
                             id: newId,
@@ -150,7 +162,8 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
                             data: { 
                                 ...node.data, 
                                 fromLoad: true,
-                                missingType: isValid ? undefined : node.type 
+                                missingType: isValid ? undefined : node.type,
+                                groupBaseId: newGroupBaseId
                             }
                         };
                     });
