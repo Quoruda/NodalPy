@@ -9,7 +9,6 @@ const isGroupNode = (type) => {
     return plugin?.config?.isGroupComponent || false;
 };
 
-
 const PADDING = 40;
 const TITLE_HEIGHT = 36;
 
@@ -31,7 +30,6 @@ function getChildrenBounds(children) {
     });
     return { minX, minY, maxX, maxY };
 }
-
 
 const GroupNode = memo(({ id, data, selected }) => {
     const { updateNode } = useFlowContext();
@@ -86,7 +84,6 @@ const GroupNode = memo(({ id, data, selected }) => {
 
 GroupNode.displayName = 'GroupNode';
 export default GroupNode;
-
 
 uiRegistry.registerNodeType({
     type: 'groupNode',
