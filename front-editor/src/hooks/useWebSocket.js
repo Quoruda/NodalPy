@@ -12,6 +12,7 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
     const onProjectLoadedRef = useRef(onProjectLoaded);
     const connectRef = useRef(null);
     const scheduleReconnectRef = useRef(null);
+    const frontVersionRef = useRef(null);
 
     const WEBSOCKET_ERROR_TOAST_ID = "websocket-error";
     const WEBSOCKET_RECONNECTING_TOAST_ID = "websocket-reconnecting";
@@ -210,6 +211,20 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
                             });
                         }
                         setServerConfigRef.current(msg.config);
+                        
+                        if (msg.front_version) {
+                            if (frontVersionRef.current === null) {
+                                frontVersionRef.current = msg.front_version;
+                            } else if (frontVersionRef.current !== msg.front_version) {
+                                console.log("New frontend version detected. Reloading page...");
+                                toast.info("New update available! Reloading the page...", {
+                                    autoClose: 1500,
+                                    onClose: () => window.location.reload()
+                                });
+                                // Stop processing further messages
+                                return;
+                            }
+                        }
                     }
                 } else if (msg.action === "load_project") {
                     if (msg.status === "success" && msg.project_data) {

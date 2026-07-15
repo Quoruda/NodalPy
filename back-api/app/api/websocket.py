@@ -11,6 +11,28 @@ from ..core.node_registry import node_registry
 import app.api.websocket_actions
 import importlib
 import plugins
+import re
+
+FRONTEND_VERSION = "dev"
+def _load_frontend_version():
+    global FRONTEND_VERSION
+    paths = [
+        os.path.join("/app/front/index.html"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "front-editor", "dist", "index.html")
+    ]
+    for index_path in paths:
+        if os.path.exists(index_path):
+            try:
+                with open(index_path, "r", encoding="utf-8") as f:
+                    html = f.read()
+                    match = re.search(r'src="/assets/index-(.*?)\.js"', html)
+                    if match:
+                        FRONTEND_VERSION = match.group(1)
+                        return
+            except Exception:
+                pass
+
+_load_frontend_version()
 
 plugins_path = plugins.__path__[0] if hasattr(plugins, "__path__") else os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "plugins")
 if os.path.exists(plugins_path):
@@ -91,6 +113,7 @@ class UserWebSocket:
             await self.websocket.send_json({
                 "action": "login", 
                 "status": "success",
+                "front_version": FRONTEND_VERSION,
                 "config": {
                     "debounce": EXECUTION_DEBOUNCE,
                     "batch_interval": WS_BATCH_INTERVAL,
