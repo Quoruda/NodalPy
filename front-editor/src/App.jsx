@@ -3,7 +3,6 @@ import {
     ReactFlow,
     useNodesState,
     useEdgesState,
-    addEdge,
     Controls,
     MiniMap,
     Background,
@@ -23,9 +22,8 @@ import { useProjectPersistence } from './hooks/useProjectPersistence.js';
 import { useNodeFactory } from './hooks/useNodeFactory.js';
 import { useHistory } from './hooks/useHistory.js';
 import { useClipboard } from './hooks/useClipboard.js';
-import { usePluginShortcuts } from './hooks/usePluginShortcuts.js';
-import { toast } from 'react-toastify';
-import { wouldCreateCycle } from './utils/cycleDetection.js';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts.js';
+import { useFlowEvents } from './hooks/useFlowEvents.js';
 import './core/pluginLoader.js';
 import { uiRegistry } from './core/uiRegistry';
 
@@ -52,53 +50,30 @@ function Flow() {
 
     const { takeSnapshot } = useHistory(nodes, edges, setNodes, setEdges);
     useClipboard(nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot);
-    usePluginShortcuts({ nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot });
+    useKeyboardShortcuts(
+        { nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot },
+        { saveProjectToFile }
+    );
 
-    const handleNodesChange = useCallback((changes) => {
-        const shouldSnapshot = changes.some(c =>
-            c.type === 'remove' || c.type === 'add' || c.type === 'replace'
-        );
-        if (shouldSnapshot) takeSnapshot();
-        onNodesChange(changes);
-        uiRegistry.fireCallbacks('onNodesChange', changes, contextRef.current);
-    }, [onNodesChange, takeSnapshot]);
-
-    const handleEdgesChange = useCallback((changes) => {
-        const shouldSnapshot = changes.some(c => c.type === 'remove' || c.type === 'add');
-        if (shouldSnapshot) takeSnapshot();
-        onEdgesChange(changes);
-    }, [onEdgesChange, takeSnapshot]);
-
-    const onNodeDragStart = useCallback(() => {
-        takeSnapshot();
-    }, [takeSnapshot]);
-
-    const contextRef = React.useRef({ nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot });
-    React.useEffect(() => {
-        contextRef.current = { nodes, edges, selectedNodes, selectedEdges, setNodes, setEdges, takeSnapshot };
+    const {
+        handleNodesChange,
+        handleEdgesChange,
+        onNodeDragStart,
+        onNodeDragStop,
+        onNodeDrag,
+        onConnectEdge,
+        onSelectionChange,
+        onDragOver,
+        onDrop
+    } = useFlowEvents({
+        nodes, edges, selectedNodes, selectedEdges,
+        setNodes, setEdges,
+        onNodesChange, onEdgesChange,
+        takeSnapshot,
+        addNode,
+        screenToFlowPosition,
+        setSelectedNodes, setSelectedEdges
     });
-
-    const onNodeDragStop = useCallback((_event, node) => {
-        uiRegistry.fireCallbacks('onNodeDragStop', _event, node, contextRef.current);
-    }, []);
-
-    const onNodeDrag = useCallback((_event, node) => {
-        uiRegistry.fireCallbacks('onNodeDrag', _event, node, contextRef.current);
-    }, []);
-
-    useEffect(() => {
-        const handleKeyDown = (event) => {
-            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.closest('.cm-editor') || event.target.closest('.nodrag')) {
-                return;
-            }
-            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-                event.preventDefault();
-                saveProjectToFile();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [saveProjectToFile]);
 
     const handleImportClick = () => {
         document.getElementById('loading-file-input').click();
@@ -112,23 +87,6 @@ function Flow() {
         event.target.value = '';
     };
 
-    const onConnectEdge = useCallback(
-        (params) => {
-            if (wouldCreateCycle(nodes, edges, params)) {
-                toast.error("Cycles forbidden! 🚫 Loop detected.");
-                return;
-            }
-            takeSnapshot();
-            setEdges((eds) => addEdge(params, eds));
-        },
-        [setEdges, nodes, edges, takeSnapshot]
-    );
-
-    const onSelectionChange = useCallback(({ nodes, edges }) => {
-        setSelectedNodes(nodes || []);
-        setSelectedEdges(edges || []);
-    }, []);
-
     const styledEdges = useMemo(() =>
         edges.map((edge) => ({
             ...edge,
@@ -138,31 +96,6 @@ function Flow() {
             },
         }))
         , [edges, selectedEdges]);
-
-    const onDragOver = useCallback((event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-    }, []);
-
-    const onDrop = useCallback(
-        (event) => {
-            event.preventDefault();
-            const type = event.dataTransfer.getData('application/reactflow');
-
-            if (typeof type === 'undefined' || !type) {
-                return;
-            }
-
-            const position = screenToFlowPosition({
-                x: event.clientX,
-                y: event.clientY,
-            });
-
-            takeSnapshot();
-            addNode(type, position);
-        },
-        [addNode, screenToFlowPosition, takeSnapshot],
-    );
 
     const allNodeTypes = useMemo(() => {
         const types = { 
