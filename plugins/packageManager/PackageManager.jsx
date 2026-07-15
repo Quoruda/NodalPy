@@ -48,10 +48,21 @@ const PackageManager = ({ sendMessage }) => {
             setShowLogs(true);
         };
 
+        const handleReset = (e) => {
+            setActionRunning(false);
+            if (e.detail.status === 'success') {
+                toast.success("Environment reset successfully!");
+                sendMessage({ action: 'package_manager:list' });
+            } else if (e.detail.status === 'error') {
+                toast.error(`Reset failed: ${e.detail.error}`);
+            }
+        };
+
         window.addEventListener('ws_package_manager:list', handleList);
         window.addEventListener('ws_package_manager:install', handleInstall);
         window.addEventListener('ws_package_manager:uninstall', handleUninstall);
         window.addEventListener('ws_package_manager:log', handleLog);
+        window.addEventListener('ws_package_manager:reset', handleReset);
 
         setLoading(true);
         sendMessage({ action: 'package_manager:list' });
@@ -61,6 +72,7 @@ const PackageManager = ({ sendMessage }) => {
             window.removeEventListener('ws_package_manager:install', handleInstall);
             window.removeEventListener('ws_package_manager:uninstall', handleUninstall);
             window.removeEventListener('ws_package_manager:log', handleLog);
+            window.removeEventListener('ws_package_manager:reset', handleReset);
         };
     }, [sendMessage]);
 
@@ -90,6 +102,17 @@ const PackageManager = ({ sendMessage }) => {
         });
     };
 
+    const handleResetClick = () => {
+        if (actionRunning) return;
+        if (window.confirm("Are you sure you want to reset the entire Python environment? All installed packages will be deleted.")) {
+            setLogs([]);
+            setActionRunning(true);
+            sendMessage({
+                action: 'package_manager:reset'
+            });
+        }
+    };
+
     const filteredPackages = packages.filter((pkg) =>
         pkg.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -97,7 +120,18 @@ const PackageManager = ({ sendMessage }) => {
     return (
         <div className="pkg-manager-container">
             <div className="pkg-header">
-                <div className="pkg-title">📦 Python Packages</div>
+                <div className="pkg-title">
+                    📦 Python Packages
+                    <button 
+                        className="pkg-btn-reset" 
+                        onClick={handleResetClick} 
+                        disabled={actionRunning}
+                        title="Reset Python Environment"
+                        style={{ marginLeft: '10px', fontSize: '12px', padding: '4px 8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                        Reset Env
+                    </button>
+                </div>
                 <div className="pkg-install-box">
                     <input
                         type="text"

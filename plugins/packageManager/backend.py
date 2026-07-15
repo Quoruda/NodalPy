@@ -1,4 +1,5 @@
 import os
+import shutil
 import asyncio
 import json
 import venv
@@ -146,6 +147,24 @@ async def handle_uninstall_package(session, data: dict):
     except Exception as e:
         await session.websocket.send_json({
             "action": "package_manager:uninstall",
+            "status": "error",
+            "error": str(e)
+        })
+
+@ws_registry.register("package_manager:reset")
+async def handle_reset_env(session, data: dict):
+    venv_dir = os.path.join(session.user.local_storage_dir, ".venv")
+    try:
+        if os.path.exists(venv_dir):
+            shutil.rmtree(venv_dir)
+        ensure_venv(session.user.local_storage_dir)
+        await session.websocket.send_json({
+            "action": "package_manager:reset",
+            "status": "success"
+        })
+    except Exception as e:
+        await session.websocket.send_json({
+            "action": "package_manager:reset",
             "status": "error",
             "error": str(e)
         })
