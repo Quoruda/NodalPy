@@ -1,0 +1,291 @@
+.project-tabs-bar {
+    display: flex;
+    align-items: stretch;
+    background: rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    height: 36px;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.project-tabs-scroll {
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    flex: 1;
+    scrollbar-width: none;
+}
+
+.project-tabs-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.project-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    min-width: 100px;
+    max-width: 200px;
+    cursor: pointer;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
+    transition: background 0.15s;
+    position: relative;
+    white-space: nowrap;
+}
+
+.project-tab:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.project-tab.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid var(--color-accent, #a78bfa);
+}
+
+.project-tab-icon {
+    font-size: 12px;
+    flex-shrink: 0;
+    opacity: 0.6;
+}
+
+.project-tab-name {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.75);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.02em;
+}
+
+.project-tab.active .project-tab-name {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+}
+
+.project-tab-edit {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    color: #fff;
+    font-size: 12px;
+    padding: 2px 4px;
+    width: 100%;
+    outline: none;
+}
+
+.project-tab-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.project-tab:hover .project-tab-close {
+    opacity: 1;
+}
+
+.project-tab-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.project-tabs-actions {
+    display: flex;
+    align-items: stretch;
+    position: relative;
+}
+
+.project-tab-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.project-tab-add:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+/* Project Picker Dropdown */
+.project-picker {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 220px;
+    background: #1e1e2e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    padding: 4px;
+    animation: pickerFadeIn 0.12s ease-out;
+}
+
+@keyframes pickerFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.project-picker button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.project-picker button:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.project-picker-new {
+    font-weight: 500;
+}
+
+.project-picker-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 8px;
+}
+
+.project-picker-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    padding: 4px 12px 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Context Menu */
+.project-tab-context-menu {
+    position: fixed;
+    min-width: 160px;
+    background: #1e1e2e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    padding: 4px;
+    animation: pickerFadeIn 0.1s ease-out;
+}
+
+.project-tab-context-menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.project-tab-context-menu button:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.project-tab-context-menu button.danger {
+    color: #ef4444;
+}
+
+.project-tab-context-menu button.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Delete Confirmation Dialog */
+.project-delete-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    animation: pickerFadeIn 0.15s ease-out;
+}
+
+.project-delete-dialog {
+    background: #1e1e2e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 24px;
+    min-width: 320px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+.project-delete-dialog p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.project-delete-warning {
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-size: 12px !important;
+    margin-top: 6px !important;
+}
+
+.project-delete-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.project-delete-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.project-delete-actions button:first-child {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.project-delete-actions button:first-child:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.project-delete-actions button.danger {
+    background: #ef4444;
+    color: #fff;
+}
+
+.project-delete-actions button.danger:hover {
+    background: #dc2626;
+}

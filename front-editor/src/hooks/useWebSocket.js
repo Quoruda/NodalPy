@@ -3,14 +3,13 @@ import { toast } from "react-toastify";
 import { processSystemMessage, processNodeMessages } from './wsMessageProcessors';
 
 // Dedicated and reusable WebSocket hook with auto-reconnection
-export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) => {
+export const useWebSocket = (url, setNodes, setServerConfig) => {
     const wsRef = useRef(null);
     const reconnectAttemptsRef = useRef(0);
     const reconnectTimeoutRef = useRef(null);
     const isManualCloseRef = useRef(false);
     const setNodesRef = useRef(setNodes);
     const setServerConfigRef = useRef(setServerConfig);
-    const onProjectLoadedRef = useRef(onProjectLoaded);
     const connectRef = useRef(null);
     const scheduleReconnectRef = useRef(null);
     const frontVersionRef = useRef(null);
@@ -31,8 +30,7 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
     useEffect(() => {
         setNodesRef.current = setNodes;
         setServerConfigRef.current = setServerConfig;
-        onProjectLoadedRef.current = onProjectLoaded;
-    }, [setNodes, setServerConfig, onProjectLoaded]);
+    }, [setNodes, setServerConfig]);
 
     const getReconnectDelay = useCallback((attemptNumber) => {
         if (attemptNumber <= 10) {
@@ -193,7 +191,7 @@ export const useWebSocket = (url, setNodes, setServerConfig, onProjectLoaded) =>
 
             messages.forEach(msg => {
                 window.dispatchEvent(new CustomEvent(`ws_${msg.action}`, { detail: msg }));
-                processSystemMessage(msg, setServerConfigRef, frontVersionRef, onProjectLoadedRef);
+                processSystemMessage(msg, setServerConfigRef, frontVersionRef);
             });
 
             // Filter messages for node updates

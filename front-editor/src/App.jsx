@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     ReactFlow,
     useNodesState,
@@ -15,6 +15,7 @@ import './App.css';
 import { NodeTypes } from './components/Nodes/NodeTypes.jsx';
 import MissingPluginNode from './components/Nodes/MissingPluginNode.jsx';
 import Sidebar from './components/Sidebar/Sidebar.jsx';
+import ProjectTabs from './components/ProjectTabs/ProjectTabs.jsx';
 import { availableNodes } from './components/Nodes/nodeConfig';
 import { FlowProvider } from './components/FlowContext.jsx';
 import { useWebSocket } from './hooks/useWebSocket.js';
@@ -44,8 +45,21 @@ function Flow() {
 
     const wsUrl = import.meta.env.VITE_WS_URL || "ws://127.0.0.1:8000/ws";
 
-    const { wsRef, isConnected, sendMessage } = useWebSocket(wsUrl, setNodes, setServerConfig, (data) => loadProject(data));
-    const { isLoaded, loadProject, saveProjectToFile, loadProjectFromFile } = useProjectPersistence(nodes, edges, setNodes, setEdges, isConnected, sendMessage);
+    const { wsRef, isConnected, sendMessage } = useWebSocket(wsUrl, setNodes, setServerConfig);
+    const {
+        isLoaded,
+        openTabs,
+        activeProjectId,
+        allProjects,
+        switchToProject,
+        openProject,
+        closeTab,
+        createProject,
+        deleteProject,
+        renameProject,
+        saveProjectToFile,
+        loadProjectFromFile
+    } = useProjectPersistence(nodes, edges, setNodes, setEdges, isConnected, sendMessage);
     const { addNode } = useNodeFactory(nodes, setNodes);
 
     const { takeSnapshot } = useHistory(nodes, edges, setNodes, setEdges);
@@ -116,52 +130,65 @@ function Flow() {
         <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef} sendMessage={sendMessage} isConnected={isConnected} serverConfig={serverConfig} setServerConfig={setServerConfig}>
             <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
                 <Sidebar
-                    onLoadDemo={loadProject}
                     onImport={handleImportClick}
                     onExport={saveProjectToFile}
+                    onNewProject={createProject}
                     isConnected={isConnected}
                     sendMessage={sendMessage}
                     sidebarView={sidebarView}
                     setSidebarView={setSidebarView}
                 />
-                <div style={{ flex: 1, height: '100vh', position: 'relative' }} onDrop={onDrop} onDragOver={onDragOver}>
-                    <input
-                        type="file"
-                        accept=".json"
-                        onChange={handleFileLoad}
-                        style={{ display: 'none' }}
-                        id="loading-file-input"
+                <div style={{ flex: 1, height: '100vh', display: 'flex', flexDirection: 'column' }}>
+                    <ProjectTabs
+                        openTabs={openTabs}
+                        activeProjectId={activeProjectId}
+                        onSwitchTab={switchToProject}
+                        onCloseTab={closeTab}
+                        onCreateProject={createProject}
+                        onDeleteProject={deleteProject}
+                        onRenameProject={renameProject}
+                        allProjects={allProjects}
+                        onOpenProject={openProject}
                     />
-                    <ReactFlow
-                        nodes={nodes}
-                        edges={styledEdges}
-                        onSelectionChange={onSelectionChange}
-                        onNodesChange={handleNodesChange}
-                        onEdgesChange={handleEdgesChange}
-                        onNodeDragStart={onNodeDragStart}
-                        onNodeDrag={onNodeDrag}
-                        onNodeDragStop={onNodeDragStop}
-                        onConnect={onConnectEdge}
-                        nodeTypes={allNodeTypes}
-                        edgeTypes={edgeTypes}
-                        defaultEdgeOptions={{ type: 'default' }}
-                        nodeOrigin={[0.5, 0.5]}
-                        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                    >
-                        <Background variant="dots" gap={16} size={1} />
-                        <MiniMap
-                            nodeColor={(n) => {
-                                const allConfigs = [
-                                    ...availableNodes,
-                                    ...uiRegistry.slots.nodeTypes.map(node => node.config)
-                                ];
-                                const config = allConfigs.find(node => node.type === n.type);
-                                return config ? config.color : '#aaa';
-                            }}
-                            position="bottom-left"
+                    <div style={{ flex: 1, position: 'relative' }} onDrop={onDrop} onDragOver={onDragOver}>
+                        <input
+                            type="file"
+                            accept=".json"
+                            onChange={handleFileLoad}
+                            style={{ display: 'none' }}
+                            id="loading-file-input"
                         />
-                        <Controls position="bottom-left" />
-                    </ReactFlow>
+                        <ReactFlow
+                            nodes={nodes}
+                            edges={styledEdges}
+                            onSelectionChange={onSelectionChange}
+                            onNodesChange={handleNodesChange}
+                            onEdgesChange={handleEdgesChange}
+                            onNodeDragStart={onNodeDragStart}
+                            onNodeDrag={onNodeDrag}
+                            onNodeDragStop={onNodeDragStop}
+                            onConnect={onConnectEdge}
+                            nodeTypes={allNodeTypes}
+                            edgeTypes={edgeTypes}
+                            defaultEdgeOptions={{ type: 'default' }}
+                            nodeOrigin={[0.5, 0.5]}
+                            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                        >
+                            <Background variant="dots" gap={16} size={1} />
+                            <MiniMap
+                                nodeColor={(n) => {
+                                    const allConfigs = [
+                                        ...availableNodes,
+                                        ...uiRegistry.slots.nodeTypes.map(node => node.config)
+                                    ];
+                                    const config = allConfigs.find(node => node.type === n.type);
+                                    return config ? config.color : '#aaa';
+                                }}
+                                position="bottom-left"
+                            />
+                            <Controls position="bottom-left" />
+                        </ReactFlow>
+                    </div>
                 </div>
             </div>
         </FlowProvider>

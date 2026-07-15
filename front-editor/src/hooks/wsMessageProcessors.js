@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 
-export const processSystemMessage = (msg, setServerConfigRef, frontVersionRef, onProjectLoadedRef) => {
+export const processSystemMessage = (msg, setServerConfigRef, frontVersionRef) => {
     if (msg.action === "login") {
         if (msg.status === "preparing") {
             toast.loading(msg.message || "Initializing Python environment...", {
@@ -33,20 +33,6 @@ export const processSystemMessage = (msg, setServerConfigRef, frontVersionRef, o
                     return;
                 }
             }
-        }
-    } else if (msg.action === "load_project") {
-        if (msg.status === "success" && msg.project_data) {
-            onProjectLoadedRef.current?.(msg.project_data);
-        } else if (msg.status === "empty") {
-            onProjectLoadedRef.current?.({});
-        } else if (msg.status === "error") {
-            toast.error(`Failed to load project: ${msg.error}`);
-        }
-    } else if (msg.action === "save_project") {
-        if (msg.status === "success") {
-            console.log("Project auto-saved to backend successfully.");
-        } else if (msg.status === "error") {
-            toast.error(`Failed to save project: ${msg.error}`);
         }
     } else if (msg.action === "fs_list") {
         if (msg.status === "success") {

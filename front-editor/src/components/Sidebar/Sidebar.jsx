@@ -35,18 +35,13 @@ uiRegistry.registerSidebarTab({
     component: NodePalette
 });
 
-const Sidebar = ({ onLoadDemo, onImport, onExport, isConnected, sendMessage, sidebarView, setSidebarView }) => {
+const Sidebar = ({ onImport, onExport, onNewProject, isConnected, sendMessage, sidebarView, setSidebarView }) => {
     const [isFileOpen, setIsFileOpen] = React.useState(false);
     const [isViewOpen, setIsViewOpen] = React.useState(false);
 
     const onDragStart = (event, nodeType) => {
         event.dataTransfer.setData('application/reactflow', nodeType);
         event.dataTransfer.effectAllowed = 'move';
-    };
-
-    const allDemos = {
-        ...demos,
-        ...uiRegistry.slots.demos
     };
 
     return (
@@ -61,24 +56,15 @@ const Sidebar = ({ onLoadDemo, onImport, onExport, isConnected, sendMessage, sid
                     <span className="menu-label">File</span>
                     {isFileOpen && (
                         <div className="floating-menu">
+                            <button onClick={() => { onNewProject(); setIsFileOpen(false); }}>
+                                ✨ New Project
+                            </button>
                             <button onClick={() => { onImport(); setIsFileOpen(false); }}>
-                                Import Project (.json)
+                                📂 Import Project (.json)
                             </button>
                             <button onClick={() => { onExport(); setIsFileOpen(false); }}>
-                                Export Project (.json)
+                                💾 Export Project (.json)
                             </button>
-                            <div className="submenu-container">
-                                <button className="submenu-trigger">
-                                    Demos & Examples ▶
-                                </button>
-                                <div className="floating-submenu">
-                                    {Object.keys(allDemos).map(demoName => (
-                                        <button key={demoName} onClick={() => { onLoadDemo(allDemos[demoName]); setIsFileOpen(false); }}>
-                                            {demoName}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
                         </div>
                     )}
                 </div>
