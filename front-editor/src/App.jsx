@@ -26,7 +26,7 @@ import { useClipboard } from './hooks/useClipboard.js';
 import { usePluginShortcuts } from './hooks/usePluginShortcuts.js';
 import { toast } from 'react-toastify';
 import { wouldCreateCycle } from './utils/cycleDetection.js';
-import.meta.glob('../../plugins/*/frontend.jsx', { eager: true });
+import './core/pluginLoader.js';
 import { uiRegistry } from './core/uiRegistry';
 
 const edgeTypes = {};
