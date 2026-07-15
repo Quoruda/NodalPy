@@ -19,14 +19,7 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
         edgesRef.current = edges;
     }, [nodes, edges]);
 
-    // Send load request when connection is established
-    useEffect(() => {
-        if (isConnected) {
-            sendMessage({ action: "load_project" });
-        } else {
-            setIsLoaded(false);
-        }
-    }, [isConnected, sendMessage]);
+
 
     const saveProjectToBackend = useCallback(() => {
         if (!isLoaded || !isConnected) return;
@@ -52,6 +45,18 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
             project_data: { nodes: sanitizedNodes, edges: edgesRef.current }
         });
     }, [isLoaded, isConnected, sendMessage]);
+
+    // Send load request on initial connection, or sync on reconnect
+    useEffect(() => {
+        if (isConnected) {
+            if (!isLoaded) {
+                sendMessage({ action: "load_project" });
+            } else if (hasUnsavedChanges.current) {
+                saveProjectToBackend();
+                hasUnsavedChanges.current = false;
+            }
+        }
+    }, [isConnected, isLoaded, sendMessage, saveProjectToBackend]);
 
     // Track changes to trigger auto-save
     useEffect(() => {
