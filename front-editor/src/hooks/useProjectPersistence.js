@@ -8,6 +8,23 @@ const isValidType = (type) => {
     return uiRegistry.slots.nodeTypes.some(p => p.type === type);
 };
 
+const sanitizeNodes = (nodes) => {
+    return nodes.map(node => ({
+        ...node,
+        data: {
+            ...node.data,
+            output: undefined,
+            error: undefined,
+            state: 0,
+            outputs: node.data.outputs ? node.data.outputs.map(out => ({
+                ...out,
+                value: undefined,
+                type: undefined
+            })) : undefined
+        }
+    }));
+};
+
 export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnected, sendMessage) => {
     const [isLoaded, setIsLoaded] = useState(false);
     const hasUnsavedChanges = useRef(false);
@@ -24,21 +41,7 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
     const saveProjectToBackend = useCallback(() => {
         if (!isLoaded || !isConnected) return;
 
-        // Sanitize nodes to remove heavy execution data (output, error)
-        const sanitizedNodes = nodesRef.current.map(node => ({
-            ...node,
-            data: {
-                ...node.data,
-                output: undefined,
-                error: undefined,
-                state: 0,
-                outputs: node.data.outputs ? node.data.outputs.map(out => ({
-                    ...out,
-                    value: undefined,
-                    type: undefined
-                })) : undefined
-            }
-        }));
+        const sanitizedNodes = sanitizeNodes(nodesRef.current);
 
         sendMessage({
             action: "save_project",
@@ -110,20 +113,7 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
     }, [setNodes, setEdges]);
 
     const saveProjectToFile = useCallback(() => {
-        const sanitizedNodes = nodesRef.current.map(node => ({
-            ...node,
-            data: {
-                ...node.data,
-                output: undefined,
-                error: undefined,
-                state: 0,
-                outputs: node.data.outputs ? node.data.outputs.map(out => ({
-                    ...out,
-                    value: undefined,
-                    type: undefined
-                })) : undefined
-            }
-        }));
+        const sanitizedNodes = sanitizeNodes(nodesRef.current);
         const data = { nodes: sanitizedNodes, edges: edgesRef.current };
         const json = JSON.stringify(data, null, 2);
 
