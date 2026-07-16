@@ -1,7 +1,6 @@
 import React, { memo, useState, useCallback } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import NodeShell, { NodeShellHeader, useNodeShell } from '../../front-editor/src/components/Nodes/NodeShell.jsx';
 import { useValueNode } from './useValueNode.js';
-import '../../front-editor/src/components/Nodes/NodeShell.css';
 import './NumberNode.css';
 
 const NumberNode = memo(({ id, data, selected }) => {
@@ -37,22 +36,24 @@ const NumberNode = memo(({ id, data, selected }) => {
     const handleMaxChange = useCallback((e) => setMaxRange(parseFloat(e.target.value) || 100), []);
     const handleStepChange = useCallback((e) => setStep(parseFloat(e.target.value) || 1), []);
 
-    const stopPropagation = useCallback((e) => e.stopPropagation(), []);
+    const { stopPropagation } = useNodeShell(id);
 
     return (
-        <div className={`node-shell number-node ${selected ? 'selected' : ''}`}>
-            <div className="big-number">123</div>
-
-            <div className="node-shell-header number-header">
-                <input
-                    type="text"
-                    className="node-shell-title title-input nodrag"
-                    placeholder="Title"
-                    value={localTitle}
-                    onChange={handleTitleChange}
-                    onKeyDown={stopPropagation}
-                />
-            </div>
+        <NodeShell 
+            id={id} 
+            selected={selected} 
+            nodeClass="number-node"
+            outputs={['output']}
+            renderBasicHandles={true}
+        >
+            <NodeShellHeader 
+                nodeClass="number" 
+                title={localTitle} 
+                onTitleChange={handleTitleChange}
+                onTitleKeyDown={stopPropagation}
+            >
+                <div className="big-number">123</div>
+            </NodeShellHeader>
 
             <div className="number-content">
                 <div className="value-input-container nodrag">
@@ -107,14 +108,7 @@ const NumberNode = memo(({ id, data, selected }) => {
                     />
                 </div>
             </div>
-
-            <Handle
-                type="source"
-                position={Position.Right}
-                id="output"
-                className="number-handle"
-            />
-        </div>
+        </NodeShell>
     );
 });
 

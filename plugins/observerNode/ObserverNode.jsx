@@ -4,7 +4,7 @@ import { useFlowContext } from '../../front-editor/src/components/FlowContext.js
 
 import '../../front-editor/src/components/Nodes/nodes.css';
 import '../../front-editor/src/components/Nodes/node_content.css';
-import '../../front-editor/src/components/Nodes/NodeShell.css';
+import NodeShell, { NodeShellHeader } from '../../front-editor/src/components/Nodes/NodeShell.jsx';
 import './ObserverNode.css';
 
 const ObserverNode = memo(({ data, id, selected }) => {
@@ -123,7 +123,11 @@ const ObserverNode = memo(({ data, id, selected }) => {
     }, [connectedSource, sourceNodeState, handleRefresh]);
 
     return (
-        <div className={`node-shell observer-node ${selected ? 'selected' : ''}`}>
+        <NodeShell 
+            id={id} 
+            selected={selected} 
+            nodeClass="observer-node"
+        >
             <Handle
                 type="target"
                 position={Position.Left}
@@ -131,7 +135,7 @@ const ObserverNode = memo(({ data, id, selected }) => {
                 isConnectable={!connectedSource}
             />
 
-            <div className="node-shell-header observer-header">
+            <NodeShellHeader nodeClass="observer" readOnly={true}>
                 <div className="observer-eyes">
                     <div className="eye">
                         <div className="pupil"></div>
@@ -143,7 +147,7 @@ const ObserverNode = memo(({ data, id, selected }) => {
                 <span className="observer-title">
                     {connectedSource ? connectedSource.variableName : "Observer"}
                 </span>
-            </div>
+            </NodeShellHeader>
 
             <div className="observer-content">
                 {connectedSource ? (
@@ -185,7 +189,7 @@ const ObserverNode = memo(({ data, id, selected }) => {
                     <div className="no-connection">Connect a variable</div>
                 )}
             </div>
-        </div>
+        </NodeShell>
     )
 });
 

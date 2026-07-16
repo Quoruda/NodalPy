@@ -1,9 +1,12 @@
-.fast-node {
-    border-color: var(--node-border-default);
-    border-radius: 12px;
-    min-width: 180px;
-    font-family: 'Inter', system-ui, sans-serif;
+/* Outer wrapper handles the overflow:visible for lightning bolt decoration */
+.fast-node-wrapper {
+    position: relative;
     overflow: visible;
+}
+
+.fast-node {
+    border-color: #0984e3;
+    font-family: 'Inter', system-ui, sans-serif;
 }
 
 .fast-node:hover {
@@ -37,7 +40,7 @@
     }
 }
 
-.fast-header {
+.fast-node-header {
     background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);
     justify-content: space-between;
     border-bottom: 2px solid #0652dd;
@@ -56,32 +59,6 @@
     min-width: 0;
 }
 
-.fast-content {
-    padding: 12px;
-    color: #dfe6e9;
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-    align-items: flex-start;
-}
-
-.fast-inputs,
-.fast-outputs {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 20px;
-    justify-content: center;
-}
-
-.fast-center {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 0 5px;
-    min-width: 120px;
-}
 
 .fast-node .code-mirror-wrapper {
     width: 100%;

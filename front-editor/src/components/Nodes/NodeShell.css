@@ -73,3 +73,189 @@
     border: 2px solid #2e2d44 !important;
     top: 50% !important;
 }
+
+/* ============================================
+   BaseCodeNode shared layout classes
+   ============================================ */
+
+/* Shared node container (used by BaseCodeNode) */
+.node {
+    background: #1e1e2f;
+    border: 2px solid var(--node-border-default, #4b4b60);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    min-width: 250px;
+    position: relative;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: box-shadow 0.1s ease, border-color 0.1s ease;
+    overflow: visible;
+}
+
+/* Shared header */
+.node-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 7px 7px 0 0;
+}
+
+.node-header .title-section {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.node-header .controls-section {
+    display: flex;
+    align-items: center;
+}
+
+/* Shared title input */
+.title-input {
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: 600;
+    width: 100%;
+    min-width: 0;
+    outline: none;
+    transition: all 0.2s;
+    font-family: inherit;
+    flex: 1;
+}
+
+.title-input:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+/* Body layout: inputs | center | outputs */
+.node-body {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.node-inputs,
+.node-outputs {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: auto;
+    padding: 0 4px;
+}
+
+.node-outputs {
+    align-items: flex-end;
+}
+
+.node-center {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* Collapsible sections (Code / Logs) */
+.node-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.section-toggle {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 8px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    font-size: 11px;
+    user-select: none;
+}
+
+.section-toggle span:first-child {
+    opacity: 0.7;
+}
+
+.section-toggle span:last-child {
+    opacity: 0.5;
+}
+
+/* Add input/output button */
+.add-io-btn {
+    background: none;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 1px 6px;
+    transition: all 0.2s;
+}
+
+.add-io-btn:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+/* Output / Error log areas */
+.node-output,
+.node-error {
+    padding: 4px 0;
+    cursor: text;
+}
+
+.node-output pre,
+.node-error pre {
+    margin: 0;
+    font-size: 11px;
+    white-space: pre-wrap;
+    color: #a8c7fa;
+}
+
+.node-error pre {
+    color: #ff6b6b;
+}
+
+/* Execute / run buttons (shared) */
+.execute-button {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #55efc4;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+    margin-left: 0.5rem;
+    transition: all 0.2s;
+}
+
+.execute-button:hover {
+    background: rgba(0, 0, 0, 0.4);
+    color: #00b894;
+    transform: scale(1.05);
+}
+
+.running-button {
+    background: transparent;
+    border: none;
+    color: #ffeaa7;
+    font-size: 1rem;
+    margin-left: 0.5rem;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

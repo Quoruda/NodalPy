@@ -1,47 +1,30 @@
 import React, { memo } from 'react';
-import BaseNode from './BaseNode.jsx';
+import BaseCodeNode from '../../front-editor/src/components/Nodes/BaseCodeNode.jsx';
 import { useCodeNode } from '../../front-editor/src/components/Nodes/useCodeNode.js';
-
-const ManualNode = memo(({ id, data }) => {
+import './ManualNode.css';
+const ManualNode = memo(({ id, data, selected }) => {
     const nodeState = useCodeNode({ ...data, id }, { timeout: null, autoTrigger: false });
 
     return (
-        <BaseNode
-            id={id}
-            data={data}
-            nodeTypeClass="manual-node"
-            {...nodeState}
-        />
+        <div className={selected ? 'selected' : ''}>
+            <BaseCodeNode
+                id={id}
+                data={data}
+                nodeTypeClass="manual-node"
+                {...nodeState}
+            />
+        </div>
     );
-}, (prevProps, nextProps) => {
-    if (prevProps.data === nextProps.data) return true;
-    const prev = prevProps.data;
-    const next = nextProps.data;
-
-    if (prev.id !== next.id) return false;
-    if (prev.code !== next.code) return false;
-    if (prev.title !== next.title) return false;
-    if (prev.state !== next.state) return false;
-
-    if (prev.isCodeOpen !== next.isCodeOpen) return false;
-    if (prev.isLogsOpen !== next.isLogsOpen) return false;
-
-    if (prev.inputs !== next.inputs) {
-        if (JSON.stringify(prev.inputs) !== JSON.stringify(next.inputs)) return false;
-    }
-    if (prev.outputs !== next.outputs) {
-        if (JSON.stringify(prev.outputs) !== JSON.stringify(next.outputs)) return false;
-    }
-
-    if (prev.onChange !== next.onChange) return false;
-
-    if (prev.output !== next.output) return false;
-    if (prev.logs !== next.logs) return false;
-    if (prev.error !== next.error) return false;
-
-    return true;
+}, (prev, next) => {
+    if (prev.data === next.data && prev.selected === next.selected) return true;
+    const p = prev.data, n = next.data;
+    return p.code === n.code && p.title === n.title && p.state === n.state &&
+        p.isCodeOpen === n.isCodeOpen && p.isLogsOpen === n.isLogsOpen &&
+        p.output === n.output && p.logs === n.logs && p.error === n.error &&
+        JSON.stringify(p.inputs) === JSON.stringify(n.inputs) &&
+        JSON.stringify(p.outputs) === JSON.stringify(n.outputs) &&
+        prev.selected === next.selected;
 });
 
 ManualNode.displayName = 'ManualNode';
-
 export default ManualNode;
