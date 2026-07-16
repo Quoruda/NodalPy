@@ -10,7 +10,8 @@ uiRegistry.registerNodeType({
         colorVar: '--color-fast',
         color: '#74b9ff',
         category: 'Logic',
-        autoTrigger: true
+        autoTrigger: true,
+        supportsShadowing: true
     },
     defaultData: {
         title: 'Fast Node',

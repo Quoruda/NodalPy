@@ -1,0 +1,259 @@
+.shadow-node {
+    background: #2e2d44;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.shadow-node:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 12px rgba(127, 140, 155, 0.3);
+}
+
+.shadow-node.selected {
+    border-color: var(--node-selected-color, #ff0072) !important;
+    box-shadow: var(--node-selected-shadow, 0 0 0 2px rgba(255, 0, 114, 0.4)), 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.shadow-header {
+    background: linear-gradient(135deg, #4a5a6b 0%, #7f8c9b 100%);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 7px 7px 0 0;
+    border-bottom: 2px solid #38424c;
+}
+
+.title-input {
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.title-input:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.title-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.shadow-icon {
+    font-size: 14px;
+    opacity: 0.8;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.shadow-select {
+    background: transparent;
+    color: #dfe6e9;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    border: none;
+    outline: none;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.shadow-select option {
+    background: #1a1a2e;
+    color: white;
+}
+
+.shadow-select optgroup {
+    background: #10101a;
+    color: #a78bfa;
+    font-weight: bold;
+}
+
+.shadow-body {
+    padding: 12px;
+    color: #dfe6e9;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 50px;
+}
+
+.link-badge {
+    background: rgba(127, 140, 155, 0.12);
+    border-radius: 6px;
+    padding: 8px 10px;
+    border: 2px solid rgba(127, 140, 155, 0.3);
+    font-size: 11px;
+    color: #a8b5c0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.shadow-empty {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 12px;
+    font-style: italic;
+    padding: 12px;
+}
+
+.shadow-content {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+}
+
+.shadow-ports {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.shadow-port-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 18px;
+}
+
+.shadow-ports.inputs .shadow-port-row {
+    padding-left: 12px;
+    justify-content: flex-start;
+}
+
+.shadow-ports.outputs .shadow-port-row {
+    padding-right: 12px;
+    justify-content: flex-end;
+}
+
+.shadow-port-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: monospace;
+}
+
+.shadow-handle {
+    width: 12px;
+    height: 12px;
+    background: #4a4a5a;
+    border: 2px solid #2a2a35;
+    /* ReactFlow default positioning */
+}
+
+/* Specific overrides for handle placement inside relative container */
+.shadow-ports.inputs .shadow-handle {
+    left: -8px;
+    right: auto;
+}
+
+.shadow-ports.outputs .shadow-handle {
+    right: -8px;
+    left: auto;
+}
+
+.shadow-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 12px;
+}
+
+.shadow-auto-toggle {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.shadow-auto-toggle input {
+    cursor: pointer;
+    margin: 0;
+}
+
+.shadow-play-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(167, 139, 250, 0.15);
+    color: #a78bfa;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.shadow-play-btn:hover:not(:disabled) {
+    background: rgba(167, 139, 250, 0.3);
+    transform: scale(1.05);
+}
+
+.shadow-play-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.shadow-play-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+
+
+.shadow-error {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #e74c3c;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: help;
+}
+
+/* Decorative Link Chain */
+.shadow-chain-links {
+    position: absolute;
+    top: -18px;
+    right: -16px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.shadow-chain-svg {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+    animation: linkSway 3s ease-in-out infinite;
+    overflow: visible;
+    transform: rotate(50deg);
+}
+
+@keyframes linkSway {
+    0%, 100% { transform: rotate(46deg); }
+    50% { transform: rotate(54deg); }
+}

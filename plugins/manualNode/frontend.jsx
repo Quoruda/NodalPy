@@ -9,7 +9,8 @@ uiRegistry.registerNodeType({
         label: 'Manual Node',
         colorVar: '--color-custom',
         color: '#6c5ce7',
-        category: 'Logic'
+        category: 'Logic',
+        supportsShadowing: true
     },
     defaultData: {
         title: 'Manual Node',

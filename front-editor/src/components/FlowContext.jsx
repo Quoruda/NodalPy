@@ -131,7 +131,8 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
             const targetNode = currentNodes.find(n => n.id === targetId);
             if (!targetNode) return;
             const nodeConfig = uiRegistry.slots.nodeTypes.find(n => n.type === targetNode.type)?.config;
-            if (!nodeConfig || !nodeConfig.autoTrigger) return;
+            const isAutoTrigger = targetNode.data?.autoTrigger !== undefined ? targetNode.data.autoTrigger : nodeConfig?.autoTrigger;
+            if (!isAutoTrigger) return;
 
             // Check that ALL source nodes of the FastNode have completed (state 2)
             const incomingEdges = currentEdges.filter(e => e.target === targetId);
@@ -141,7 +142,14 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
             });
 
             if (allSourcesReady) {
-                addNodeToQueue({ ...targetNode.data, id: targetNode.id });
+                let nodePayload = { ...targetNode.data, id: targetNode.id };
+                if (targetNode.data?.masterId) {
+                    const masterNode = currentNodes.find(n => n.id === targetNode.data.masterId);
+                    if (masterNode) {
+                        nodePayload.code = masterNode.data?.code || '';
+                    }
+                }
+                addNodeToQueue(nodePayload);
             }
         });
     }, [addNodeToQueue]);
@@ -154,7 +162,14 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
 
             const nodeConfig = uiRegistry.slots.nodeTypes.find(n => n.type === targetNode.type)?.config;
             if (nodeConfig && nodeConfig.autoTrigger) {
-                addNodeToQueue({ ...targetNode.data, id: targetNode.id });
+                let nodePayload = { ...targetNode.data, id: targetNode.id };
+                if (targetNode.data?.masterId) {
+                    const masterNode = nodesRef.current.find(n => n.id === targetNode.data.masterId);
+                    if (masterNode) {
+                        nodePayload.code = masterNode.data?.code || '';
+                    }
+                }
+                addNodeToQueue(nodePayload);
             }
         };
 
