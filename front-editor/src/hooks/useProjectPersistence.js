@@ -263,15 +263,24 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
         }
     }, [nodes, edges, isLoaded]);
 
-    // Auto-save interval
+    // Auto-save interval & Before Unload
     useEffect(() => {
-        const intervalId = setInterval(() => {
+        const handleSave = () => {
             if (isLoaded && hasUnsavedChanges.current && isConnected) {
                 saveProjectToBackend();
                 hasUnsavedChanges.current = false;
             }
-        }, 5000);
-        return () => clearInterval(intervalId);
+        };
+
+        const intervalId = setInterval(handleSave, 1000);
+        
+        // Also try to save right before the page unloads
+        window.addEventListener('beforeunload', handleSave);
+
+        return () => {
+            clearInterval(intervalId);
+            window.removeEventListener('beforeunload', handleSave);
+        };
     }, [saveProjectToBackend, isLoaded, isConnected]);
 
     // Switch to a different project tab
