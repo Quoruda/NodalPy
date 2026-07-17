@@ -135,12 +135,12 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
                 )
             );
 
-            // Send login with persistent User ID
-            const userId = "default_user";
+            // Send login with persistent JWT token
+            const token = localStorage.getItem('nodal_token');
 
             socket.send(JSON.stringify({
                 action: "login",
-                identifier: userId
+                token: token
             }));
 
             // Flush pending messages

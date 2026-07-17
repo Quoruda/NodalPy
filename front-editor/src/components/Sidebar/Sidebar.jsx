@@ -2,6 +2,7 @@ import React from 'react';
 import { availableNodes } from '../Nodes/nodeConfig';
 import { demos } from '../../utils/demos';
 import { uiRegistry } from '../../core/uiRegistry';
+import { useAuthStore } from '../../store/useAuthStore';
 import './Sidebar.css';
 
 const NodePalette = ({ onDragStart }) => {
@@ -31,17 +32,24 @@ const NodePalette = ({ onDragStart }) => {
 
 uiRegistry.registerSidebarTab({
     id: 'nodes',
-    label: '🧩 Nodes',
+    label: 'Nodes',
     component: NodePalette
 });
 
-const Sidebar = ({ onImport, onExport, onNewProject, isConnected, sendMessage, sidebarView, setSidebarView }) => {
+const Sidebar = ({ onLoadDemo, onImport, onExport, onNewProject, isConnected, sendMessage, sidebarView, setSidebarView }) => {
     const [isFileOpen, setIsFileOpen] = React.useState(false);
     const [isViewOpen, setIsViewOpen] = React.useState(false);
+    const [isUserOpen, setIsUserOpen] = React.useState(false);
+    const logout = useAuthStore(state => state.logout);
 
     const onDragStart = (event, nodeType) => {
         event.dataTransfer.setData('application/reactflow', nodeType);
         event.dataTransfer.effectAllowed = 'move';
+    };
+
+    const allDemos = {
+        ...demos,
+        ...uiRegistry.slots.demos
     };
 
     return (
@@ -57,14 +65,26 @@ const Sidebar = ({ onImport, onExport, onNewProject, isConnected, sendMessage, s
                     {isFileOpen && (
                         <div className="floating-menu">
                             <button onClick={() => { onNewProject(); setIsFileOpen(false); }}>
-                                ✨ New Project
+                                New Project
                             </button>
                             <button onClick={() => { onImport(); setIsFileOpen(false); }}>
-                                📂 Import Project (.json)
+                                Import Project (.json)
                             </button>
                             <button onClick={() => { onExport(); setIsFileOpen(false); }}>
-                                💾 Export Project (.json)
+                                Export Project (.json)
                             </button>
+                            <div className="submenu-container">
+                                <button className="submenu-trigger">
+                                    Demos & Examples ▶
+                                </button>
+                                <div className="floating-submenu">
+                                    {Object.keys(allDemos).map(demoName => (
+                                        <button key={demoName} onClick={() => { onLoadDemo(allDemos[demoName], demoName); setIsFileOpen(false); }}>
+                                            {demoName}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -88,8 +108,19 @@ const Sidebar = ({ onImport, onExport, onNewProject, isConnected, sendMessage, s
                         </div>
                     )}
                 </div>
-                <div className="menu-item disabled">
-                    <span className="menu-label">Settings</span>
+                <div
+                    className="menu-item"
+                    onMouseEnter={() => setIsUserOpen(true)}
+                    onMouseLeave={() => setIsUserOpen(false)}
+                >
+                    <span className="menu-label">User</span>
+                    {isUserOpen && (
+                        <div className="floating-menu user-menu">
+                            <button className="danger" onClick={() => { logout(); setIsUserOpen(false); }}>
+                                Logout
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

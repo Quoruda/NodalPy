@@ -101,6 +101,15 @@
     font-weight: 600;
 }
 
+.floating-menu button.danger {
+    color: #ef4444;
+}
+
+.floating-menu button.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ff5555;
+}
+
 /* Nodes Header */
 .sidebar-header {
     padding: 15px 10px 5px;

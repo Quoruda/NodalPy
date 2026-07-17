@@ -11,6 +11,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './components/Auth/LoginPage.jsx';
+import RegisterPage from './components/Auth/RegisterPage.jsx';
+import { useAuthStore } from './store/useAuthStore.js';
 
 import { NodeTypes } from './components/Nodes/NodeTypes.jsx';
 import MissingPluginNode from './components/Nodes/MissingPluginNode.jsx';
@@ -58,7 +62,8 @@ function Flow() {
         deleteProject,
         renameProject,
         saveProjectToFile,
-        loadProjectFromFile
+        loadProjectFromFile,
+        loadProjectFromData
     } = useProjectPersistence(nodes, edges, setNodes, setEdges, isConnected, sendMessage);
     const { addNode } = useNodeFactory(nodes, setNodes);
 
@@ -130,6 +135,7 @@ function Flow() {
         <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef} sendMessage={sendMessage} isConnected={isConnected} serverConfig={serverConfig} setServerConfig={setServerConfig}>
             <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
                 <Sidebar
+                    onLoadDemo={loadProjectFromData}
                     onImport={handleImportClick}
                     onExport={saveProjectToFile}
                     onNewProject={createProject}
@@ -196,9 +202,19 @@ function Flow() {
 }
 
 export default function App() {
+    const token = useAuthStore(state => state.token);
+
     return (
-        <ReactFlowProvider>
-            <Flow />
-        </ReactFlowProvider>
+        <Router>
+            <Routes>
+                <Route path="/login" element={!token ? <LoginPage /> : <Navigate to="/" />} />
+                <Route path="/register" element={!token ? <RegisterPage /> : <Navigate to="/" />} />
+                <Route path="/" element={token ? (
+                    <ReactFlowProvider>
+                        <Flow />
+                    </ReactFlowProvider>
+                ) : <Navigate to="/login" />} />
+            </Routes>
+        </Router>
     );
 }

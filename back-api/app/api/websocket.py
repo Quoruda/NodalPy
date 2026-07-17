@@ -8,6 +8,9 @@ from ..services import filesystem as fs
 from ..core.config import EXECUTION_DEBOUNCE, WS_BATCH_INTERVAL, MANUAL_NODE_TIMEOUT
 from ..core.registry import ws_registry
 from ..core.node_registry import node_registry
+from ..auth.security import SECRET_KEY, ALGORITHM
+import jwt
+from jwt.exceptions import InvalidTokenError
 import app.api.websocket_actions
 import importlib
 import plugins
@@ -77,7 +80,17 @@ class UserWebSocket:
         try:
             data = await asyncio.wait_for(self.websocket.receive_json(), timeout=30.0)
             if data["action"] == "login":
-                identifier = data["identifier"]
+                token = data.get("token")
+                try:
+                    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+                    identifier = payload.get("sub")
+                    if identifier is None:
+                        raise ValueError("Invalid token")
+                except Exception as e:
+                    await self.websocket.send_json({"error": "Authentication failed"})
+                    await self.websocket.close(code=1008)
+                    return
+
                 self.user = self.user_manager.get_user(identifier)
                 
                 # Close existing connection if any

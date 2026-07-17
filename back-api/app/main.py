@@ -7,12 +7,17 @@ from fastapi.responses import FileResponse
 from .services.user_manager import UserManager
 from .api.websocket import UserWebSocket
 from .core.config import STORAGE_DIR, FRONTEND_DIR
+from .core.database import engine, Base
+from .auth.routes import router as auth_router
 
 user_manager = UserManager()
 app = FastAPI()
 
+app.include_router(auth_router)
+
 @app.on_event("startup")
 async def startup_event():
+    Base.metadata.create_all(bind=engine)
     await user_manager.cleanup_orphans()
     await user_manager.start_cleanup_loop()
 

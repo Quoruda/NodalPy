@@ -375,87 +375,96 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
         document.body.removeChild(link);
     }, [activeProjectId, openTabs]);
 
+    const loadProjectFromData = useCallback((json, fallbackName) => {
+        try {
+            const rawNodes = json.nodes || [];
+            const rawEdges = json.edges || [];
+
+            if (containsCycle(rawNodes, rawEdges)) {
+                toast.error("Import Failed: Project contains loops!");
+                return;
+            }
+
+            const idMapping = {};
+            rawNodes.forEach(node => {
+                idMapping[node.id] = crypto.randomUUID();
+            });
+
+            const loadedNodes = rawNodes.map(node => {
+                const newId = idMapping[node.id];
+                const isValid = isValidType(node.type);
+                let newGroupBaseId = node.data?.groupBaseId;
+                if (newGroupBaseId && idMapping[newGroupBaseId]) {
+                    newGroupBaseId = idMapping[newGroupBaseId];
+                }
+                return {
+                    ...node,
+                    id: newId,
+                    type: isValid ? node.type : 'missingPlugin',
+                    data: {
+                        ...node.data,
+                        fromLoad: true,
+                        missingType: isValid ? undefined : node.type,
+                        groupBaseId: newGroupBaseId
+                    }
+                };
+            });
+
+            const loadedEdges = rawEdges.map(edge => ({
+                ...edge,
+                id: `reactflow__edge-${idMapping[edge.source] || edge.source}-${edge.sourceHandle}-${idMapping[edge.target] || edge.target}-${edge.targetHandle}`,
+                source: idMapping[edge.source] || edge.source,
+                target: idMapping[edge.target] || edge.target
+            }));
+
+            // Create a new project on the server for this import
+            const projectName = json.meta?.name || fallbackName || "Imported";
+
+            // We need to create the project, then populate it
+            const tempId = crypto.randomUUID();
+            projectCacheRef.current[tempId] = { nodes: loadedNodes, edges: loadedEdges };
+
+            // Listen for the create response to save the data
+            const onCreated = (ev) => {
+                const msg = ev.detail;
+                if (msg.status === "success" && msg.project) {
+                    // Move cached data to the real ID
+                    const cached = projectCacheRef.current[tempId];
+                    delete projectCacheRef.current[tempId];
+                    if (cached) {
+                        projectCacheRef.current[msg.project.id] = cached;
+                        // Since create_project handler will set this as active with empty canvas,
+                        // we need to override with the imported data
+                        setNodes(cached.nodes);
+                        setEdges(cached.edges);
+                        hasUnsavedChanges.current = true;
+                    }
+                    window.removeEventListener('ws_create_project', onCreated);
+                }
+            };
+            window.addEventListener('ws_create_project', onCreated);
+            sendMessage({ action: "create_project", name: projectName });
+
+        } catch (err) {
+            console.error("Load error:", err);
+            toast.error("Failed to parse project data.");
+        }
+    }, [sendMessage, setNodes, setEdges]);
+
     // Import a file as a new project
     const loadProjectFromFile = useCallback((file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                const rawNodes = json.nodes || [];
-                const rawEdges = json.edges || [];
-
-                if (containsCycle(rawNodes, rawEdges)) {
-                    toast.error("Import Failed: Project contains loops!");
-                    return;
-                }
-
-                const idMapping = {};
-                rawNodes.forEach(node => {
-                    idMapping[node.id] = crypto.randomUUID();
-                });
-
-                const loadedNodes = rawNodes.map(node => {
-                    const newId = idMapping[node.id];
-                    const isValid = isValidType(node.type);
-                    let newGroupBaseId = node.data?.groupBaseId;
-                    if (newGroupBaseId && idMapping[newGroupBaseId]) {
-                        newGroupBaseId = idMapping[newGroupBaseId];
-                    }
-                    return {
-                        ...node,
-                        id: newId,
-                        type: isValid ? node.type : 'missingPlugin',
-                        data: {
-                            ...node.data,
-                            fromLoad: true,
-                            missingType: isValid ? undefined : node.type,
-                            groupBaseId: newGroupBaseId
-                        }
-                    };
-                });
-
-                const loadedEdges = rawEdges.map(edge => ({
-                    ...edge,
-                    id: `reactflow__edge-${idMapping[edge.source] || edge.source}-${edge.sourceHandle}-${idMapping[edge.target] || edge.target}-${edge.targetHandle}`,
-                    source: idMapping[edge.source] || edge.source,
-                    target: idMapping[edge.target] || edge.target
-                }));
-
-                // Create a new project on the server for this import
-                const projectName = json.meta?.name || file.name.replace('.json', '') || "Imported";
-
-                // We need to create the project, then populate it
-                const tempId = crypto.randomUUID();
-                projectCacheRef.current[tempId] = { nodes: loadedNodes, edges: loadedEdges };
-
-                // Listen for the create response to save the data
-                const onCreated = (ev) => {
-                    const msg = ev.detail;
-                    if (msg.status === "success" && msg.project) {
-                        // Move cached data to the real ID
-                        const cached = projectCacheRef.current[tempId];
-                        delete projectCacheRef.current[tempId];
-                        if (cached) {
-                            projectCacheRef.current[msg.project.id] = cached;
-                            // Since create_project handler will set this as active with empty canvas,
-                            // we need to override with the imported data
-                            setNodes(cached.nodes);
-                            setEdges(cached.edges);
-                            hasUnsavedChanges.current = true;
-                        }
-                        window.removeEventListener('ws_create_project', onCreated);
-                    }
-                };
-                window.addEventListener('ws_create_project', onCreated);
-                sendMessage({ action: "create_project", name: projectName });
-
+                loadProjectFromData(json, file.name.replace('.json', ''));
             } catch (err) {
                 console.error("Load error:", err);
                 toast.error("Failed to parse project file.");
             }
         };
         reader.readAsText(file);
-    }, [sendMessage, setNodes, setEdges]);
+    }, [loadProjectFromData]);
 
     return {
         isLoaded,
@@ -469,6 +478,7 @@ export const useProjectPersistence = (nodes, edges, setNodes, setEdges, isConnec
         deleteProject,
         renameProject,
         saveProjectToFile,
-        loadProjectFromFile
+        loadProjectFromFile,
+        loadProjectFromData
     };
 };

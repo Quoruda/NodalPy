@@ -95,7 +95,6 @@ const ProjectTabs = ({
                             }
                         }}
                     >
-                        <span className="project-tab-icon">📄</span>
                         {editingTabId === tab.id ? (
                             <input
                                 ref={handleInputRef}
@@ -128,7 +127,7 @@ const ProjectTabs = ({
                     className="project-tab-add"
                     onClick={() => setShowProjectPicker(prev => !prev)}
                     title="New or open project"
-                >＋</button>
+                >+</button>
 
                 {showProjectPicker && (
                     <div className="project-picker">
@@ -136,7 +135,7 @@ const ProjectTabs = ({
                             className="project-picker-new"
                             onClick={() => { onCreateProject(); setShowProjectPicker(false); }}
                         >
-                            ✨ New Project
+                            New Project
                         </button>
                         {unopenedProjects.length > 0 && (
                             <>
@@ -149,7 +148,7 @@ const ProjectTabs = ({
                                         onClick={() => { onOpenProject(p.id, p.name); setShowProjectPicker(false); }}
                                         onContextMenu={(e) => { e.preventDefault(); handleContextMenu(e, p); setShowProjectPicker(false); }}
                                     >
-                                        📄 {p.name}
+                                        {p.name}
                                     </button>
                                 ))}
                             </>
@@ -164,13 +163,13 @@ const ProjectTabs = ({
                     style={{ left: contextMenu.x, top: contextMenu.y }}
                 >
                     <button onClick={() => startRename(contextMenu.tab)}>
-                        ✏️ Rename
+                        Rename
                     </button>
                     <button
                         className="danger"
                         onClick={() => handleDeleteClick(contextMenu.tab)}
                     >
-                        🗑️ Delete
+                        Delete
                     </button>
                 </div>
             )}
