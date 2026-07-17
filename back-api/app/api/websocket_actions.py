@@ -3,6 +3,7 @@ import json
 import time
 import uuid
 from datetime import datetime, timezone
+from loguru import logger
 from ..core.registry import ws_registry
 from ..services import filesystem as fs
 from ..core.node_registry import node_registry
@@ -35,9 +36,9 @@ def _migrate_legacy_project(projects_dir):
         with open(new_path, "w", encoding="utf-8") as f:
             json.dump(new_data, f, indent=2)
         os.remove(old_path)
-        print(f"✅ Migrated legacy project.json → {new_id}.json", flush=True)
+        logger.info(f"Migrated legacy project.json → {new_id}.json")
     except Exception as e:
-        print(f"❌ Error migrating legacy project: {e}", flush=True)
+        logger.error(f"Error migrating legacy project: {e}")
 
 def _scan_projects(projects_dir):
     projects = []
@@ -257,7 +258,7 @@ async def handle_get_variable(session, data: dict):
             "type": response.get("type")
         })
     except Exception as e:
-        print(f"Error in ws_get_variable: {e}")
+        logger.error(f"Error in ws_get_variable: {e}")
         await session.websocket.send_json({
             "action": "get_variable",
             "node": data.get("node"),
@@ -307,7 +308,7 @@ async def handle_save_project(session, data: dict):
             "project_id": data["project_id"]
         })
     except Exception as e:
-        print(f"Error saving project: {e}")
+        logger.error(f"Error saving project: {e}")
         await session.websocket.send_json({
             "action": "save_project",
             "status": "error",
@@ -341,7 +342,7 @@ async def handle_load_project(session, data: dict):
                 "error": "Project not found"
             })
     except Exception as e:
-        print(f"Error loading project: {e}")
+        logger.error(f"Error loading project: {e}")
         await session.websocket.send_json({
             "action": "load_project",
             "status": "error",

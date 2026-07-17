@@ -10,3 +10,4 @@ docker
 sqlalchemy
 bcrypt
 PyJWT
+loguru

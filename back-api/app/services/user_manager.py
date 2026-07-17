@@ -1,6 +1,7 @@
 from .user_proxy import UserKernelProxy
 import asyncio
 import time
+from loguru import logger
 
 class UserManager:
     def __init__(self):
@@ -25,7 +26,7 @@ class UserManager:
                     # Check if the kernel container is running
                     is_running = proxy.container is not None
                     if is_running and (now - proxy.last_activity) > 600:
-                        print(f"⏰ Idle timeout (10m) for user {user_id}. Stopping kernel.", flush=True)
+                        logger.info(f"Idle timeout (10m) for user {user_id}. Stopping kernel.")
                         await proxy.stop()
         
         self.cleanup_task = asyncio.create_task(loop())
@@ -39,19 +40,19 @@ class UserManager:
                 containers = client.containers.list(all=True)
                 for container in containers:
                     if container.name.startswith("nodalpy_kernel_"):
-                        print(f"🧹 Found orphaned kernel container '{container.name}'. Stopping & removing...", flush=True)
+                        logger.info(f"Found orphaned kernel container '{container.name}'. Stopping & removing...")
                         try:
                             container.stop(timeout=2)
                             container.remove()
                         except Exception:
                             pass
             except Exception as e:
-                    print(f"⚠️ Docker connection error during startup cleanup: {e}", flush=True)
+                    logger.warning(f"Docker connection error during startup cleanup: {e}")
         
         await asyncio.to_thread(do_cleanup)
 
     async def stop_all_kernels(self):
-        print("🛑 Shutting down all user kernels...", flush=True)
+        logger.info("Shutting down all user kernels...")
         for user_id, proxy in list(self.users.items()):
             await proxy.stop()
         if self.cleanup_task:

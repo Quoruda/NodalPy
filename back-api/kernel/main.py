@@ -4,10 +4,11 @@ import argparse
 import sys
 import os
 import venv
+from loguru import logger
 from .runner import KernelRunner
 
 async def handle_client(reader, writer, runner):
-    print("🔌 Host connected to kernel.", flush=True)
+    logger.info("Host connected to kernel.")
     try:
         while True:
             data = await reader.readline()
@@ -35,7 +36,7 @@ async def handle_client(reader, writer, runner):
                 timeout = request.get("timeout")
                 inputs = request.get("inputs")
                 
-                print(f"▶️ Running node {node}...", flush=True)
+                logger.info(f"Running node {node}...")
                 try:
                     status, output, error_msg = runner.run_node(
                         node=node,
@@ -88,7 +89,7 @@ async def handle_client(reader, writer, runner):
                 await writer.drain()
                 
             elif action == "shutdown":
-                print("🛑 Shutdown request received. Exiting kernel.", flush=True)
+                logger.info("Shutdown request received. Exiting kernel.")
                 writer.write((json.dumps({"status": "shutdown_ack"}) + "\n").encode('utf-8'))
                 await writer.drain()
                 sys.exit(0)
@@ -100,9 +101,9 @@ async def handle_client(reader, writer, runner):
     except asyncio.CancelledError:
         pass
     except Exception as e:
-        print(f"⚠️ Error handling client: {e}", flush=True)
+        logger.warning(f"Error handling client: {e}")
     finally:
-        print("🔌 Host disconnected from kernel.", flush=True)
+        logger.info("Host disconnected from kernel.")
         writer.close()
         await writer.wait_closed()
 
@@ -116,12 +117,12 @@ async def main():
 
     venv_dir = os.path.join(args.storage_dir, ".venv")
     if not os.path.exists(venv_dir):
-        print(f"📦 Initializing user virtual environment in {venv_dir}...", flush=True)
+        logger.info(f"Initializing user virtual environment in {venv_dir}...")
         try:
             venv.create(venv_dir, with_pip=True, system_site_packages=True)
-            print(f"📦 Virtual environment initialized successfully.", flush=True)
+            logger.info(f"Virtual environment initialized successfully.")
         except Exception as e:
-            print(f"⚠️ Failed to create virtual environment: {e}", flush=True)
+            logger.error(f"Failed to create virtual environment: {e}")
 
     runner = KernelRunner(user_id=args.user_id, storage_dir=args.storage_dir)
 
@@ -132,8 +133,8 @@ async def main():
     )
 
     addr = server.sockets[0].getsockname()
-    print(f"🚀 Kernel started for user {args.user_id} on {addr[0]}:{addr[1]}", flush=True)
-    print(f"📁 Storage path set to: {args.storage_dir}", flush=True)
+    logger.info(f"Kernel started for user {args.user_id} on {addr[0]}:{addr[1]}")
+    logger.info(f"Storage path set to: {args.storage_dir}")
 
     async with server:
         await server.serve_forever()
@@ -142,4 +143,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n🛑 Kernel stopped by user.", flush=True)
+        logger.info("Kernel stopped by user.")

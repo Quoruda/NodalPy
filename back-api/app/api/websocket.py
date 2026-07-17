@@ -11,6 +11,7 @@ from ..core.node_registry import node_registry
 from ..auth.security import SECRET_KEY, ALGORITHM
 import jwt
 from jwt.exceptions import InvalidTokenError
+from loguru import logger
 import app.api.websocket_actions
 import importlib
 import plugins
@@ -47,9 +48,8 @@ if os.path.exists(plugins_path):
                 try:
                     importlib.import_module(f"plugins.{item}.backend")
                 except Exception as e:
-                    import traceback
-                    print(f"❌ Error loading plugin backend {item}: {e}", flush=True)
-                    traceback.print_exc()
+                    logger.error(f"Error loading plugin backend {item}: {e}")
+                    logger.error(traceback.format_exc())
 
 def verif_args(data: dict, required_args: list[str]) -> bool:
     for arg in required_args:
@@ -96,7 +96,7 @@ class UserWebSocket:
                 # Close existing connection if any
                 old_conn = self.user_manager.active_connections.get(identifier)
                 if old_conn and old_conn is not self:
-                    print(f"⚠️ User {identifier} connected from another session. Terminating previous connection...", flush=True)
+                    logger.warning(f"User {identifier} connected from another session. Terminating previous connection...")
                     try:
                         await old_conn.websocket.close(code=1008)
                     except Exception:
@@ -115,13 +115,13 @@ class UserWebSocket:
                 try:
                     await self.user.start()
                 except Exception as e:
-                    print(f"❌ Failed to start kernel for user {identifier}: {e}", flush=True)
+                    logger.error(f"Failed to start kernel for user {identifier}: {e}")
                     await self.websocket.send_json({"error": f"Failed to initialize Python environment: {str(e)}"})
                     await self.websocket.close()
                     return
             if self.user is None:
                 await self.websocket.close()
-                print("❌ WebSocket error: no user")
+                logger.error("WebSocket error: no user")
                 return
             await self.websocket.send_json({
                 "action": "login", 

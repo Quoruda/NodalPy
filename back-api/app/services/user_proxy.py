@@ -3,6 +3,7 @@ import asyncio
 import time
 import json
 import docker
+from loguru import logger
 from ..core.config import STORAGE_DIR
 
 class UserKernelProxy:
@@ -44,12 +45,12 @@ class UserKernelProxy:
         if self.container is not None:
             return
 
-        print(f"🐳 Spawning kernel container '{self.container_name}' using image '{self.image_name}'...", flush=True)
+        logger.info(f"Spawning kernel container '{self.container_name}' using image '{self.image_name}'...")
         
         try:
             self.docker_client = docker.from_env()
         except Exception as e:
-            print(f"❌ Failed to connect to host Docker daemon: {e}", flush=True)
+            logger.error(f"Failed to connect to Docker daemon: {e}")
             raise RuntimeError(f"Failed to connect to Docker daemon: {e}")
 
         # Ensure container folder exists inside /app/storage
@@ -58,7 +59,7 @@ class UserKernelProxy:
         # Check and remove any stale container with the same name
         try:
             stale = self.docker_client.containers.get(self.container_name)
-            print(f"♻️ Found stale container '{self.container_name}'. Stopping and removing it...", flush=True)
+            logger.info(f"Found stale container '{self.container_name}'. Stopping and removing it...")
             stale.stop(timeout=2)
             stale.remove()
         except docker.errors.NotFound:
@@ -92,7 +93,7 @@ class UserKernelProxy:
                 auto_remove=True
             )
         except Exception as e:
-            print(f"❌ Failed to run Docker container '{self.container_name}': {e}", flush=True)
+            logger.error(f"Failed to run Docker container '{self.container_name}': {e}")
             self.container = None
             raise e
 
@@ -103,7 +104,7 @@ class UserKernelProxy:
             self.container.reload()
             if self.container.status == "exited":
                 logs = self.container.logs().decode('utf-8')
-                print(f"❌ Kernel container '{self.container_name}' exited immediately. Logs:\n{logs}", flush=True)
+                logger.error(f"Kernel container '{self.container_name}' exited immediately. Logs:\n{logs}")
                 self.container = None
                 raise RuntimeError("Kernel container exited immediately after launch")
 
@@ -116,7 +117,7 @@ class UserKernelProxy:
                 await asyncio.sleep(0.1)
 
         if not connected:
-            print(f"❌ Failed to connect to kernel container '{self.container_name}' after 5 seconds.", flush=True)
+            logger.error(f"Failed to connect to kernel container '{self.container_name}' after 5 seconds.")
             try:
                 self.container.stop(timeout=2)
             except Exception:
@@ -124,7 +125,7 @@ class UserKernelProxy:
             self.container = None
             raise RuntimeError("Failed to connect to spawned user kernel container")
 
-        print(f"✅ Connected to user kernel container '{self.container_name}'", flush=True)
+        logger.info(f"Connected to user kernel container '{self.container_name}'")
 
     async def stop(self):
         async with self.lock:
@@ -134,7 +135,7 @@ class UserKernelProxy:
         if self.container is None:
             return
 
-        print(f"🐳 Stopping kernel container '{self.container_name}'...", flush=True)
+        logger.info(f"Stopping kernel container '{self.container_name}'...")
         try:
             if self.writer:
                 self.writer.write(json.dumps({"action": "shutdown"}).encode('utf-8') + b"\n")
@@ -145,12 +146,12 @@ class UserKernelProxy:
         try:
             self.container.stop(timeout=2)
         except Exception as e:
-            print(f"⚠️ Error stopping container: {e}", flush=True)
+            logger.warning(f"Error stopping container: {e}")
 
         self.container = None
         self.reader = None
         self.writer = None
-        print(f"🐳 Kernel container '{self.container_name}' stopped.", flush=True)
+        logger.info(f"Kernel container '{self.container_name}' stopped.")
 
     async def send_request(self, request: dict) -> dict:
         self.last_activity = time.time()
@@ -170,7 +171,7 @@ class UserKernelProxy:
                     
                 return json.loads(response_bytes.decode('utf-8'))
             except Exception as e:
-                print(f"⚠️ Kernel communication error for user {self.user_id}: {e}. Restarting...", flush=True)
+                logger.warning(f"Kernel communication error for user {self.user_id}: {e}. Restarting...")
                 await self._stop_docker()
                 await self._start_docker()
                 payload = json.dumps(request) + "\n"

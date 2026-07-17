@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from app.core.database import SessionLocal, engine, Base
 from app.models.user import User
 import bcrypt
+from loguru import logger
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -29,7 +30,7 @@ def main():
         # Check if user already exists
         user = db.query(User).filter(User.username == args.username).first()
         if user:
-            print(f"Error: User '{args.username}' already exists.")
+            logger.error(f"User '{args.username}' already exists.")
             sys.exit(1)
         
         # Create new user
@@ -38,7 +39,7 @@ def main():
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        print(f"Success: User '{args.username}' created with ID {new_user.id}.")
+        logger.info(f"Success: User '{args.username}' created with ID {new_user.id}.")
     finally:
         db.close()
 

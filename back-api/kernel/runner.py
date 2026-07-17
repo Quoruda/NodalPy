@@ -3,6 +3,7 @@ import os
 import cloudpickle as pickle
 from .execution import run_code_in_process
 from .converter import convert_value
+from loguru import logger
 
 class KernelRunner:
     def __init__(self, user_id: str, storage_dir: str):
@@ -29,13 +30,13 @@ class KernelRunner:
                 pickle.dumps(value)
                 clean_scope[key] = value
             except Exception as e:
-                print(f"Warning: Could not pickle variable '{key}': {e}", flush=True)
+                logger.warning(f"Could not pickle variable '{key}': {e}")
                 
         try:
             with open(state_file, 'wb') as f:
                 pickle.dump(clean_scope, f)
         except Exception as e:
-            print(f"Error saving state for node {node_id}: {e}", flush=True)
+            logger.error(f"Error saving state for node {node_id}: {e}")
 
     def _load_node_state(self, node_id: str) -> dict:
         state_dir = self._get_state_dir()
@@ -46,7 +47,7 @@ class KernelRunner:
                 with open(state_file, 'rb') as f:
                     return pickle.load(f)
             except Exception as e:
-                print(f"Error loading state for node {node_id}: {e}", flush=True)
+                logger.error(f"Error loading state for node {node_id}: {e}")
         return {}
 
     def get_variable(self, node: str, name: str):
