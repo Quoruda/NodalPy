@@ -15,13 +15,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - NODAL_SECRET_KEY=NodalPy_Super_Secret_Key_Change_Me_In_Prod
-      - NODAL_TOKEN_EXPIRE=10080
-      - NODAL_DEBOUNCE=300
-      - NODAL_BATCH_INTERVAL=50
       - NODAL_DOCKER_NETWORK=nodalpy_network
       - NODAL_KERNEL_IMAGE=nodalpy_server:latest
-      - NODAL_FAST_TIMEOUT=1.0
-      - NODAL_MANUAL_TIMEOUT=60.0
       - HOST_STORAGE_PATH=${PWD}/.storage
     networks:
       - nodalpy_network

@@ -5,7 +5,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from ..services.user_manager import UserManager
 from ..services import filesystem as fs
-from ..core.config import EXECUTION_DEBOUNCE, WS_BATCH_INTERVAL, MANUAL_NODE_TIMEOUT
+from ..core.config import EXECUTION_DEBOUNCE, WS_BATCH_INTERVAL
 from ..core.registry import ws_registry
 from ..core.node_registry import node_registry
 from ..auth.security import SECRET_KEY, ALGORITHM
@@ -131,7 +131,7 @@ class UserWebSocket:
                     "debounce": EXECUTION_DEBOUNCE,
                     "batch_interval": WS_BATCH_INTERVAL,
                     "fast_timeout": node_registry.get_timeout("FastNode"),
-                    "manual_timeout": MANUAL_NODE_TIMEOUT
+                    "manual_timeout": node_registry.get_timeout("ManualNode")
                 }
             })
             while True:
