@@ -1,3 +1,9 @@
+# Stage 0: Extract dependencies to optimize caching
+FROM alpine AS plugin-deps
+WORKDIR /extract
+COPY plugins/ plugins/
+RUN find plugins/ -type f ! -name "package.json" ! -name "requirements.txt" -delete
+
 # Stage 1: Build React Frontend
 FROM node:20 AS frontend-build
 WORKDIR /app/front-editor
@@ -6,9 +12,12 @@ WORKDIR /app/front-editor
 COPY front-editor/package*.json ./
 RUN npm install --legacy-peer-deps
 
-# Copy source and plugins
-COPY plugins/ /app/plugins/
+# Extract plugin package.json files and install dependencies
+COPY --from=plugin-deps /extract/plugins/ /app/plugins/
 RUN find /app/plugins -name "package.json" -execdir npm install --legacy-peer-deps \;
+
+# Copy actual source code
+COPY plugins/ /app/plugins/
 COPY front-editor/ ./
 
 ARG VITE_WS_URL
@@ -31,10 +40,13 @@ COPY back-api/requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Extract plugin requirements.txt files and install dependencies
+COPY --from=plugin-deps /extract/plugins/ /app/plugins/
+RUN find /app/plugins -name "requirements.txt" -exec pip install --no-cache-dir -r {} \;
+
 # Structure the app directory to match the expected NodalPy build architecture
 COPY back-api/ /app/
 COPY plugins/ /app/plugins/
-RUN find /app/plugins -name "requirements.txt" -exec pip install --no-cache-dir -r {} \;
 COPY --from=frontend-build /app/front-editor/dist /app/front
 
 # Persist user storage
