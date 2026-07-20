@@ -12,6 +12,8 @@ from ..auth.security import SECRET_KEY, ALGORITHM
 import jwt
 from jwt.exceptions import InvalidTokenError
 from loguru import logger
+from ..core.database import SessionLocal
+from ..models.user import User
 import app.api.websocket_actions
 import importlib
 import plugins
@@ -86,7 +88,18 @@ class UserWebSocket:
                     identifier = payload.get("sub")
                     if identifier is None:
                         raise ValueError("Invalid token")
+                    
+                    # Verify user actually exists in database
+                    db = SessionLocal()
+                    try:
+                        db_user = db.query(User).filter(User.id == identifier).first()
+                        if not db_user:
+                            raise ValueError("User no longer exists in database")
+                    finally:
+                        db.close()
+                        
                 except Exception as e:
+                    logger.warning(f"WebSocket authentication failed: {e}")
                     await self.websocket.send_json({"error": "Authentication failed"})
                     await self.websocket.close(code=1008)
                     return

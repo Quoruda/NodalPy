@@ -11,7 +11,7 @@ class UserKernelProxy:
         self.user_id = user_id
         
         # Paths
-        self.local_storage_dir = os.path.join(STORAGE_DIR, user_id)
+        self.local_storage_dir = os.path.join(STORAGE_DIR, "users", str(user_id))
         self.projects_dir = os.path.join(self.local_storage_dir, "projects")
         self.files_dir = os.path.join(self.local_storage_dir, "files")
         self.nodes_dir = os.path.join(self.local_storage_dir, "nodes")
@@ -21,7 +21,7 @@ class UserKernelProxy:
         self.image_name = os.getenv("NODAL_KERNEL_IMAGE", "nodalpy_server:latest")
         self.network_name = os.getenv("NODAL_DOCKER_NETWORK", "nodalpy_network")
         self.host_storage_path = os.getenv("HOST_STORAGE_PATH", os.path.join(os.getcwd(), "storage"))
-        self.user_host_files_path = os.path.join(self.host_storage_path, user_id, "files")
+        self.user_host_files_path = os.path.join(self.host_storage_path, "users", str(user_id), "files")
         self.container = None
         self.docker_client = None
 
@@ -84,7 +84,7 @@ class UserKernelProxy:
                 name=self.container_name,
                 network=self.network_name,
                 volumes={
-                    os.path.join(self.host_storage_path, self.user_id): {
+                    os.path.join(self.host_storage_path, "users", str(self.user_id)): {
                         "bind": "/app/storage",
                         "mode": "rw"
                     }

@@ -39,14 +39,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str | None = payload.get("sub")
-        if username is None:
+        user_id_str: str | None = payload.get("sub")
+        if user_id_str is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
-    except InvalidTokenError:
+        token_data = TokenData(user_id=user_id_str)
+    except (InvalidTokenError, ValueError):
         raise credentials_exception
     
-    user = db.query(User).filter(User.username == token_data.username).first()
+    user = db.query(User).filter(User.id == token_data.user_id).first()
     if user is None:
         raise credentials_exception
     return user

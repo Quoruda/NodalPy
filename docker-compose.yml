@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      pull: false
       args:
         - VITE_WS_URL=ws://127.0.0.1:8555/ws
     container_name: nodalpy_server

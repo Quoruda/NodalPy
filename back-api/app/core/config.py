@@ -15,6 +15,7 @@ core_config = ConfigManager(
     default_schema={
         "secret_key": os.getenv("NODAL_SECRET_KEY", "your-secret-key-for-dev-only"),
         "token_expire_minutes": 10080,
+        "allow_registration": True,
         "execution_debounce_ms": 50,
         "ws_batch_interval_ms": 0,
         "algorithm": "HS256"
@@ -27,5 +28,6 @@ core_config = ConfigManager(
 SECRET_KEY = core_config.get("secret_key")
 ALGORITHM = core_config.get("algorithm")
 ACCESS_TOKEN_EXPIRE_MINUTES = core_config.get("token_expire_minutes")
+ALLOW_REGISTRATION = core_config.get("allow_registration")
 EXECUTION_DEBOUNCE = core_config.get("execution_debounce_ms")
 WS_BATCH_INTERVAL = core_config.get("ws_batch_interval_ms")

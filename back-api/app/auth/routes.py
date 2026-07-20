@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
+from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES, ALLOW_REGISTRATION
 from app.models.user import User
 from app.models.schemas import Token, UserCreate
 from app.auth.security import verify_password, get_password_hash, create_access_token, get_current_user
@@ -13,6 +13,9 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/register", response_model=Token)
 async def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
+    if not ALLOW_REGISTRATION:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Registration is disabled on this server")
+        
     user = db.query(User).filter(User.username == user_in.username).first()
     if user:
         raise HTTPException(status_code=400, detail="Username already registered")
@@ -29,7 +32,7 @@ async def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": new_user.username}, expires_delta=access_token_expires
+        data={"sub": str(new_user.id)}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -44,7 +47,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
