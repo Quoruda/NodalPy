@@ -17,7 +17,7 @@ const FastNode = memo(({ id, data, selected }) => {
     // Debounced re-run on code change
     const handleCodeChange = useCallback((value) => {
         updateNode(id, { code: value });
-        const debounceTime = serverConfig?.debounce ?? 50;
+        const debounceTime = serverConfig?.core?.debounce ?? 50;
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => runCode({ code: value }), debounceTime);
     }, [id, updateNode, runCode, serverConfig]);

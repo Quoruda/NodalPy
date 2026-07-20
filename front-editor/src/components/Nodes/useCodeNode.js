@@ -16,7 +16,6 @@ const generateUniqueId = () =>
     `var_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 export const useCodeNode = (data, config = null) => {
-    const { timeout = null } = (config && typeof config === 'object') ? config : {};
 
     const [isEditing, setIsEditing] = useState(false);
     const [tempTitle, setTempTitle] = useState(data.title || 'Code Node');
@@ -71,8 +70,8 @@ export const useCodeNode = (data, config = null) => {
             ? { ...dataRef.current, ...overrideData }
             : dataRef.current;
 
-        addNodeToQueue?.(dataToRun, timeout);
-    }, [addNodeToQueue, timeout]);
+        addNodeToQueue?.(dataToRun);
+    }, [addNodeToQueue]);
 
     // Called by NodeHeader on title blur / Enter
     const handleSave = useCallback(() => {

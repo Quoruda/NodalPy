@@ -11,7 +11,7 @@ const FlowContext = createContext({
     wsRef: { current: null },
     sendMessage: () => { },
     isConnected: false,
-    serverConfig: { debounce: 50, batch_interval: 0, fast_timeout: 1.0, manual_timeout: 0.0 }, // Defaults
+    serverConfig: { core: { debounce: 50, batch_interval: 0 }, plugins: {} }, // Defaults
     setServerConfig: () => { },
     addNodeToQueue: () => { },
     triggerDownstreamNodes: () => { },
@@ -64,7 +64,7 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
         );
     }, [setNodes]);
 
-    const runCodeBackend = useCallback((node, timeout = null) => {
+    const runCodeBackend = useCallback((node) => {
         const variables = buildVariables(node, edgesRef.current, nodesRef.current);
         const fullNode = nodesRef.current.find(n => n.id === node.id);
         const nodeType = fullNode ? fullNode.type : 'CustomNode';
@@ -76,7 +76,6 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
             inputs: (node.inputs || []).map(i => i.name),
             node: node.id,
             node_type: nodeType,
-            timeout,
         });
 
         setNodes((nds) =>
@@ -93,10 +92,10 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
         isExecutingRef.current = true;
 
         try {
-            const { node, timeout } = executionQueueRef.current.shift();
+            const { node } = executionQueueRef.current.shift();
             activeNodeRef.current = node.id;
 
-            runCodeBackend(node, timeout);
+            runCodeBackend(node);
         } catch (error) {
             console.error("Queue execution error:", error);
             isExecutingRef.current = false;
@@ -105,15 +104,15 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
         }
     }, [runCodeBackend]);
 
-    const addNodeToQueue = useCallback((node, timeout = null) => {
+    const addNodeToQueue = useCallback((node) => {
         const index = executionQueueRef.current.findIndex(item => item.node.id === node.id);
         if (index !== -1) {
             // Update the existing queue item with the latest node state/code
-            executionQueueRef.current[index] = { node, timeout };
+            executionQueueRef.current[index] = { node };
             return;
         }
 
-        executionQueueRef.current.push({ node, timeout });
+        executionQueueRef.current.push({ node });
         setTimeout(() => processQueue(), 0);
     }, [processQueue]);
 

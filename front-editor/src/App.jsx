@@ -42,7 +42,7 @@ function Flow() {
     const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
     const [selectedEdges, setSelectedEdges] = useState([]);
     const [selectedNodes, setSelectedNodes] = useState([]);
-    const [serverConfig, setServerConfig] = useState({ debounce: 50, batch_interval: 0 });
+    const [serverConfig, setServerConfig] = useState({ core: { debounce: 50, batch_interval: 0 }, plugins: {} });
     const [sidebarView, setSidebarView] = useState('nodes');
 
     const { screenToFlowPosition } = useReactFlow();

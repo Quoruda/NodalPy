@@ -19,7 +19,26 @@ class UiRegistry {
     }
 
     registerNodeType(node) {
-        this.slots.nodeTypes.push(node);
+        // Default UI schema for all plugins
+        const defaultSchema = {
+            category: 'Uncategorized',
+            color: '#aaaaaa',
+            colorVar: '--color-custom',
+            supportsShadowing: false,
+            autoTrigger: false,
+            forceRunOnLoad: false,
+            icon: '📦',
+        };
+
+        const configWithDefaults = {
+            ...defaultSchema,
+            ...(node.config || {})
+        };
+
+        this.slots.nodeTypes.push({
+            ...node,
+            config: configWithDefaults
+        });
     }
 
     registerDemo(name, demoData) {
