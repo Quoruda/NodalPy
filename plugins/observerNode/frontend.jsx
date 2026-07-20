@@ -7,6 +7,7 @@ uiRegistry.registerNodeType({
     config: {
         type: 'ObserverNode',
         label: 'Observer',
+        icon: '👁️',
         colorVar: '--color-observer',
         color: '#00d2d3',
         category: 'Output'

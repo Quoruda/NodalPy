@@ -7,6 +7,7 @@ uiRegistry.registerNodeType({
     config: {
         type: 'ManualNode',
         label: 'Manual Node',
+        icon: '⚙️',
         colorVar: '--color-custom',
         color: '#6c5ce7',
         category: 'Logic',

@@ -7,6 +7,7 @@ uiRegistry.registerNodeType({
     config: {
         type: 'FastNode',
         label: 'Fast Node',
+        icon: '⚡',
         colorVar: '--color-fast',
         color: '#74b9ff',
         category: 'Logic',

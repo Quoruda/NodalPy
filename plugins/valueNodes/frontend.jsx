@@ -9,6 +9,7 @@ uiRegistry.registerNodeType({
     config: {
         type: 'NumberNode',
         label: 'Number',
+        icon: '🔢',
         colorVar: '--color-number',
         color: '#0984e3',
         category: 'Input',
@@ -28,6 +29,7 @@ uiRegistry.registerNodeType({
     config: {
         type: 'BooleanNode',
         label: 'Boolean',
+        icon: '🔘',
         colorVar: '--color-boolean',
         color: '#fd79a8',
         category: 'Input',
@@ -47,6 +49,7 @@ uiRegistry.registerNodeType({
     config: {
         type: 'StringNode',
         label: 'String',
+        icon: '🔤',
         colorVar: '--color-string',
         color: '#2ecc71',
         category: 'Input',
