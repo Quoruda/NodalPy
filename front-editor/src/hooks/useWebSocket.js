@@ -203,6 +203,13 @@ export const useWebSocket = (url, setNodes, setServerConfig) => {
 
         socket.onmessage = (event) => {
             const msg = JSON.parse(event.data);
+            
+            if (msg.action === "auth_error") {
+                localStorage.removeItem('nodal_token');
+                window.location.href = '/login';
+                return;
+            }
+            
             messageQueue.push(msg);
 
             if (timeoutId) clearTimeout(timeoutId);

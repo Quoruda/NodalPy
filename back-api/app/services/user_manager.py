@@ -9,9 +9,12 @@ class UserManager:
         self.active_connections = {}
         self.cleanup_task = None
 
-    def get_user(self, user_id) -> UserKernelProxy:
+    def get_user(self, user_id, tier: str = "default") -> UserKernelProxy:
         if user_id not in self.users:
-            self.users[user_id] = UserKernelProxy(user_id)
+            self.users[user_id] = UserKernelProxy(user_id, tier)
+        else:
+            # Update tier if it changed
+            self.users[user_id].tier = tier
         return self.users[user_id]
 
     async def start_cleanup_loop(self):

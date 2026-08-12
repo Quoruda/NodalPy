@@ -29,7 +29,6 @@ def child_target(code: str, initial_context: dict, cwd: str, q: Queue):
             })
             return
 
-    # Prepare stdout/stderr redirection
     stdout_buffer = StringIO()
     stderr_buffer = stdout_buffer
 
@@ -54,13 +53,18 @@ def child_target(code: str, initial_context: dict, cwd: str, q: Queue):
         'os': os
     }
 
-    # Populate local scope with initial context (upstream variables)
     local_scope = {}
     for k, v in initial_context.items():
         local_scope[k] = v
 
     status = "finished"
     error_val = ""
+
+    try:
+        import resource
+        resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))
+    except Exception:
+        pass
 
     try:
         exec(code, exec_globals, local_scope)
@@ -70,7 +74,6 @@ def child_target(code: str, initial_context: dict, cwd: str, q: Queue):
 
     stdout_val = stdout_buffer.getvalue()
 
-    # Filter out non-pickleable variables and system names
     clean_scope = {}
     for key, value in local_scope.items():
         if key.startswith("__"):
@@ -105,11 +108,9 @@ def run_code_in_process(code: str, initial_context: dict, timeout: float = None,
 
     while True:
         try:
-            # Poll the queue with a short timeout to remain responsive
             result = q.get(timeout=0.1)
             break
         except queue.Empty:
-            # Check if process died unexpectedly
             if not p.is_alive():
                 try:
                     result = q.get_nowait()
@@ -123,7 +124,6 @@ def run_code_in_process(code: str, initial_context: dict, timeout: float = None,
                     }
                 break
 
-            # Enforce timeout if specified
             if timeout and (time.time() - start_time) > timeout:
                 p.terminate()
                 p.join(timeout=1)
@@ -132,13 +132,11 @@ def run_code_in_process(code: str, initial_context: dict, timeout: float = None,
                     p.join()
                 raise TimeoutError(f"Execution timed out after {timeout}s")
 
-    # Wait for the child process to exit cleanly
     p.join(timeout=1)
     if p.is_alive():
         p.kill()
         p.join()
 
-    # Deserialize the scope in the parent process
     local_scope = {}
     if "serialized_scope" in result:
         try:

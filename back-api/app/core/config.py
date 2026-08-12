@@ -18,7 +18,16 @@ core_config = ConfigManager(
         "allow_registration": True,
         "execution_debounce_ms": 50,
         "ws_batch_interval_ms": 0,
-        "algorithm": "HS256"
+        "algorithm": "HS256",
+        "tiers": {
+            "default": {
+                "mem_limit": "512m",
+                "cpu_quota": 50000,
+                "max_disk_mb": 500,
+                "execution_timeout": 30,
+                "max_projects": 5
+            }
+        }
     },
     is_core=True,
     storage_dir=STORAGE_DIR

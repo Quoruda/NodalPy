@@ -29,10 +29,12 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
-# System dependencies for scientific packages (pandas, numpy, etc.)
+# System dependencies for scientific packages + disk quota management
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
+    e2fsprogs \
+    util-linux \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements

@@ -7,25 +7,25 @@ from loguru import logger
 from ..core.config import STORAGE_DIR
 
 class UserKernelProxy:
-    def __init__(self, user_id: str):
+    def __init__(self, user_id: str, tier: str = "default"):
         self.user_id = user_id
+        self.tier = tier
         
-        # Paths
         self.local_storage_dir = os.path.join(STORAGE_DIR, "users", str(user_id))
         self.projects_dir = os.path.join(self.local_storage_dir, "projects")
-        self.files_dir = os.path.join(self.local_storage_dir, "files")
-        self.nodes_dir = os.path.join(self.local_storage_dir, "nodes")
+        self.kernel_data_dir = os.path.join(self.local_storage_dir, "kernel_data")
         
-        # Docker execution properties
+        self.files_dir = os.path.join(self.kernel_data_dir, "files")
+        self.nodes_dir = os.path.join(self.kernel_data_dir, "nodes")
+        
         self.container_name = f"nodalpy_kernel_{user_id}"
         self.image_name = os.getenv("NODAL_KERNEL_IMAGE", "nodalpy_server:latest")
         self.network_name = os.getenv("NODAL_DOCKER_NETWORK", "nodalpy_network")
         self.host_storage_path = os.getenv("HOST_STORAGE_PATH", os.path.join(os.getcwd(), "storage"))
-        self.user_host_files_path = os.path.join(self.host_storage_path, "users", str(user_id), "files")
+        self.user_host_kernel_data_path = os.path.join(self.host_storage_path, "users", str(user_id), "kernel_data")
         self.container = None
         self.docker_client = None
 
-        # Common properties
         self.reader = None
         self.writer = None
         self.last_activity = time.time()
@@ -37,6 +37,7 @@ class UserKernelProxy:
     async def start(self):
         async with self.lock:
             os.makedirs(self.projects_dir, exist_ok=True)
+            os.makedirs(self.kernel_data_dir, exist_ok=True)
             os.makedirs(self.files_dir, exist_ok=True)
             os.makedirs(self.nodes_dir, exist_ok=True)
             await self._start_docker()
@@ -53,10 +54,8 @@ class UserKernelProxy:
             logger.error(f"Failed to connect to Docker daemon: {e}")
             raise RuntimeError(f"Failed to connect to Docker daemon: {e}")
 
-        # Ensure container folder exists inside /app/storage
         os.makedirs(self.files_dir, exist_ok=True)
 
-        # Check and remove any stale container with the same name
         try:
             stale = self.docker_client.containers.get(self.container_name)
             logger.info(f"Found stale container '{self.container_name}'. Stopping and removing it...")
@@ -65,6 +64,9 @@ class UserKernelProxy:
         except docker.errors.NotFound:
             pass
 
+        from ..core.tier_manager import get_tier_config
+        config = get_tier_config(self.tier)
+        
         try:
             self.container = self.docker_client.containers.run(
                 image=self.image_name,
@@ -84,11 +86,13 @@ class UserKernelProxy:
                 name=self.container_name,
                 network=self.network_name,
                 volumes={
-                    os.path.join(self.host_storage_path, "users", str(self.user_id)): {
+                    self.user_host_kernel_data_path: {
                         "bind": "/app/storage",
                         "mode": "rw"
                     }
                 },
+                mem_limit=config.get("mem_limit"),
+                cpu_quota=config.get("cpu_quota"),
                 detach=True,
                 auto_remove=True
             )
@@ -97,10 +101,8 @@ class UserKernelProxy:
             self.container = None
             raise e
 
-        # Wait for container port to be ready
         connected = False
         for _ in range(50):
-            # Check if container died
             self.container.reload()
             if self.container.status == "exited":
                 logs = self.container.logs().decode('utf-8')
@@ -109,7 +111,6 @@ class UserKernelProxy:
                 raise RuntimeError("Kernel container exited immediately after launch")
 
             try:
-                # Inside docker network, the container name acts as hostname
                 self.reader, self.writer = await asyncio.open_connection(self.container_name, 8000)
                 connected = True
                 break

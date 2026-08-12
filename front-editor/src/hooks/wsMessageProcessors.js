@@ -40,6 +40,13 @@ export const processSystemMessage = (msg, setServerConfigRef, frontVersionRef) =
         }
     } else if (msg.action === "fs_read") {
         window.dispatchEvent(new CustomEvent('fs_read_result', { detail: msg }));
+    } else if (msg.action === "notification") {
+        const level = msg.level || "info";
+        if (toast[level]) {
+            toast[level](msg.message, { autoClose: 5000 });
+        } else {
+            toast(msg.message, { autoClose: 5000 });
+        }
     }
 };
 

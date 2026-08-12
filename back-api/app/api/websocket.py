@@ -1,6 +1,7 @@
 import asyncio
 import os
 import json
+import traceback
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from ..services.user_manager import UserManager
@@ -95,16 +96,17 @@ class UserWebSocket:
                         db_user = db.query(User).filter(User.id == identifier).first()
                         if not db_user:
                             raise ValueError("User no longer exists in database")
+                        user_tier = db_user.tier
                     finally:
                         db.close()
                         
                 except Exception as e:
                     logger.warning(f"WebSocket authentication failed: {e}")
-                    await self.websocket.send_json({"error": "Authentication failed"})
+                    await self.websocket.send_json({"action": "auth_error", "error": "Authentication failed"})
                     await self.websocket.close(code=1008)
                     return
 
-                self.user = self.user_manager.get_user(identifier)
+                self.user = self.user_manager.get_user(identifier, user_tier)
                 
                 # Close existing connection if any
                 old_conn = self.user_manager.active_connections.get(identifier)
@@ -141,10 +143,11 @@ class UserWebSocket:
                 "status": "success",
                 "front_version": FRONTEND_VERSION,
                 "config": {
-                    "debounce": EXECUTION_DEBOUNCE,
-                    "batch_interval": WS_BATCH_INTERVAL,
-                    "fast_timeout": node_registry.get_timeout("FastNode"),
-                    "manual_timeout": node_registry.get_timeout("ManualNode")
+                    "core": {
+                        "debounce": EXECUTION_DEBOUNCE,
+                        "batch_interval": WS_BATCH_INTERVAL
+                    },
+                    "plugins": node_registry.get_all_configs()
                 }
             })
             while True:

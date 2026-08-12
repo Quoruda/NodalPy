@@ -7,6 +7,8 @@ from loguru import logger
 from ..core.registry import ws_registry
 from ..services import filesystem as fs
 from ..core.node_registry import node_registry
+from ..core.tier_manager import get_tier_config
+from ..core.storage_manager import check_user_quota
 
 def verif_args(data: dict, required_args: list[str]) -> bool:
     for arg in required_args:
@@ -88,8 +90,27 @@ async def handle_list_projects(session, data: dict):
 @ws_registry.register("create_project")
 async def handle_create_project(session, data: dict):
     try:
+        tier_config = get_tier_config(session.user.tier)
+        max_projects = tier_config.get("max_projects")
+        
         projects_dir = session.user.projects_dir
         os.makedirs(projects_dir, exist_ok=True)
+        
+        if max_projects is not None:
+            existing_projects = _scan_projects(projects_dir)
+            if len(existing_projects) >= max_projects:
+                await session.websocket.send_json({
+                    "action": "create_project",
+                    "status": "error",
+                    "error": f"Limit of {max_projects} projects reached."
+                })
+                await session.websocket.send_json({
+                    "action": "notification",
+                    "level": "warning",
+                    "message": f"Project limit reached ({max_projects}). Delete a project first."
+                })
+                return
+                
         now = datetime.now(timezone.utc).isoformat()
         project_id = str(uuid.uuid4())
         name = data.get("name", "Untitled")
@@ -186,9 +207,29 @@ async def handle_run_node(session, data: dict):
 
     node_type = data.get("node_type", "CustomNode")
     timeout = node_registry.get_timeout(node_type)
+    
+    tier_config = get_tier_config(session.user.tier)
+    tier_timeout = tier_config.get("execution_timeout")
+    if tier_timeout is not None:
+        if timeout is None or tier_timeout < timeout:
+            timeout = tier_timeout
 
     inputs = data.get("inputs", [])
     node_id = data["node"]
+
+    if not check_user_quota(session.user.user_id, tier=session.user.tier):
+        await session.websocket.send_json({
+            "action": "notification",
+            "level": "warning",
+            "message": "Storage quota reached. Delete files to free up space."
+        })
+        await session.websocket.send_json({
+            "action": "run_code",
+            "status": "error",
+            "node": node_id,
+            "error": "STORAGE_QUOTA_EXCEEDED"
+        })
+        return
 
     if not session.user.can_run_code():
         await session.websocket.send_json({
@@ -224,6 +265,14 @@ async def handle_run_node(session, data: dict):
             "timeout": timeout,
             "inputs": inputs
         })
+        
+        if response.get("error") == "STORAGE_QUOTA_EXCEEDED":
+            await session.websocket.send_json({
+                "action": "notification",
+                "level": "warning",
+                "message": "Storage quota reached. Delete files to free up space."
+            })
+            
         await session.websocket.send_json({
             "action": "run_code", 
             "status": response.get("status"), 
@@ -250,6 +299,14 @@ async def handle_get_variable(session, data: dict):
             "node": data["node"],
             "name": data["name"]
         })
+        
+        if response.get("error") == "STORAGE_QUOTA_EXCEEDED":
+            await session.websocket.send_json({
+                "action": "notification",
+                "level": "warning",
+                "message": "Storage quota reached. Delete files to free up space."
+            })
+            
         await session.websocket.send_json({
             "action": "get_variable",
             "node": data["node"],
@@ -271,6 +328,19 @@ async def handle_save_project(session, data: dict):
     try:
         if not verif_args(data, ["project_id", "project_data"]):
             await session.websocket.send_json({"error": "missing project_id or project_data"})
+            return
+
+        if not check_user_quota(session.user.user_id, tier=session.user.tier):
+            await session.websocket.send_json({
+                "action": "notification",
+                "level": "error",
+                "message": "Storage quota reached. Cannot save project."
+            })
+            await session.websocket.send_json({
+                "action": "save_project",
+                "status": "error",
+                "error": "STORAGE_QUOTA_EXCEEDED"
+            })
             return
 
         projects_dir = session.user.projects_dir
@@ -307,6 +377,25 @@ async def handle_save_project(session, data: dict):
             "status": "success",
             "project_id": data["project_id"]
         })
+    except OSError as e:
+        if e.errno == 28:
+            await session.websocket.send_json({
+                "action": "notification",
+                "level": "error",
+                "message": "Storage quota reached. Cannot save project."
+            })
+            await session.websocket.send_json({
+                "action": "save_project",
+                "status": "error",
+                "error": "STORAGE_QUOTA_EXCEEDED"
+            })
+        else:
+            logger.error(f"Error saving project: {e}")
+            await session.websocket.send_json({
+                "action": "save_project",
+                "status": "error",
+                "error": str(e)
+            })
     except Exception as e:
         logger.error(f"Error saving project: {e}")
         await session.websocket.send_json({

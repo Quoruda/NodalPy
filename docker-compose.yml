@@ -1,6 +1,7 @@
 services:
   nodalpy:
     image: nodalpy_server:latest
+    privileged: true 
     build:
       context: .
       dockerfile: Dockerfile
@@ -11,8 +12,12 @@ services:
     ports:
       - "8555:8000"
     volumes:
-      - .storage:/app/storage
+      - .storage:/app/storage:shared
       - /var/run/docker.sock:/var/run/docker.sock
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/loop-control:/dev/loop-control
     environment:
       - PYTHONUNBUFFERED=1
       - NODAL_SECRET_KEY=NodalPy_Super_Secret_Key_Change_Me_In_Prod

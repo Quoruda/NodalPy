@@ -26,15 +26,18 @@ class KernelRunner:
                 continue
             
             try:
-                # Test pickleability
                 pickle.dumps(value)
                 clean_scope[key] = value
             except Exception as e:
                 logger.warning(f"Could not pickle variable '{key}': {e}")
-                
+
         try:
             with open(state_file, 'wb') as f:
                 pickle.dump(clean_scope, f)
+        except OSError as e:
+            if e.errno == 28:
+                raise ValueError("STORAGE_QUOTA_EXCEEDED")
+            logger.error(f"Error saving state for node {node_id}: {e}")
         except Exception as e:
             logger.error(f"Error saving state for node {node_id}: {e}")
 
@@ -72,7 +75,6 @@ class KernelRunner:
                 if input_name not in new_context:
                     new_context[input_name] = None
 
-        # Ensure user storage directory exists
         os.makedirs(self.storage_dir, exist_ok=True)
         
         self.is_running_code = True
@@ -96,6 +98,12 @@ class KernelRunner:
             error_msg = str(e)
             
         self.is_running_code = False
-        self._save_node_state(node, local_scope)
+        
+        try:
+            self._save_node_state(node, local_scope)
+        except ValueError as e:
+            if str(e) == "STORAGE_QUOTA_EXCEEDED":
+                status = "error"
+                error_msg = "STORAGE_QUOTA_EXCEEDED"
             
         return status, output, error_msg
