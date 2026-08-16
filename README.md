@@ -14,7 +14,9 @@
 *   **Isolated Environments**: Multi-tenant isolation with dedicated per-user Python virtual environments (`.venv`).
 *   **Built-in PackageManager**: Real-time management (search, install, uninstall) of Python libraries at runtime.
 *   **FastNodes**: Automatic and reactive execution. Updates to code or inputs trigger instant recalculation (debounced).
-*   **Custom Nodes**: Designed for heavy tasks or precise control. Execution is triggered manually and is isolated from upstream parents.
+*   **Custom / Manual Nodes**: Designed for heavy tasks or precise control. Can be triggered manually or via upstream trigger nodes.
+*   **Background Triggers & Timer Nodes**: Scheduled background triggers (interval and daily execution with timezone support) that automatically activate downstream workflow execution.
+*   **Shadow Nodes**: Dynamic node mirroring and aliasing to reuse code and state seamlessly across the graph.
 *   **Value Nodes**: Ready-to-use typed inputs including Integer, Float, Boolean, String, and File (supports file uploads and relative paths).
 *   **Observer Node**: Rich result visualization supporting Text, Numbers, Images (Matplotlib, PIL, base64), and interactive JSON formatting for Tables/Dictionaries.
 *   **Project Persistence**:
@@ -64,6 +66,7 @@ pip install -r requirements.txt
 
 ### 4. Run the Application
 
+```bash
 python3 main.py
 ```
 
