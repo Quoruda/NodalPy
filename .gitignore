@@ -1,12 +1,32 @@
+# Build & Distribution
 build/
-.idea
-.fleet
+front-editor/dist/
+node_modules/
 
-# Python cache files
+# IDE & Editor Settings
+.idea/
+.fleet/
+.vscode/
+
+# Python & Virtual Environments
+.venv/
+venv/
 *.pyc
 __pycache__/
-back-api/__pycache__
-/storage/
+**/__pycache__/
+
+# Storage & Temporary Files
+storage/
 .storage/
-.venv/
-ROADMAP.mdAGENT.md
+back-api/storage/
+*.log
+
+# Local Project Management & Scratch Files
+AGENT.md
+ROADMAP.md
+My_Project.json
+link_node.html
+
+# OS Files
+.DS_Store
+Thumbs.db
