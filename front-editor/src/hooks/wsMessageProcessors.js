@@ -47,6 +47,8 @@ export const processSystemMessage = (msg, setServerConfigRef, frontVersionRef) =
         } else {
             toast(msg.message, { autoClose: 5000 });
         }
+    } else if (msg.action === "trigger_fired") {
+        window.dispatchEvent(new CustomEvent('trigger_fired', { detail: msg }));
     }
 };
 

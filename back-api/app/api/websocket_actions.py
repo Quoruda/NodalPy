@@ -9,6 +9,7 @@ from ..services import filesystem as fs
 from ..core.node_registry import node_registry
 from ..core.tier_manager import get_tier_config
 from ..core.storage_manager import check_user_quota
+from ..services.trigger_manager import trigger_manager
 
 def verif_args(data: dict, required_args: list[str]) -> bool:
     for arg in required_args:
@@ -153,6 +154,7 @@ async def handle_delete_project(session, data: dict):
         project_path = os.path.join(projects_dir, f"{data['project_id']}.json")
         if os.path.exists(project_path):
             os.remove(project_path)
+        await trigger_manager.delete_project_triggers(data["project_id"])
         await session.websocket.send_json({
             "action": "delete_project",
             "status": "success",
@@ -161,6 +163,58 @@ async def handle_delete_project(session, data: dict):
     except Exception as e:
         await session.websocket.send_json({
             "action": "delete_project",
+            "status": "error",
+            "error": str(e)
+        })
+
+@ws_registry.register("update_trigger")
+async def handle_update_trigger(session, data: dict):
+    try:
+        if not verif_args(data, ["project_id", "node_id", "node_type"]):
+            await session.websocket.send_json({"error": "missing arguments for update_trigger"})
+            return
+        
+        is_active = data.get("is_active", True)
+        config = data.get("config", {})
+        
+        await trigger_manager.update_trigger(
+            user_id=session.user.user_id,
+            project_id=data["project_id"],
+            node_id=data["node_id"],
+            node_type=data["node_type"],
+            is_active=is_active,
+            config=config
+        )
+        
+        await session.websocket.send_json({
+            "action": "update_trigger",
+            "status": "success",
+            "node_id": data["node_id"],
+            "is_active": is_active
+        })
+    except Exception as e:
+        await session.websocket.send_json({
+            "action": "update_trigger",
+            "status": "error",
+            "error": str(e)
+        })
+
+@ws_registry.register("delete_trigger")
+async def handle_delete_trigger(session, data: dict):
+    try:
+        if not verif_args(data, ["node_id"]):
+            await session.websocket.send_json({"error": "missing node_id"})
+            return
+            
+        await trigger_manager.delete_trigger(data["node_id"])
+        await session.websocket.send_json({
+            "action": "delete_trigger",
+            "status": "success",
+            "node_id": data["node_id"]
+        })
+    except Exception as e:
+        await session.websocket.send_json({
+            "action": "delete_trigger",
             "status": "error",
             "error": str(e)
         })

@@ -132,7 +132,7 @@ function Flow() {
     }
 
     return (
-        <FlowProvider edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef} sendMessage={sendMessage} isConnected={isConnected} serverConfig={serverConfig} setServerConfig={setServerConfig}>
+        <FlowProvider activeProjectId={activeProjectId} edges={edges} nodes={nodes} setNodes={setNodes} setEdges={setEdges} wsRef={wsRef} sendMessage={sendMessage} isConnected={isConnected} serverConfig={serverConfig} setServerConfig={setServerConfig}>
             <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
                 <Sidebar
                     onLoadDemo={loadProjectFromData}

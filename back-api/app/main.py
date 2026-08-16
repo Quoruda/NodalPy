@@ -32,6 +32,8 @@ for _log in ['uvicorn', 'uvicorn.error', 'uvicorn.access', 'fastapi']:
     _logger.handlers = [InterceptHandler()]
     _logger.propagate = False
 
+from .services.trigger_manager import trigger_manager
+
 user_manager = UserManager()
 app = FastAPI()
 
@@ -42,6 +44,7 @@ async def startup_event():
     Base.metadata.create_all(bind=engine)
     await user_manager.cleanup_orphans()
     await user_manager.start_cleanup_loop()
+    await trigger_manager.initialize(user_manager)
 
 @app.on_event("shutdown")
 async def shutdown_event():
