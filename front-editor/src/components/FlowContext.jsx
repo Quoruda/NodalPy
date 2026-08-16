@@ -29,11 +29,11 @@ export const useFlowContext = () => {
 };
 
 // Provider to wrap ReactFlow
-export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef, sendMessage, isConnected, serverConfig, setServerConfig }) => {
+export const FlowProvider = ({ activeProjectId, children, edges, nodes, setNodes, setEdges, wsRef, sendMessage, isConnected, serverConfig, setServerConfig }) => {
     
-    // Refs to access current states without recreating functions
     const nodesRef = useRef(nodes);
     const edgesRef = useRef(edges);
+    const activeProjectIdRef = useRef(activeProjectId);
     
     useEffect(() => {
         nodesRef.current = nodes;
@@ -42,6 +42,12 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
     useEffect(() => {
         edgesRef.current = edges;
     }, [edges]);
+
+    useEffect(() => {
+        activeProjectIdRef.current = activeProjectId;
+    }, [activeProjectId]);
+
+
 
     // Global sequential execution queue (avoids parallelism rejected by the Python server)
     const executionQueueRef = useRef([]);
@@ -120,6 +126,10 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
         const currentEdges = edgesRef.current;
         const currentNodes = nodesRef.current;
 
+        const sourceNode = currentNodes.find(n => n.id === sourceNodeId);
+        const sourceConfig = sourceNode ? uiRegistry.slots.nodeTypes.find(n => n.type === sourceNode.type)?.config : null;
+        const isSourceTrigger = Boolean(sourceConfig?.isTrigger || sourceNode?.data?.isTrigger);
+
         const targetIds = currentEdges
             .filter(e => e.source === sourceNodeId)
             .map(e => e.target);
@@ -129,13 +139,15 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
         uniqueTargetIds.forEach(targetId => {
             const targetNode = currentNodes.find(n => n.id === targetId);
             if (!targetNode) return;
+
             const nodeConfig = uiRegistry.slots.nodeTypes.find(n => n.type === targetNode.type)?.config;
             const isAutoTrigger = targetNode.data?.autoTrigger !== undefined ? targetNode.data.autoTrigger : nodeConfig?.autoTrigger;
-            if (!isAutoTrigger) return;
 
-            // Check that ALL source nodes of the FastNode have completed (state 2)
+            if (!isAutoTrigger && !isSourceTrigger) return;
+
             const incomingEdges = currentEdges.filter(e => e.target === targetId);
             const allSourcesReady = incomingEdges.every(edge => {
+                if (edge.source === sourceNodeId) return true;
                 const srcNode = currentNodes.find(n => n.id === edge.source);
                 return srcNode && srcNode.data?.state === 2;
             });
@@ -152,6 +164,64 @@ export const FlowProvider = ({ children, edges, nodes, setNodes, setEdges, wsRef
             }
         });
     }, [addNodeToQueue]);
+
+    useEffect(() => {
+        const handleTriggerFired = (e) => {
+            const { node_id, output } = e.detail;
+            const targetNode = nodesRef.current.find(n => n.id === node_id);
+            if (!targetNode) return;
+
+            setNodes((nds) =>
+                nds.map((n) =>
+                    n.id === node_id
+                        ? {
+                            ...n,
+                            data: {
+                                ...n.data,
+                                state: 2,
+                                lastTriggeredAt: output?.timestamp || new Date().toISOString(),
+                                tickCount: (n.data?.tickCount || 0) + 1
+                            }
+                        }
+                        : n
+                )
+            );
+
+            triggerDownstreamNodes(node_id);
+        };
+
+        const handleUpdateNodeTrigger = (e) => {
+            const { nodeId, isActive, configPatch } = e.detail;
+            const targetNode = nodesRef.current.find(n => n.id === nodeId);
+            if (!targetNode) return;
+
+            const currentIsActive = isActive !== undefined ? isActive : targetNode.data?.isActive;
+            const config = {
+                mode: targetNode.data?.mode || 'interval',
+                interval: targetNode.data?.interval !== undefined ? targetNode.data.interval : 5,
+                unit: targetNode.data?.unit || 'seconds',
+                targetTime: targetNode.data?.targetTime || '12:00:00',
+                repeatDaily: targetNode.data?.repeatDaily !== undefined ? targetNode.data.repeatDaily : true,
+                ...(configPatch || {})
+            };
+
+            sendMessage({
+                action: "update_trigger",
+                project_id: activeProjectIdRef.current || 'default',
+                node_id: nodeId,
+                node_type: targetNode.type,
+                is_active: currentIsActive,
+                config
+            });
+        };
+
+        window.addEventListener('trigger_fired', handleTriggerFired);
+        window.addEventListener('update_node_trigger', handleUpdateNodeTrigger);
+        return () => {
+            window.removeEventListener('trigger_fired', handleTriggerFired);
+            window.removeEventListener('update_node_trigger', handleUpdateNodeTrigger);
+        };
+    }, [sendMessage, setNodes, triggerDownstreamNodes]);
 
     useEffect(() => {
         const handleAutoRun = (e) => {
