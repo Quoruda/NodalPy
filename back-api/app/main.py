@@ -48,6 +48,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    await trigger_manager.shutdown()
     await user_manager.stop_all_kernels()
 
 app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")

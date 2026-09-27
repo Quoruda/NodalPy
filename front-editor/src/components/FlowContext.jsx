@@ -82,6 +82,7 @@ export const FlowProvider = ({ activeProjectId, children, edges, nodes, setNodes
             inputs: (node.inputs || []).map(i => i.name),
             node: node.id,
             node_type: nodeType,
+            project_id: activeProjectIdRef.current || 'default',
         });
 
         setNodes((nds) =>
@@ -187,7 +188,8 @@ export const FlowProvider = ({ activeProjectId, children, edges, nodes, setNodes
                 )
             );
 
-            triggerDownstreamNodes(node_id);
+            // Downstream execution is handled autonomously by the backend WorkflowEngine.
+            // Progress events (run_code) are received and rendered via WebSocket.
         };
 
         const handleUpdateNodeTrigger = (e) => {
@@ -221,7 +223,7 @@ export const FlowProvider = ({ activeProjectId, children, edges, nodes, setNodes
             window.removeEventListener('trigger_fired', handleTriggerFired);
             window.removeEventListener('update_node_trigger', handleUpdateNodeTrigger);
         };
-    }, [sendMessage, setNodes, triggerDownstreamNodes]);
+    }, [sendMessage, setNodes]);
 
     useEffect(() => {
         const handleAutoRun = (e) => {

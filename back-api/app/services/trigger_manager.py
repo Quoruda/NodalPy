@@ -7,6 +7,7 @@ from loguru import logger
 from ..core.config import STORAGE_DIR
 from ..core.database import SessionLocal
 from ..models.trigger import Trigger
+from sqlalchemy import select
 
 class TriggerManager:
     def __init__(self):
@@ -24,22 +25,17 @@ class TriggerManager:
         if user_manager:
             self.user_manager = user_manager
         
-        def _get_active_triggers():
-            db = SessionLocal()
-            try:
-                triggers = db.query(Trigger).filter(Trigger.is_active == True).all()
-                return [{
+        try:
+            async with SessionLocal() as db:
+                result = await db.execute(select(Trigger).where(Trigger.is_active == True))
+                triggers = result.scalars().all()
+                active_triggers = [{
                     "id": t.id,
                     "user_id": t.user_id,
                     "project_id": t.project_id,
                     "node_type": t.node_type,
                     "config": t.config
                 } for t in triggers]
-            finally:
-                db.close()
-
-        try:
-            active_triggers = await asyncio.to_thread(_get_active_triggers)
             for t_data in active_triggers:
                 self._schedule_trigger_task(
                     t_data["id"], 
@@ -80,10 +76,10 @@ class TriggerManager:
             task.cancel()
 
     async def update_trigger(self, user_id: str, project_id: str, node_id: str, node_type: str, is_active: bool, config: dict):
-        def _db_update():
-            db = SessionLocal()
-            try:
-                trigger = db.query(Trigger).filter(Trigger.id == node_id).first()
+        try:
+            async with SessionLocal() as db:
+                result = await db.execute(select(Trigger).where(Trigger.id == node_id))
+                trigger = result.scalars().first()
                 if not trigger:
                     trigger = Trigger(
                         id=node_id,
@@ -101,15 +97,7 @@ class TriggerManager:
                     trigger.is_active = is_active
                     trigger.config_json = json.dumps(config or {})
                 
-                db.commit()
-            except Exception as e:
-                db.rollback()
-                raise e
-            finally:
-                db.close()
-
-        try:
-            await asyncio.to_thread(_db_update)
+                await db.commit()
         except Exception as e:
             logger.error(f"Error updating trigger in database for node {node_id}: {e}")
             raise e
@@ -122,42 +110,25 @@ class TriggerManager:
     async def delete_trigger(self, node_id: str):
         self._cancel_trigger_task(node_id)
         
-        def _db_delete():
-            db = SessionLocal()
-            try:
-                trigger = db.query(Trigger).filter(Trigger.id == node_id).first()
-                if trigger:
-                    db.delete(trigger)
-                    db.commit()
-            except Exception as e:
-                db.rollback()
-                raise e
-            finally:
-                db.close()
-
         try:
-            await asyncio.to_thread(_db_delete)
+            async with SessionLocal() as db:
+                result = await db.execute(select(Trigger).where(Trigger.id == node_id))
+                trigger = result.scalars().first()
+                if trigger:
+                    await db.delete(trigger)
+                    await db.commit()
         except Exception as e:
             logger.error(f"Error deleting trigger {node_id}: {e}")
 
     async def delete_project_triggers(self, project_id: str):
-        def _get_and_delete_project_triggers():
-            db = SessionLocal()
-            try:
-                triggers = db.query(Trigger).filter(Trigger.project_id == project_id).all()
+        try:
+            async with SessionLocal() as db:
+                result = await db.execute(select(Trigger).where(Trigger.project_id == project_id))
+                triggers = result.scalars().all()
                 trigger_ids = [t.id for t in triggers]
                 for trigger in triggers:
-                    db.delete(trigger)
-                db.commit()
-                return trigger_ids
-            except Exception as e:
-                db.rollback()
-                raise e
-            finally:
-                db.close()
-
-        try:
-            trigger_ids = await asyncio.to_thread(_get_and_delete_project_triggers)
+                    await db.delete(trigger)
+                await db.commit()
             for tid in trigger_ids:
                 self._cancel_trigger_task(tid)
         except Exception as e:

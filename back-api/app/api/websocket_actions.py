@@ -10,6 +10,7 @@ from ..core.node_registry import node_registry
 from ..core.tier_manager import get_tier_config
 from ..core.storage_manager import check_user_quota
 from ..services.trigger_manager import trigger_manager
+from ..services.workflow_engine import workflow_engine
 
 def verif_args(data: dict, required_args: list[str]) -> bool:
     for arg in required_args:
@@ -334,6 +335,33 @@ async def handle_run_node(session, data: dict):
             "output": response.get("output", ""),
             "error": response.get("error", "")
         })
+
+        project_id = data.get("project_id")
+        if project_id:
+            try:
+                p_data = workflow_engine.load_project(session.user.user_id, project_id)
+                t_node = next((n for n in p_data.get("nodes", []) if n.get("id") == data["node"]), None)
+                if t_node:
+                    n_data = t_node.setdefault("data", {})
+                    if response.get("status") == "finished":
+                        n_data["state"] = 2
+                        n_data["error"] = None
+                        if response.get("output"):
+                            n_data["logs"] = response.get("output")
+                    elif response.get("status") == "error":
+                        n_data["state"] = 3
+                        n_data["error"] = response.get("error")
+                    workflow_engine.save_project(session.user.user_id, project_id, p_data)
+            except Exception as e:
+                logger.debug(f"Could not persist node state in project: {e}")
+
+            if data.get("run_downstream", False) and response.get("status") == "finished":
+                await workflow_engine.run_downstream(
+                    user_id=session.user.user_id,
+                    project_id=project_id,
+                    source_node_id=data["node"],
+                    user_manager=session.user_manager
+                )
     except Exception as e:
         await session.websocket.send_json({
             "action": "run_code", 
@@ -341,6 +369,46 @@ async def handle_run_node(session, data: dict):
             "node": data["node"],
             "error": str(e)
         })
+
+
+@ws_registry.register("run_flow")
+async def handle_run_flow(session, data: dict):
+    if not verif_args(data, ["project_id", "node"]):
+        await session.websocket.send_json({"error": "missing project_id or node"})
+        return
+
+    project_id = data["project_id"]
+    node_id = data["node"]
+    override_code = data.get("code")
+
+    project_data = workflow_engine.load_project(session.user.user_id, project_id)
+    target_node = next((n for n in project_data.get("nodes", []) if n.get("id") == node_id), None)
+
+    if not target_node:
+        await session.websocket.send_json({
+            "action": "run_code",
+            "status": "error",
+            "node": node_id,
+            "error": "Node not found in project"
+        })
+        return
+
+    res = await workflow_engine.execute_node(
+        user_id=session.user.user_id,
+        project_id=project_id,
+        node=target_node,
+        project_data=project_data,
+        user_manager=session.user_manager,
+        override_code=override_code
+    )
+
+    if res.get("status") == "finished":
+        await workflow_engine.run_downstream(
+            user_id=session.user.user_id,
+            project_id=project_id,
+            source_node_id=node_id,
+            user_manager=session.user_manager
+        )
 
 @ws_registry.register("get_variable")
 async def handle_get_variable(session, data: dict):

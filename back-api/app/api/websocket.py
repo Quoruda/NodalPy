@@ -14,6 +14,7 @@ import jwt
 from jwt.exceptions import InvalidTokenError
 from loguru import logger
 from ..core.database import SessionLocal
+from sqlalchemy import select
 from ..models.user import User
 import app.api.websocket_actions
 import importlib
@@ -70,6 +71,18 @@ class UserWebSocket:
         self.user = None
         self.last_execution_time = {} # Map node_id -> timestamp
 
+        # Safely wrap send_json so that no execution or action ever crashes due to a disconnected client
+        original_send_json = websocket.send_json
+        async def safe_send_json(payload, *args, **kwargs):
+            if self.is_open():
+                try:
+                    return await original_send_json(payload, *args, **kwargs)
+                except Exception as e:
+                    logger.debug(f"Safely caught WebSocket send error (client disconnected): {e}")
+            else:
+                logger.debug("Safely skipped WebSocket send (client not connected)")
+        self.websocket.send_json = safe_send_json
+
     def is_open(self) -> bool:
         return self.websocket.client_state == WebSocketState.CONNECTED
 
@@ -91,14 +104,12 @@ class UserWebSocket:
                         raise ValueError("Invalid token")
                     
                     # Verify user actually exists in database
-                    db = SessionLocal()
-                    try:
-                        db_user = db.query(User).filter(User.id == identifier).first()
+                    async with SessionLocal() as db:
+                        result = await db.execute(select(User).where(User.id == identifier))
+                        db_user = result.scalars().first()
                         if not db_user:
                             raise ValueError("User no longer exists in database")
                         user_tier = db_user.tier
-                    finally:
-                        db.close()
                         
                 except Exception as e:
                     logger.warning(f"WebSocket authentication failed: {e}")

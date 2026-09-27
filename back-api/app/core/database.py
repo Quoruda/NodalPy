@@ -1,7 +1,6 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
 
 if os.path.exists("/app/storage"):
     STORAGE_DIR = "/app/storage"
@@ -11,19 +10,15 @@ else:
     STORAGE_DIR = os.path.join(BASE_DIR, ".storage")
 
 os.makedirs(STORAGE_DIR, exist_ok=True)
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{os.path.join(STORAGE_DIR, 'users.db')}"
+SQLALCHEMY_DATABASE_URL = f"sqlite+aiosqlite:///{os.path.join(STORAGE_DIR, 'users.db')}"
 
-# check_same_thread=False is needed only for SQLite
-engine = create_engine(
+engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
 
 Base = declarative_base()
 
-def get_db():
-    db = SessionLocal()
-    try:
+async def get_db():
+    async with SessionLocal() as db:
         yield db
-    finally:
-        db.close()
