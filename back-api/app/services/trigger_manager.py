@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 import cloudpickle as pickle
-from typing import Callable, Dict, Any
+from typing import Callable, Dict, Any, Optional
 from loguru import logger
 from ..core.config import STORAGE_DIR
 from ..core.database import SessionLocal
@@ -24,21 +24,39 @@ class TriggerManager:
         if user_manager:
             self.user_manager = user_manager
         
-        db = SessionLocal()
+        def _get_active_triggers():
+            db = SessionLocal()
+            try:
+                triggers = db.query(Trigger).filter(Trigger.is_active == True).all()
+                return [{
+                    "id": t.id,
+                    "user_id": t.user_id,
+                    "project_id": t.project_id,
+                    "node_type": t.node_type,
+                    "config": t.config
+                } for t in triggers]
+            finally:
+                db.close()
+
         try:
-            active_triggers = db.query(Trigger).filter(Trigger.is_active == True).all()
-            for trigger in active_triggers:
-                self._schedule_trigger_task(trigger.id, trigger.user_id, trigger.project_id, trigger.node_type, trigger.config)
+            active_triggers = await asyncio.to_thread(_get_active_triggers)
+            for t_data in active_triggers:
+                self._schedule_trigger_task(
+                    t_data["id"], 
+                    t_data["user_id"], 
+                    t_data["project_id"], 
+                    t_data["node_type"], 
+                    t_data["config"]
+                )
         except Exception as e:
             logger.error(f"Failed to load active triggers on startup: {e}")
-        finally:
-            db.close()
 
     def _schedule_trigger_task(self, node_id: str, user_id: str, project_id: str, node_type: str, config: dict):
         self._cancel_trigger_task(node_id)
         
         handler = self.handlers.get(node_type.lower())
         if not handler:
+            logger.warning(f"No handler registered for trigger node_type '{node_type}' (node {node_id})")
             return
 
         async def run_wrapper():
@@ -49,7 +67,12 @@ class TriggerManager:
             except Exception as e:
                 logger.error(f"Error in trigger task for node {node_id}: {e}")
 
-        self.active_tasks[node_id] = asyncio.create_task(run_wrapper())
+        task = asyncio.create_task(run_wrapper())
+        def _on_done(t):
+            if self.active_tasks.get(node_id) is t:
+                self.active_tasks.pop(node_id, None)
+        task.add_done_callback(_on_done)
+        self.active_tasks[node_id] = task
 
     def _cancel_trigger_task(self, node_id: str):
         task = self.active_tasks.pop(node_id, None)
@@ -57,33 +80,39 @@ class TriggerManager:
             task.cancel()
 
     async def update_trigger(self, user_id: str, project_id: str, node_id: str, node_type: str, is_active: bool, config: dict):
-        db = SessionLocal()
+        def _db_update():
+            db = SessionLocal()
+            try:
+                trigger = db.query(Trigger).filter(Trigger.id == node_id).first()
+                if not trigger:
+                    trigger = Trigger(
+                        id=node_id,
+                        user_id=user_id,
+                        project_id=project_id,
+                        node_type=node_type,
+                        is_active=is_active,
+                        config_json=json.dumps(config or {})
+                    )
+                    db.add(trigger)
+                else:
+                    trigger.user_id = user_id
+                    trigger.project_id = project_id
+                    trigger.node_type = node_type
+                    trigger.is_active = is_active
+                    trigger.config_json = json.dumps(config or {})
+                
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                raise e
+            finally:
+                db.close()
+
         try:
-            trigger = db.query(Trigger).filter(Trigger.id == node_id).first()
-            if not trigger:
-                trigger = Trigger(
-                    id=node_id,
-                    user_id=user_id,
-                    project_id=project_id,
-                    node_type=node_type,
-                    is_active=is_active,
-                    config_json=json.dumps(config or {})
-                )
-                db.add(trigger)
-            else:
-                trigger.user_id = user_id
-                trigger.project_id = project_id
-                trigger.node_type = node_type
-                trigger.is_active = is_active
-                trigger.config_json = json.dumps(config or {})
-            
-            db.commit()
+            await asyncio.to_thread(_db_update)
         except Exception as e:
-            db.rollback()
             logger.error(f"Error updating trigger in database for node {node_id}: {e}")
             raise e
-        finally:
-            db.close()
 
         if is_active:
             self._schedule_trigger_task(node_id, user_id, project_id, node_type, config)
@@ -92,62 +121,109 @@ class TriggerManager:
 
     async def delete_trigger(self, node_id: str):
         self._cancel_trigger_task(node_id)
-        db = SessionLocal()
+        
+        def _db_delete():
+            db = SessionLocal()
+            try:
+                trigger = db.query(Trigger).filter(Trigger.id == node_id).first()
+                if trigger:
+                    db.delete(trigger)
+                    db.commit()
+            except Exception as e:
+                db.rollback()
+                raise e
+            finally:
+                db.close()
+
         try:
-            trigger = db.query(Trigger).filter(Trigger.id == node_id).first()
-            if trigger:
-                db.delete(trigger)
-                db.commit()
+            await asyncio.to_thread(_db_delete)
         except Exception as e:
-            db.rollback()
             logger.error(f"Error deleting trigger {node_id}: {e}")
-        finally:
-            db.close()
 
     async def delete_project_triggers(self, project_id: str):
-        db = SessionLocal()
+        def _get_and_delete_project_triggers():
+            db = SessionLocal()
+            try:
+                triggers = db.query(Trigger).filter(Trigger.project_id == project_id).all()
+                trigger_ids = [t.id for t in triggers]
+                for trigger in triggers:
+                    db.delete(trigger)
+                db.commit()
+                return trigger_ids
+            except Exception as e:
+                db.rollback()
+                raise e
+            finally:
+                db.close()
+
         try:
-            triggers = db.query(Trigger).filter(Trigger.project_id == project_id).all()
-            for trigger in triggers:
-                self._cancel_trigger_task(trigger.id)
-                db.delete(trigger)
-            db.commit()
+            trigger_ids = await asyncio.to_thread(_get_and_delete_project_triggers)
+            for tid in trigger_ids:
+                self._cancel_trigger_task(tid)
         except Exception as e:
-            db.rollback()
             logger.error(f"Error deleting project triggers for {project_id}: {e}")
-        finally:
-            db.close()
+
+    async def shutdown(self):
+        """Cleanly cancel and wait on all active background trigger tasks."""
+        logger.info(f"Shutting down TriggerManager ({len(self.active_tasks)} active triggers)...")
+        tasks = list(self.active_tasks.values())
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        self.active_tasks.clear()
 
     async def fire_trigger(self, user_id: str, project_id: str, node_id: str, output_data: dict = None):
         output_payload = output_data or {}
         
         try:
-            state_dir = os.path.join(STORAGE_DIR, "users", user_id, ".states")
-            os.makedirs(state_dir, exist_ok=True)
-            state_file = os.path.join(state_dir, f"{node_id}.pkl")
-            
             scope = {
                 "output": output_payload,
                 "trigger": output_payload,
                 "timestamp": output_payload.get("timestamp"),
                 "out1": output_payload
             }
-            with open(state_file, 'wb') as f:
-                pickle.dump(scope, f)
+            # Target both kernel_data/.states (where container reads) and legacy .states
+            target_dirs = [
+                os.path.join(STORAGE_DIR, "users", str(user_id), "kernel_data", ".states"),
+                os.path.join(STORAGE_DIR, "users", str(user_id), ".states")
+            ]
+            for s_dir in target_dirs:
+                os.makedirs(s_dir, exist_ok=True)
+                s_file = os.path.join(s_dir, f"{node_id}.pkl")
+                t_file = f"{s_file}.tmp"
+                with open(t_file, 'wb') as f:
+                    pickle.dump(scope, f)
+                os.replace(t_file, s_file)
         except Exception as e:
             logger.error(f"Error saving state for trigger {node_id}: {e}")
 
-        if not self.user_manager:
-            return
+        # Broadcast trigger_fired event to user if WebSocket is open
+        if self.user_manager:
+            conn = self.user_manager.active_connections.get(str(user_id))
+            if conn and conn.is_open():
+                payload = {
+                    "action": "trigger_fired",
+                    "project_id": project_id,
+                    "node_id": node_id,
+                    "output": output_payload
+                }
+                try:
+                    await conn.websocket.send_json(payload)
+                except Exception as e:
+                    logger.debug(f"Failed to send trigger_fired event: {e}")
 
-        conn = self.user_manager.active_connections.get(user_id)
-        if conn and conn.is_open():
-            payload = {
-                "action": "trigger_fired",
-                "project_id": project_id,
-                "node_id": node_id,
-                "output": output_payload
-            }
-            await conn.websocket.send_json(payload)
+        # Execute downstream workflow nodes autonomously on the backend
+        try:
+            from .workflow_engine import workflow_engine
+            await workflow_engine.run_downstream(
+                user_id=str(user_id),
+                project_id=str(project_id),
+                source_node_id=str(node_id),
+                user_manager=self.user_manager
+            )
+        except Exception as e:
+            logger.error(f"Error running downstream workflow for trigger {node_id}: {e}")
 
 trigger_manager = TriggerManager()
