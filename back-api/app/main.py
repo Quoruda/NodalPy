@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -35,21 +36,23 @@ for _log in ['uvicorn', 'uvicorn.error', 'uvicorn.access', 'fastapi']:
 from .services.trigger_manager import trigger_manager
 
 user_manager = UserManager()
-app = FastAPI()
 
-app.include_router(auth_router)
-
-@app.on_event("startup")
-async def startup_event():
-    Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     await user_manager.cleanup_orphans()
     await user_manager.start_cleanup_loop()
     await trigger_manager.initialize(user_manager)
-
-@app.on_event("shutdown")
-async def shutdown_event():
+    yield
+    # Shutdown
     await trigger_manager.shutdown()
     await user_manager.stop_all_kernels()
+
+app = FastAPI(lifespan=lifespan)
+
+app.include_router(auth_router)
 
 app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
 

@@ -6,7 +6,7 @@ import queue
 import time
 import cloudpickle as pickle
 
-def child_target(code: str, initial_context: dict, cwd: str, q: Queue):
+def child_target(code: str, initial_context: dict, cwd: str, max_write_bytes: int, q: Queue):
     if cwd:
         storage_dir = os.path.dirname(cwd)
         venv_site_packages = os.path.join(
@@ -60,11 +60,14 @@ def child_target(code: str, initial_context: dict, cwd: str, q: Queue):
     status = "finished"
     error_val = ""
 
-    try:
-        import resource
-        resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))
-    except Exception:
-        pass
+    # Limit file write size per execution to the user's disk quota.
+    # A value of 0 blocks all writes; None or negative means no limit.
+    if max_write_bytes is not None and max_write_bytes >= 0:
+        try:
+            import resource
+            resource.setrlimit(resource.RLIMIT_FSIZE, (max_write_bytes, max_write_bytes))
+        except Exception:
+            pass
 
     try:
         exec(code, exec_globals, local_scope)
@@ -98,9 +101,9 @@ def child_target(code: str, initial_context: dict, cwd: str, q: Queue):
         "serialized_scope": serialized_scope
     })
 
-def run_code_in_process(code: str, initial_context: dict, timeout: float = None, cwd: str = None) -> dict:
+def run_code_in_process(code: str, initial_context: dict, timeout: float = None, cwd: str = None, max_write_bytes: int = None) -> dict:
     q = Queue()
-    p = Process(target=child_target, args=(code, initial_context, cwd, q))
+    p = Process(target=child_target, args=(code, initial_context, cwd, max_write_bytes, q))
     p.start()
 
     start_time = time.time()

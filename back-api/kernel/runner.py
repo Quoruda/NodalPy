@@ -58,7 +58,7 @@ class KernelRunner:
         value = node_context.get(name, None)
         return convert_value(value)
 
-    def run_node(self, node: str, code: str, variables: list[dict], timeout: float = None, inputs: list[str] = None) -> tuple[str, str, str]:
+    def run_node(self, node: str, code: str, variables: list[dict], timeout: float = None, inputs: list[str] = None, max_disk_mb: int = None) -> tuple[str, str, str]:
         if self.is_running_code:
             raise RuntimeError("Code is already running")
 
@@ -85,7 +85,10 @@ class KernelRunner:
         local_scope = {}
         
         try:
-            result = run_code_in_process(code, new_context, timeout, cwd=os.path.join(self.storage_dir, 'files'))
+            # Convert max_disk_mb to bytes for RLIMIT_FSIZE.
+            # None means no limit (backwards compatible).
+            max_write_bytes = max_disk_mb * 1024 * 1024 if max_disk_mb is not None else None
+            result = run_code_in_process(code, new_context, timeout, cwd=os.path.join(self.storage_dir, 'files'), max_write_bytes=max_write_bytes)
             status = result["status"]
             output = result.get("stdout", "")
             error_msg = result.get("error", "")

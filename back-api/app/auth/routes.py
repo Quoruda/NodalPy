@@ -2,7 +2,8 @@ from datetime import timedelta
 import re
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES, ALLOW_REGISTRATION
 from app.models.user import User
@@ -12,11 +13,12 @@ from app.auth.security import verify_password, get_password_hash, create_access_
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/register", response_model=Token)
-async def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
+async def register_user(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     if not ALLOW_REGISTRATION:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Registration is disabled on this server")
         
-    user = db.query(User).filter(User.username == user_in.username).first()
+    result = await db.execute(select(User).where(User.username == user_in.username))
+    user = result.scalars().first()
     if user:
         raise HTTPException(status_code=400, detail="Username already registered")
         
@@ -27,8 +29,8 @@ async def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     hashed_password = get_password_hash(pwd)
     new_user = User(username=user_in.username, password_hash=hashed_password)
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -37,8 +39,9 @@ async def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/token", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == form_data.username).first()
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.username == form_data.username))
+    user = result.scalars().first()
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

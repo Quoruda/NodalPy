@@ -284,13 +284,15 @@ class WorkflowEngine:
             return {"status": "error", "error": err_msg, "node": node_id}
 
         try:
+            max_disk_mb = tier_config.get("max_disk_mb")
             response = await user_proxy.send_request({
                 "action": "run_node",
                 "node": node_id,
                 "code": code,
                 "variables": variables,
                 "timeout": timeout,
-                "inputs": inputs_list
+                "inputs": inputs_list,
+                "max_disk_mb": max_disk_mb
             })
 
             status = response.get("status", "finished")

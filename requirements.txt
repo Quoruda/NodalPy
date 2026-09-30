@@ -1,8 +1,7 @@
-pillow
+Pillow
 fastapi
 uvicorn[standard]
 websockets
-Pillow
 matplotlib
 pandas
 numpy

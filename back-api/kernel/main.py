@@ -35,6 +35,7 @@ async def handle_client(reader, writer, runner):
                 variables = request.get("variables", [])
                 timeout = request.get("timeout")
                 inputs = request.get("inputs")
+                max_disk_mb = request.get("max_disk_mb")
                 
                 logger.info(f"Running node {node}...")
                 try:
@@ -43,7 +44,8 @@ async def handle_client(reader, writer, runner):
                         code=code,
                         variables=variables,
                         timeout=timeout,
-                        inputs=inputs
+                        inputs=inputs,
+                        max_disk_mb=max_disk_mb
                     )
                     response = {
                         "action": "run_node",
