@@ -8,6 +8,8 @@
 
 **NodalPy** is a node-based visual development environment for real-time Python code execution in the browser. It combines the flexibility of Python scripting with an intuitive nodal interface for creating data processing workflows, algorithm prototypes, and visualizations.
 
+![NodalPy](.github/nodalpy.png)
+
 ## Key Features
 
 *   **Zero-Code Dynamic Plugins**: Auto-discovery and loading of backend execution logic and frontend React components.
